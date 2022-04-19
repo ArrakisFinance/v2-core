@@ -76,7 +76,7 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
                 mintAmount,
                 totalSupply
             );
-        // solhint-disable-next-line no-empty-blocks
+            // solhint-disable-next-line no-empty-blocks
         } else {
             // TODO: if supply is 0 what do we do ?
         }
@@ -236,7 +236,7 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
                 amount0Max,
                 amount1Max
             );
-        // solhint-disable-next-line no-empty-blocks
+            // solhint-disable-next-line no-empty-blocks
         } else {
             // TODO: if supply is 0 what do we do ?
         }
