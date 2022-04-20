@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.13;
 
-interface IStrategy {
+interface IArrakisPosition {
     function deposit(uint256 proportion) external;
 
     function withdraw(uint256 proportion) external returns (uint256, uint256);

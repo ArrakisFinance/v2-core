@@ -10,7 +10,7 @@ import {
     EnumerableSet
 } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {FullMath} from "./vendor/uniswap/FullMath.sol";
-import {IStrategy} from "./interfaces/IStrategy.sol";
+import {IArrakisPosition} from "./interfaces/IArrakisPosition.sol";
 
 contract ArrakisVaultV2 is ArrakisVaultV2Storage {
     using SafeERC20 for IERC20;
@@ -88,13 +88,11 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
         }
 
         uint256 proportion = FullMath.mulDiv(1 ether, mintAmount, totalSupply);
-        for (uint256 i = 0; i < _strategies.length(); i++) {
-            address _strategy = _strategies.at(i);
-            (uint256 in0, uint256 in1) =
-                IStrategy(_strategy).depositAmounts(proportion);
-            token0.safeIncreaseAllowance(_strategy, in0);
-            token1.safeIncreaseAllowance(_strategy, in1);
-            IStrategy(_strategies.at(i)).deposit(proportion);
+        for (uint256 i = 0; i < _positions.length(); i++) {
+            (bool success,) = _positions.at(i).delegatecall(
+                abi.encodeWithSelector(IArrakisPosition.deposit.selector, i, proportion)
+            );
+            require(success, "ArrakisVaultV2: low level call failed");
         }
 
         _mint(receiver, mintAmount);
@@ -127,12 +125,22 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
         );
         uint256 proportion = FullMath.mulDiv(1 ether, burnAmount, totalSupply);
         _burn(msg.sender, burnAmount);
-        for (uint256 i = 0; i < _strategies.length(); i++) {
-            (uint256 credit0, uint256 credit1) =
-                IStrategy(_strategies.at(i)).withdraw(proportion);
+        uint256 feeCollected0;
+        uint256 feeCollected1;
+        for (uint256 i = 0; i < _positions.length(); i++) {
+            (bool success, bytes memory data) = _positions.at(i).delegatecall(
+                abi.encodeWithSelector(IArrakisPosition.withdraw.selector, proportion)
+            );
+            require(success, "ArrakisVaultV2: low level call failed");
+            (uint256 credit0, uint256 credit1, uint256 fee0, uint256 fee1) =
+                abi.decode(data, (uint256, uint256, uint256, uint256));
             amount0 += credit0;
             amount1 += credit1;
+            feeCollected0 += fee0;
+            feeCollected1 += fee1;
         }
+        managerBalance0 += feeCollected0;
+        managerBalance1 += feeCollected1;
 
         if (amount0 > 0) {
             token0.safeTransfer(receiver, amount0);
@@ -146,7 +154,7 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
     }
 
     // Operator Functions => Only called by Vault Operators
-    // solhint-disable-next-line code-complexity, function-max-lines
+    // solhint-disable-next-line code-complexity
     function rebalance(address[] calldata targets, bytes[] calldata payloads)
         external
         nonReentrant
@@ -157,27 +165,28 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
             "ArrakisVaultV2: array mismatch"
         );
         for (uint256 i = 0; i < targets.length; i++) {
-            require(
-                _strategies.contains(targets[i]) ||
-                    _targets.contains(targets[i]),
-                "ArrakisVaultV2: target not authorized"
-            );
-            (bool success, ) = targets[i].call(payloads[i]);
+            bool success = false;
+            if (_positions.contains(targets[i])) {
+                (success,) = targets[i].delegatecall(payloads[i]);
+            } else if (_targets.contains(targets[i])) {
+                (success,) = targets[i].call(payloads[i]);
+            }
             require(success, "ArrakisVaultV2: low level call failed");
         }
     }
 
     /// @notice withdraw manager fees accrued
-    function managerWithdrawal() external {
-        uint256 amount0;
-        uint256 amount1;
-        for (uint256 i = 0; i < _strategies.length(); i++) {
-            (uint256 a0, uint256 a1) =
-                IStrategy(_strategies.at(i)).managerWithdrawal(managerTreasury);
-            amount0 += a0;
-            amount1 += a1;
+    function managerWithdrawal() external nonReentrant {
+        uint256 amount0 = managerBalance0;
+        uint256 amount1 = managerBalance1;
+        managerBalance0 = 0;
+        managerBalance1 = 0;
+        if (amount0 > 0) {
+            token0.safeTransfer(managerTreasury, amount0);
         }
-
+        if (amount1 > 0) {
+            token1.safeTransfer(managerTreasury, amount1);
+        }
         emit ManagerWithdrawal(amount0, amount1);
     }
 
@@ -221,9 +230,12 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
         view
         returns (uint256 amount0Current, uint256 amount1Current)
     {
-        for (uint256 i = 0; i < _strategies.length(); i++) {
-            (uint256 amount0, uint256 amount1) =
-                IStrategy(_strategies.at(i)).underlyingBalances();
+        for (uint256 i = 0; i < _positions.length(); i++) {
+            (bool success, bytes memory data) = _positions.at(i).delegatecall(
+                abi.encodeWithSelector(IArrakisPosition.underlyingBalances.selector)
+            );
+            require(success, "ArrakisVaultV2: low level call failed");
+            (uint256 amount0, uint256 amount1) = abi.decode(data,(uint256, uint256));
             amount0Current += amount0;
             amount1Current += amount1;
         }
@@ -234,11 +246,12 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
         view
         returns (uint256 amount0Current, uint256 amount1Current)
     {
-        for (uint256 i = 0; i < _strategies.length(); i++) {
-            (uint256 amount0, uint256 amount1) =
-                IStrategy(_strategies.at(i)).underlyingBalancesAtPrice(
-                    sqrtRatioX96
-                );
+        for (uint256 i = 0; i < _positions.length(); i++) {
+            (bool success, bytes memory data) = _positions.at(i).delegatecall(
+                abi.encodeWithSelector(IArrakisPosition.underlyingBalancesAtPrice.selector, sqrtRatioX96)
+            );
+            require(success, "ArrakisVaultV2: low level call failed");
+            (uint256 amount0, uint256 amount1) = abi.decode(data,(uint256, uint256));
             amount0Current += amount0;
             amount1Current += amount1;
         }

@@ -30,18 +30,21 @@ abstract contract ArrakisVaultV2Storage is
     string public constant version = "2.0.0";
 
     // XXXXXXXX DO NOT MODIFY ORDERING XXXXXXXX
-    EnumerableSet.AddressSet internal _strategies;
+    EnumerableSet.AddressSet internal _positions;
     EnumerableSet.AddressSet internal _operators;
     EnumerableSet.AddressSet internal _targets;
+    mapping(address => bytes) public positionState; 
     IERC20 public token0;
     IERC20 public token1;
     address public managerTreasury;
+    uint256 public managerBalance0;
+    uint256 public managerBalance1;
     // APPPEND ADDITIONAL STATE VARS BELOW:
     // XXXXXXXX DO NOT MODIFY ORDERING XXXXXXXX
 
     event SetManagerTreasury(address treasury);
-    event AddStrategy(address strategy);
-    event RemoveStrategy(address strategy);
+    event AddPosition(address position);
+    event RemovePosition(address position);
     event AddOperator(address operator);
     event RemoveOperator(address operator);
     event AddTarget(address target);
@@ -59,15 +62,15 @@ abstract contract ArrakisVaultV2Storage is
         address _token0,
         address _token1,
         address _manager_,
-        address[] memory _strategies_
+        address[] memory _positions_
     ) external initializer {
         // these variables are immutable after initialization
         token0 = IERC20(_token0);
         token1 = IERC20(_token1);
         _targets.add(_token0);
         _targets.add(_token1);
-        for (uint256 i = 0; i < _strategies_.length; i++) {
-            _strategies.add(_strategies_[i]);
+        for (uint256 i = 0; i < _positions_.length; i++) {
+            _positions.add(_positions_[i]);
         }
 
         // these variables can be udpated by the manager
@@ -89,14 +92,15 @@ abstract contract ArrakisVaultV2Storage is
         emit SetManagerTreasury(managerTreasury);
     }
 
-    function addStrategy(address strategy) external onlyManager {
-        _strategies.add(strategy);
-        emit AddStrategy(strategy);
+    function addPosition(address position, bytes memory initialState) external onlyManager {
+        _positions.add(position);
+        positionState[position] = initialState;
+        emit AddPosition(position);
     }
 
-    function removeStrategy(address strategy) external onlyManager {
-        _strategies.remove(strategy);
-        emit RemoveStrategy(strategy);
+    function removePosition(address position) external onlyManager {
+        _positions.remove(position);
+        emit RemovePosition(position);
     }
 
     function addOperator(address operator) external onlyManager {
@@ -129,11 +133,11 @@ abstract contract ArrakisVaultV2Storage is
         return output;
     }
 
-    function strategies() external view returns (address[] memory) {
-        uint256 length = _strategies.length();
+    function positions() external view returns (address[] memory) {
+        uint256 length = _positions.length();
         address[] memory output = new address[](length);
         for (uint256 i = 0; i < length; i++) {
-            output[i] = _strategies.at(i);
+            output[i] = _positions.at(i);
         }
 
         return output;
