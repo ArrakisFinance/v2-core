@@ -32,6 +32,7 @@ abstract contract ArrakisVaultV2Storage is
     // XXXXXXXX DO NOT MODIFY ORDERING XXXXXXXX
     EnumerableSet.AddressSet internal _strategies;
     EnumerableSet.AddressSet internal _operators;
+    EnumerableSet.AddressSet internal _targets;
     IERC20 public token0;
     IERC20 public token1;
     address public managerTreasury;
@@ -43,14 +44,8 @@ abstract contract ArrakisVaultV2Storage is
     event RemoveStrategy(address strategy);
     event AddOperator(address operator);
     event RemoveOperator(address operator);
-
-    modifier onlyOperators() {
-        require(
-            _operators.contains(msg.sender),
-            "ArrakisVaultV2: only operators"
-        );
-        _;
-    }
+    event AddTarget(address target);
+    event RemoveTarget(address target);
 
     /// @notice initialize storage variables on a new G-UNI pool, only called once
     /// @param _name name of Vault (immutable)
@@ -63,11 +58,17 @@ abstract contract ArrakisVaultV2Storage is
         string memory _symbol,
         address _token0,
         address _token1,
-        address _manager_
+        address _manager_,
+        address[] memory _strategies_
     ) external initializer {
         // these variables are immutable after initialization
         token0 = IERC20(_token0);
         token1 = IERC20(_token1);
+        _targets.add(_token0);
+        _targets.add(_token1);
+        for (uint256 i = 0; i < _strategies_.length; i++) {
+            _strategies.add(_strategies_[i]);
+        }
 
         // these variables can be udpated by the manager
         _manager = _manager_;
@@ -106,6 +107,16 @@ abstract contract ArrakisVaultV2Storage is
     function removeOperator(address operator) external onlyManager {
         _operators.remove(operator);
         emit RemoveOperator(operator);
+    }
+
+    function addTarget(address target) external onlyManager {
+        _targets.add(target);
+        emit AddTarget(target);
+    }
+
+    function removeTarget(address target) external onlyManager {
+        _targets.remove(target);
+        emit RemoveTarget(target);
     }
 
     function operators() external view returns (address[] memory) {

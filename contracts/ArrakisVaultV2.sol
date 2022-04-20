@@ -16,16 +16,6 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    struct RebalanceParams {
-        address[] withdrawTargets;
-        bytes[] withdrawPayloads;
-        address[] approvalTargets;
-        uint256[] approveAmounts0;
-        uint256[] approveAmounts1;
-        address[] depositTargets;
-        bytes[] depositPayloads;
-    }
-
     event Minted(
         address receiver,
         uint256 mintAmount,
@@ -40,9 +30,17 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
         uint256 amount1Out
     );
 
-    event Rebalance(); // TODO:
+    event Rebalance(); // TODO: what to log?
 
     event ManagerWithdrawal(uint256 amount0, uint256 amount1);
+
+    modifier onlyOperators() {
+        require(
+            _operators.contains(msg.sender),
+            "ArrakisVaultV2: only operators"
+        );
+        _;
+    }
 
     // User functions
 
@@ -149,51 +147,22 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
 
     // Operator Functions => Only called by Vault Operators
     // solhint-disable-next-line code-complexity, function-max-lines
-    function rebalance(RebalanceParams calldata rebalanceParams)
+    function rebalance(address[] calldata targets, bytes[] calldata payloads)
         external
         nonReentrant
         onlyOperators
     {
-        for (uint256 i = 0; i < rebalanceParams.withdrawTargets.length; i++) {
+        require(
+            targets.length == payloads.length,
+            "ArrakisVaultV2: array mismatch"
+        );
+        for (uint256 i = 0; i < targets.length; i++) {
             require(
-                _strategies.contains(rebalanceParams.withdrawTargets[i]),
-                "ArrakisVaultV2: untrusted call target"
+                _strategies.contains(targets[i]) ||
+                    _targets.contains(targets[i]),
+                "ArrakisVaultV2: target not authorized"
             );
-            (bool success, ) =
-                rebalanceParams.withdrawTargets[i].call(
-                    rebalanceParams.withdrawPayloads[i]
-                );
-            require(success, "ArrakisVaultV2: low level call failed");
-        }
-
-        for (uint256 j = 0; j < rebalanceParams.approvalTargets.length; j++) {
-            require(
-                _strategies.contains(rebalanceParams.approvalTargets[j]),
-                "ArrakisVaultV2: untrusted call target"
-            );
-            if (rebalanceParams.approveAmounts0[j] > 0) {
-                token0.safeIncreaseAllowance(
-                    rebalanceParams.approvalTargets[j],
-                    rebalanceParams.approveAmounts0[j]
-                );
-            }
-            if (rebalanceParams.approveAmounts1[j] > 0) {
-                token1.safeIncreaseAllowance(
-                    rebalanceParams.approvalTargets[j],
-                    rebalanceParams.approveAmounts1[j]
-                );
-            }
-        }
-
-        for (uint256 k = 0; k < rebalanceParams.depositTargets.length; k++) {
-            require(
-                _strategies.contains(rebalanceParams.depositTargets[k]),
-                "ArrakisVaultV2: untrusted call target"
-            );
-            (bool success, ) =
-                rebalanceParams.depositTargets[k].call(
-                    rebalanceParams.depositPayloads[k]
-                );
+            (bool success, ) = targets[i].call(payloads[i]);
             require(success, "ArrakisVaultV2: low level call failed");
         }
     }
