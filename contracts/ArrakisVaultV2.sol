@@ -42,8 +42,6 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
         _;
     }
 
-    // User functions
-
     /// @notice mint ArrakisVaultV2 Shares by supplying underlying assets
     /// @dev to compute the amouint of tokens necessary to mint `mintAmount` see getMintAmounts
     /// @param mintAmount number of shares to mint
@@ -89,9 +87,13 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
 
         uint256 proportion = FullMath.mulDiv(1 ether, mintAmount, totalSupply);
         for (uint256 i = 0; i < _positions.length(); i++) {
-            (bool success,) = _positions.at(i).delegatecall(
-                abi.encodeWithSelector(IArrakisPosition.deposit.selector, i, proportion)
-            );
+            (bool success, ) =
+                _positions.at(i).delegatecall(
+                    abi.encodeWithSelector(
+                        IArrakisPosition.deposit.selector,
+                        proportion
+                    )
+                );
             require(success, "ArrakisVaultV2: low level call failed");
         }
 
@@ -128,9 +130,13 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
         uint256 feeCollected0;
         uint256 feeCollected1;
         for (uint256 i = 0; i < _positions.length(); i++) {
-            (bool success, bytes memory data) = _positions.at(i).delegatecall(
-                abi.encodeWithSelector(IArrakisPosition.withdraw.selector, proportion)
-            );
+            (bool success, bytes memory data) =
+                _positions.at(i).delegatecall(
+                    abi.encodeWithSelector(
+                        IArrakisPosition.withdraw.selector,
+                        proportion
+                    )
+                );
             require(success, "ArrakisVaultV2: low level call failed");
             (uint256 credit0, uint256 credit1, uint256 fee0, uint256 fee1) =
                 abi.decode(data, (uint256, uint256, uint256, uint256));
@@ -153,8 +159,6 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
         emit Burned(receiver, burnAmount, amount0, amount1);
     }
 
-    // Operator Functions => Only called by Vault Operators
-    // solhint-disable-next-line code-complexity
     function rebalance(address[] calldata targets, bytes[] calldata payloads)
         external
         nonReentrant
@@ -167,9 +171,9 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
         for (uint256 i = 0; i < targets.length; i++) {
             bool success = false;
             if (_positions.contains(targets[i])) {
-                (success,) = targets[i].delegatecall(payloads[i]);
+                (success, ) = targets[i].delegatecall(payloads[i]);
             } else if (_targets.contains(targets[i])) {
-                (success,) = targets[i].call(payloads[i]);
+                (success, ) = targets[i].call(payloads[i]);
             }
             require(success, "ArrakisVaultV2: low level call failed");
         }
@@ -190,7 +194,13 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
         emit ManagerWithdrawal(amount0, amount1);
     }
 
-    // View functions
+    function delegatecallStatic(address position, bytes memory payload)
+        external
+        returns (bool, bytes memory)
+    {
+        require(msg.sender == address(this), "ArrakisVaultV2: NOT AUTHORIZED");
+        return position.delegatecall(payload);
+    }
 
     /// @notice compute maximum shares that can be minted from `amount0Max` and `amount1Max`
     /// @param amount0Max The maximum amount of token0 to forward on mint
@@ -220,7 +230,7 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
         }
     }
 
-    /// @notice compute total underlying holdings of the G-UNI token supply
+    /// @notice compute total underlying holdings of the vault
     /// includes current liquidity invested in uniswap position, current fees earned
     /// and any uninvested leftover (but does not include manager or gelato fees accrued)
     /// @return amount0Current current total underlying balance of token0
@@ -231,27 +241,44 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
         returns (uint256 amount0Current, uint256 amount1Current)
     {
         for (uint256 i = 0; i < _positions.length(); i++) {
-            (bool success, bytes memory data) = _positions.at(i).delegatecall(
-                abi.encodeWithSelector(IArrakisPosition.underlyingBalances.selector)
-            );
+            (bool success, bytes memory data) =
+                address(this).staticcall(
+                    abi.encodeWithSelector(
+                        ArrakisVaultV2.delegatecallStatic.selector,
+                        _positions.at(i),
+                        abi.encodeWithSelector(
+                            IArrakisPosition.underlyingBalances.selector
+                        )
+                    )
+                );
             require(success, "ArrakisVaultV2: low level call failed");
-            (uint256 amount0, uint256 amount1) = abi.decode(data,(uint256, uint256));
+            (uint256 amount0, uint256 amount1) =
+                abi.decode(data, (uint256, uint256));
             amount0Current += amount0;
             amount1Current += amount1;
         }
     }
 
-    function underlyingBalancesAtPrice(uint160 sqrtRatioX96)
+    function underlyingBalancesAtPriceStatic(uint160 sqrtRatioX96)
         public
         view
         returns (uint256 amount0Current, uint256 amount1Current)
     {
         for (uint256 i = 0; i < _positions.length(); i++) {
-            (bool success, bytes memory data) = _positions.at(i).delegatecall(
-                abi.encodeWithSelector(IArrakisPosition.underlyingBalancesAtPrice.selector, sqrtRatioX96)
-            );
+            (bool success, bytes memory data) =
+                address(this).staticcall(
+                    abi.encodeWithSelector(
+                        ArrakisVaultV2.delegatecallStatic.selector,
+                        _positions.at(i),
+                        abi.encodeWithSelector(
+                            IArrakisPosition.underlyingBalancesAtPrice.selector,
+                            sqrtRatioX96
+                        )
+                    )
+                );
             require(success, "ArrakisVaultV2: low level call failed");
-            (uint256 amount0, uint256 amount1) = abi.decode(data,(uint256, uint256));
+            (uint256 amount0, uint256 amount1) =
+                abi.decode(data, (uint256, uint256));
             amount0Current += amount0;
             amount1Current += amount1;
         }

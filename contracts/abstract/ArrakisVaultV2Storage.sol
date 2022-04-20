@@ -33,7 +33,7 @@ abstract contract ArrakisVaultV2Storage is
     EnumerableSet.AddressSet internal _positions;
     EnumerableSet.AddressSet internal _operators;
     EnumerableSet.AddressSet internal _targets;
-    mapping(address => bytes) public positionState; 
+    mapping(address => bytes) public positionState;
     IERC20 public token0;
     IERC20 public token1;
     address public managerTreasury;
@@ -92,7 +92,10 @@ abstract contract ArrakisVaultV2Storage is
         emit SetManagerTreasury(managerTreasury);
     }
 
-    function addPosition(address position, bytes memory initialState) external onlyManager {
+    function addPosition(address position, bytes memory initialState)
+        external
+        onlyManager
+    {
         _positions.add(position);
         positionState[position] = initialState;
         emit AddPosition(position);
