@@ -188,6 +188,8 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
         emit ManagerWithdrawal(amount0, amount1);
     }
 
+    /// @notice this function is not marked view because of internal delegatecalls
+    /// but it should be staticcalled from off chain
     function mintAmounts(uint256 amount0Max, uint256 amount1Max)
         public
         returns (
@@ -210,6 +212,8 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
             );
     }
 
+    /// @notice this function is not marked view because of internal delegatecalls
+    /// but it should be staticcalled from off chain
     function underlying() public returns (uint256 amount0, uint256 amount1) {
         for (uint256 i = 0; i < _positions.length(); i++) {
             (bool success, bytes memory data) =
@@ -223,6 +227,8 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
         }
     }
 
+    /// @notice this function is not marked view because of internal delegatecalls
+    /// but it should be staticcalled from off chain
     function underlyingAtPrice(uint160 sqrtRatioX96)
         public
         returns (uint256 amount0, uint256 amount1)
