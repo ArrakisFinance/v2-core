@@ -2,24 +2,19 @@
 pragma solidity 0.8.13;
 
 interface IArrakisPosition {
-    function deposit(uint256 proportion) external;
-
-    function withdraw(uint256 proportion) external returns (uint256, uint256);
-
-    function managerWithdrawal(address target)
+    function deposit(uint256 shares, uint256 total)
         external
         returns (uint256, uint256);
 
-    function underlyingBalances() external view returns (uint256, uint256);
-
-    function underlyingBalancesAtPrice(uint256 sqrtPrice)
+    function withdraw(uint256 shares, uint256 total)
         external
-        view
         returns (uint256, uint256);
 
-    function managerBalances() external view returns (uint256, uint256);
+    function underlying() external view returns (uint256, uint256);
 
-    function depositAmounts(uint256 proportion)
+    function initialRatio() external view returns (uint256, uint256);
+
+    function underlyingAtPrice(uint256 sqrtPrice)
         external
         view
         returns (uint256, uint256);
