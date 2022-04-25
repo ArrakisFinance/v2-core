@@ -35,8 +35,9 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
     event ManagerWithdrawal(uint256 amount0, uint256 amount1);
 
     modifier onlyOperators() {
+        VaultV2InternalStorage storage internalData = _vaultV2InternalStorage();
         require(
-            _operators.contains(msg.sender),
+            internalData._operators.contains(msg.sender),
             "ArrakisVaultV2: only operators"
         );
         _;
@@ -63,17 +64,27 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
 
         require(mintAmount > 0, "ArrakisVaultV2: mint 0");
 
+        VaultV2PublicStorage storage publicData = _vaultV2PublicStorage();
+        VaultV2InternalStorage storage internalData = _vaultV2InternalStorage();
         // transfer amounts owed to contract
         if (amount0 > 0) {
-            token0.safeTransferFrom(msg.sender, address(this), amount0);
+            publicData.token0.safeTransferFrom(
+                msg.sender,
+                address(this),
+                amount0
+            );
         }
         if (amount1 > 0) {
-            token1.safeTransferFrom(msg.sender, address(this), amount1);
+            publicData.token1.safeTransferFrom(
+                msg.sender,
+                address(this),
+                amount1
+            );
         }
 
-        for (uint256 i = 0; i < _positions.length(); i++) {
+        for (uint256 i = 0; i < internalData._positions.length(); i++) {
             (bool success, ) =
-                _positions.at(i).delegatecall(
+                internalData._positions.at(i).delegatecall(
                     abi.encodeWithSelector(
                         IArrakisPosition.deposit.selector,
                         mintAmount,
@@ -100,23 +111,26 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
     {
         require(burnAmount > 0, "ArrakisVaultV2: burn 0");
 
+        VaultV2PublicStorage storage publicData = _vaultV2PublicStorage();
+        VaultV2InternalStorage storage internalData = _vaultV2InternalStorage();
+
         uint256 totalSupply = totalSupply();
         amount0 = FullMath.mulDiv(
-            token0.balanceOf(address(this)),
+            publicData.token0.balanceOf(address(this)),
             burnAmount,
             totalSupply
         );
         amount1 = FullMath.mulDiv(
-            token1.balanceOf(address(this)),
+            publicData.token1.balanceOf(address(this)),
             burnAmount,
             totalSupply
         );
 
         uint256 feeCollected0;
         uint256 feeCollected1;
-        for (uint256 i = 0; i < _positions.length(); i++) {
+        for (uint256 i = 0; i < internalData._positions.length(); i++) {
             (bool success, bytes memory data) =
-                _positions.at(i).delegatecall(
+                internalData._positions.at(i).delegatecall(
                     abi.encodeWithSelector(
                         IArrakisPosition.withdraw.selector,
                         burnAmount,
@@ -131,17 +145,17 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
             feeCollected0 += fee0;
             feeCollected1 += fee1;
         }
-        managerBalance0 += feeCollected0;
-        managerBalance1 += feeCollected1;
+        publicData.managerBalance0 += feeCollected0;
+        publicData.managerBalance1 += feeCollected1;
 
         _burn(msg.sender, burnAmount);
 
         if (amount0 > 0) {
-            token0.safeTransfer(receiver, amount0);
+            publicData.token0.safeTransfer(receiver, amount0);
         }
 
         if (amount1 > 0) {
-            token1.safeTransfer(receiver, amount1);
+            publicData.token1.safeTransfer(receiver, amount1);
         }
 
         emit Burned(receiver, burnAmount, amount0, amount1);
@@ -156,14 +170,17 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
             targets.length == payloads.length,
             "ArrakisVaultV2: array mismatch"
         );
+
+        VaultV2InternalStorage storage internalData = _vaultV2InternalStorage();
+
         for (uint256 i = 0; i < targets.length; i++) {
-            if (_positions.contains(targets[i])) {
+            if (internalData._positions.contains(targets[i])) {
                 (bool success, ) = targets[i].delegatecall(payloads[i]);
                 require(
                     success,
                     "ArrakisVaultV2: low level delegatecall failed"
                 );
-            } else if (_targets.contains(targets[i])) {
+            } else if (internalData._targets.contains(targets[i])) {
                 (bool success, ) = targets[i].call(payloads[i]);
                 require(success, "ArrakisVaultV2: low level call failed");
             } else {
@@ -175,15 +192,17 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
     }
 
     function managerWithdrawal() external nonReentrant {
-        uint256 amount0 = managerBalance0;
-        uint256 amount1 = managerBalance1;
-        managerBalance0 = 0;
-        managerBalance1 = 0;
+        VaultV2PublicStorage storage publicData = _vaultV2PublicStorage();
+
+        uint256 amount0 = publicData.managerBalance0;
+        uint256 amount1 = publicData.managerBalance1;
+        publicData.managerBalance0 = 0;
+        publicData.managerBalance1 = 0;
         if (amount0 > 0) {
-            token0.safeTransfer(managerTreasury, amount0);
+            publicData.token0.safeTransfer(publicData.managerTreasury, amount0);
         }
         if (amount1 > 0) {
-            token1.safeTransfer(managerTreasury, amount1);
+            publicData.token1.safeTransfer(publicData.managerTreasury, amount1);
         }
         emit ManagerWithdrawal(amount0, amount1);
     }
@@ -215,9 +234,11 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
     /// @notice this function is not marked view because of internal delegatecalls
     /// but it should be staticcalled from off chain
     function underlying() public returns (uint256 amount0, uint256 amount1) {
-        for (uint256 i = 0; i < _positions.length(); i++) {
+        VaultV2InternalStorage storage internalData = _vaultV2InternalStorage();
+
+        for (uint256 i = 0; i < internalData._positions.length(); i++) {
             (bool success, bytes memory data) =
-                _positions.at(i).delegatecall(
+                internalData._positions.at(i).delegatecall(
                     abi.encodeWithSelector(IArrakisPosition.underlying.selector)
                 );
             require(success, "ArrakisVaultV2: low level delegatecall failed");
@@ -233,9 +254,11 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
         public
         returns (uint256 amount0, uint256 amount1)
     {
-        for (uint256 i = 0; i < _positions.length(); i++) {
+        VaultV2InternalStorage storage internalData = _vaultV2InternalStorage();
+
+        for (uint256 i = 0; i < internalData._positions.length(); i++) {
             (bool success, bytes memory data) =
-                _positions.at(i).delegatecall(
+                internalData._positions.at(i).delegatecall(
                     abi.encodeWithSelector(
                         IArrakisPosition.underlyingAtPrice.selector,
                         sqrtRatioX96
@@ -252,9 +275,11 @@ contract ArrakisVaultV2 is ArrakisVaultV2Storage {
         internal
         returns (uint256 amount0, uint256 amount1)
     {
-        for (uint256 i = 0; i < _positions.length(); i++) {
+        VaultV2InternalStorage storage internalData = _vaultV2InternalStorage();
+
+        for (uint256 i = 0; i < internalData._positions.length(); i++) {
             (bool success, bytes memory data) =
-                _positions.at(i).delegatecall(
+                internalData._positions.at(i).delegatecall(
                     abi.encodeWithSelector(
                         IArrakisPosition.initialRatio.selector
                     )
