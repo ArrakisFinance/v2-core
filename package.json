@@ -2,7 +2,7 @@
   "name": "hardhat-project",
   "scripts": {
     "build": "yarn compile && npx tsc",
-    "compile": "npx hardhat compile",
+    "compile": "npx hardhat compile --force",
     "clean": "rm -rf dist && npx hardhat clean",
     "deploy": "npx hardhat deploy ",
     "format": "prettier --write .",

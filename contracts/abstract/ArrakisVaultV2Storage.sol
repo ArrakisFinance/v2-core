@@ -29,18 +29,33 @@ abstract contract ArrakisVaultV2Storage is
     // solhint-disable-next-line const-name-snakecase
     string public constant version = "2.0.0";
 
-    // XXXXXXXX DO NOT MODIFY ORDERING XXXXXXXX
-    EnumerableSet.AddressSet internal _positions;
-    EnumerableSet.AddressSet internal _operators;
-    EnumerableSet.AddressSet internal _targets;
-    mapping(address => bytes) public positionState;
-    IERC20 public token0;
-    IERC20 public token1;
-    address public managerTreasury;
-    uint256 public managerBalance0;
-    uint256 public managerBalance1;
-    // APPPEND ADDITIONAL STATE VARS BELOW:
-    // XXXXXXXX DO NOT MODIFY ORDERING XXXXXXXX
+    //#region Storage struct and pointer
+
+    // solhint-disable-next-line private-vars-leading-underscore
+    bytes32 internal constant VAULT_V2_INTERNAL_STORAGE_POINTER =
+        keccak256("vault.v2.internal.storage");
+
+    bytes32 public constant VAULT_V2_PUBLIC_STORAGE_POINTER =
+        keccak256("vault.v2.public.storage");
+
+    // solhint-disable-next-line ordering
+    struct VaultV2InternalStorage {
+        EnumerableSet.AddressSet _positions;
+        EnumerableSet.AddressSet _operators;
+        EnumerableSet.AddressSet _targets;
+    }
+
+    // solhint-disable-next-line ordering
+    struct VaultV2PublicStorage {
+        mapping(address => bytes) positionState;
+        IERC20 token0;
+        IERC20 token1;
+        address managerTreasury;
+        uint256 managerBalance0;
+        uint256 managerBalance1;
+    }
+
+    //#endregion Storage struct and pointer
 
     event SetManagerTreasury(address treasury);
     event AddPosition(address position);
@@ -64,18 +79,21 @@ abstract contract ArrakisVaultV2Storage is
         address _manager_,
         address[] memory _positions_
     ) external initializer {
+        VaultV2PublicStorage storage publicData = _vaultV2PublicStorage();
+        VaultV2InternalStorage storage internalData = _vaultV2InternalStorage();
+
         // these variables are immutable after initialization
-        token0 = IERC20(_token0);
-        token1 = IERC20(_token1);
-        _targets.add(_token0);
-        _targets.add(_token1);
+        publicData.token0 = IERC20(_token0);
+        publicData.token1 = IERC20(_token1);
+        internalData._targets.add(_token0);
+        internalData._targets.add(_token1);
         for (uint256 i = 0; i < _positions_.length; i++) {
-            _positions.add(_positions_[i]);
+            internalData._positions.add(_positions_[i]);
         }
 
         // these variables can be udpated by the manager
         _manager = _manager_;
-        managerTreasury = _manager_; // default: treasury is admin
+        publicData.managerTreasury = _manager_; // default: treasury is admin
 
         // e.g. "Gelato Uniswap V3 USDC/DAI LP" and "G-UNI"
         __ERC20_init(_name, _symbol);
@@ -88,59 +106,91 @@ abstract contract ArrakisVaultV2Storage is
         external
         onlyManager
     {
-        managerTreasury = newManagerTreasury;
-        emit SetManagerTreasury(managerTreasury);
+        VaultV2PublicStorage storage publicData = _vaultV2PublicStorage();
+        publicData.managerTreasury = newManagerTreasury;
+        emit SetManagerTreasury(newManagerTreasury);
     }
 
     function addPosition(address position, bytes memory initialState)
         external
         onlyManager
     {
-        _positions.add(position);
-        positionState[position] = initialState;
+        VaultV2PublicStorage storage publicData = _vaultV2PublicStorage();
+        VaultV2InternalStorage storage internalData = _vaultV2InternalStorage();
+        internalData._positions.add(position);
+        publicData.positionState[position] = initialState;
         emit AddPosition(position);
     }
 
     function removePosition(address position) external onlyManager {
-        _positions.remove(position);
+        VaultV2InternalStorage storage internalData = _vaultV2InternalStorage();
+        internalData._positions.remove(position);
         emit RemovePosition(position);
     }
 
     function addOperator(address operator) external onlyManager {
-        _operators.add(operator);
+        VaultV2InternalStorage storage internalData = _vaultV2InternalStorage();
+        internalData._operators.add(operator);
         emit AddOperator(operator);
     }
 
     function removeOperator(address operator) external onlyManager {
-        _operators.remove(operator);
+        VaultV2InternalStorage storage internalData = _vaultV2InternalStorage();
+        internalData._operators.remove(operator);
         emit RemoveOperator(operator);
     }
 
     function addTarget(address target) external onlyManager {
-        _targets.add(target);
+        VaultV2InternalStorage storage internalData = _vaultV2InternalStorage();
+        internalData._targets.add(target);
         emit AddTarget(target);
     }
 
     function removeTarget(address target) external onlyManager {
-        _targets.remove(target);
+        VaultV2InternalStorage storage internalData = _vaultV2InternalStorage();
+        internalData._targets.remove(target);
         emit RemoveTarget(target);
     }
 
+    function _vaultV2PublicStorage()
+        internal
+        pure
+        returns (VaultV2PublicStorage storage s)
+    {
+        bytes32 pointer = VAULT_V2_PUBLIC_STORAGE_POINTER;
+        assembly {
+            s.slot := pointer
+        }
+    }
+
+    function _vaultV2InternalStorage()
+        internal
+        pure
+        returns (VaultV2InternalStorage storage s)
+    {
+        bytes32 pointer = VAULT_V2_INTERNAL_STORAGE_POINTER;
+        assembly {
+            s.slot := pointer
+        }
+    }
+
     function operators() external view returns (address[] memory) {
-        uint256 length = _operators.length();
+        VaultV2InternalStorage storage internalData = _vaultV2InternalStorage();
+        uint256 length = internalData._operators.length();
         address[] memory output = new address[](length);
         for (uint256 i = 0; i < length; i++) {
-            output[i] = _operators.at(i);
+            output[i] = internalData._operators.at(i);
         }
 
         return output;
     }
 
     function positions() external view returns (address[] memory) {
-        uint256 length = _positions.length();
+        VaultV2InternalStorage storage internalData = _vaultV2InternalStorage();
+        uint256 length = internalData._positions.length();
         address[] memory output = new address[](length);
         for (uint256 i = 0; i < length; i++) {
-            output[i] = _positions.at(i);
+            output[i] = internalData._positions.at(i);
         }
 
         return output;
