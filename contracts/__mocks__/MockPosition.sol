@@ -40,9 +40,7 @@ contract MockPosition {
     }
 
     /// @dev not have onlyManager check for mock purpose.
-    function setManagerTreasury(address newManagerTreasury)
-        external
-    {
+    function setManagerTreasury(address newManagerTreasury) external {
         VaultV2PublicStorage storage publicData = _vaultV2PublicStorage();
         publicData.managerTreasury = newManagerTreasury;
         emit SetManagerTreasury(newManagerTreasury);
