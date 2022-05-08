@@ -140,7 +140,19 @@ contract UniswapV3Multiposition is
         }
     }
 
-    function swap() external onlyOwner {} // solhint-disable-line no-empty-blocks
+    function swap(
+        int256 swapAmount,
+        uint160 swapThresholdPrice,
+        bool zeroForOne
+    ) external onlyOwner returns (int256 amount0Delta, int256 amount1Delta) {
+            return pool.swap(
+                _owner,
+                zeroForOne,
+                swapAmount,
+                swapThresholdPrice,
+                ""
+            );
+    }
 
     function underlying()
         external
