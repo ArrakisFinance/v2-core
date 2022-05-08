@@ -7,20 +7,19 @@ import {
 import {
     IUniswapV3SwapCallback
 } from "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
-import {
-    UniswapV3MultipositionStorage
-} from "../abstract/UniswapV3MultipositionStorage.sol";
 import {TickMath} from "../vendor/uniswap/TickMath.sol";
 import {
     IERC20,
     SafeERC20
 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {
     FullMath,
     LiquidityAmounts
 } from "../vendor/uniswap/LiquidityAmounts.sol";
+import {
+    UniswapV3MultipositionStorage
+} from "../abstract/UniswapV3MultipositionStorage.sol";
 import {Position, Range} from "../structs/SMultiposition.sol";
 
 contract UniswapV3Multiposition is
