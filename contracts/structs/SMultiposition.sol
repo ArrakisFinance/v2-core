@@ -10,6 +10,11 @@ struct Position {
     Range range;
 }
 
+struct Burn {
+    uint128 liquidity;
+    Range range;
+}
+
 struct SwapData {
     bytes payload;
     address router;
@@ -41,6 +46,16 @@ struct InitializeParams {
     uint256 init1;
     address managerTreasury;
     uint16 managerFeeBPS;
-    uint24 maxTwapDeviation;
+    int24 maxTwapDeviation;
     uint24 twapDuration;
+    uint24 burnSlippage;
+}
+
+struct Underlying {
+    uint256 amount0;
+    uint256 amount1;
+    uint256 fee0;
+    uint256 fee1;
+    uint256 leftOver0;
+    uint256 leftOver1;
 }

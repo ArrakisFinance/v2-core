@@ -53,8 +53,10 @@ abstract contract VaultV2Storage is
     uint256 public managerBalance0;
     uint256 public managerBalance1;
 
-    uint24 public maxTwapDeviation;
+    int24 public maxTwapDeviation;
     uint24 public twapDuration;
+
+    uint24 public burnSlippage;
 
     // #region modifiers
 
@@ -108,6 +110,7 @@ abstract contract VaultV2Storage is
         managerFeeBPS = params_.managerFeeBPS;
         maxTwapDeviation = params_.maxTwapDeviation;
         twapDuration = params_.twapDuration;
+        burnSlippage = params_.burnSlippage;
     }
 
     // #region setter functions
@@ -166,12 +169,19 @@ abstract contract VaultV2Storage is
         managerTreasury = managerTreasury_;
     }
 
-    function setMaxTwapDeviation(uint24 maxTwapDeviation_) external onlyOwner {
+    function setMaxTwapDeviation(int24 maxTwapDeviation_) external onlyOwner {
         maxTwapDeviation = maxTwapDeviation_;
     }
 
     function setTwapDuration(uint24 twapDuration_) external onlyOwner {
         twapDuration = twapDuration_;
+    }
+
+    /// @dev should higher than 10000
+    function setBurnSlippage(uint24 burnSlippage_) external onlyOwner {
+        require(burnSlippage_ > 0, "burn slippage");
+
+        burnSlippage = burnSlippage_;
     }
 
     // #endregion setter functions
