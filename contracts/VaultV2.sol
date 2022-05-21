@@ -13,7 +13,6 @@ import {
 import {
     IUniswapV3Pool
 } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {TickMath} from "./vendor/uniswap/TickMath.sol";
 import {
     IERC20,
     SafeERC20
@@ -32,8 +31,23 @@ import {
     Position,
     RebalanceParams,
     Burn,
-    Underlying
+    Underlying,
+    ComputeFeesEarned,
+    Withdraw,
+    UnderlyingPayload
 } from "./structs/SMultiposition.sol";
+import {
+    _subtractAdminFees,
+    _getPositionId,
+    _computeMintAmounts,
+    _computeFeesEarned,
+    _checkDeviation,
+    _totalUnderlyingWithFees,
+    _totalUnderlying,
+    _totalUnderlyingAtPrice
+} from "./functions/FVaultV2.sol";
+// prettier-ignore-start
+import {_liquidityZeroError, _poolError} from "./errors/EVaultV2.sol";
 import "@uniswap/v3-core/contracts/libraries/FixedPoint96.sol";
 
 contract VaultV2 is
@@ -42,8 +56,9 @@ contract VaultV2 is
     VaultV2Storage
 {
     using SafeERC20 for IERC20;
-    using TickMath for int24;
     using EnumerableSet for EnumerableSet.AddressSet;
+
+    // #region Events
 
     event Minted(
         address receiver,
@@ -68,6 +83,8 @@ contract VaultV2 is
 
     event FeesEarned(uint256 fee0, uint256 fee1);
     event FeesEarnedRebalance(uint256 fee0, uint256 fee1);
+
+    // #endregion Events
 
     // solhint-disable-next-line no-empty-blocks
     constructor(IUniswapV3Factory factory_) VaultV2Storage(factory_) {}
@@ -107,7 +124,17 @@ contract VaultV2 is
     {
         uint256 totalSupply = totalSupply();
         (uint256 current0, uint256 current1, uint256 fee0, uint256 fee1) =
-            totalSupply > 0 ? underlyingWithFees() : (_init0, _init1, 0, 0);
+            totalSupply > 0
+                ? _totalUnderlyingWithFees(
+                    UnderlyingPayload({
+                        ranges: ranges,
+                        factory: factory,
+                        token0: address(token0),
+                        token1: address(token1),
+                        self: address(this)
+                    })
+                )
+                : (_init0, _init1, 0, 0);
         uint256 denominator = totalSupply > 0 ? totalSupply : 1 ether;
         amount0 = FullMath.mulDivRoundingUp(mintAmount_, current0, denominator);
         amount1 = FullMath.mulDivRoundingUp(mintAmount_, current1, denominator);
@@ -123,14 +150,6 @@ contract VaultV2 is
         _mint(receiver_, mintAmount_);
         emit FeesEarned(fee0, fee1);
         emit Minted(receiver_, mintAmount_, amount0, amount1);
-    }
-
-    // solhint-disable-next-line ordering
-    struct Withdraw {
-        uint256 burn0;
-        uint256 burn1;
-        uint256 fee0;
-        uint256 fee1;
     }
 
     // solhint-disable-next-line function-max-lines, code-complexity
@@ -149,7 +168,11 @@ contract VaultV2 is
 
             {
                 (uint256 fee0, uint256 fee1) =
-                    _subtractAdminFees(underlying.fee0, underlying.fee1);
+                    _subtractAdminFees(
+                        underlying.fee0,
+                        underlying.fee1,
+                        managerFeeBPS
+                    );
                 underlying.amount0 += underlying.leftOver0 + fee0;
                 underlying.amount1 += underlying.leftOver1 + fee1;
             }
@@ -186,7 +209,7 @@ contract VaultV2 is
         Withdraw memory total;
         {
             for (uint256 i = 0; i < burns.length; i++) {
-                require(burns[i].liquidity > 0, "liquidity");
+                if (burns[i].liquidity == 0) _liquidityZeroError(burns[i]);
 
                 address pool =
                     factory.getPool(
@@ -195,7 +218,7 @@ contract VaultV2 is
                         burns[i].range.feeTier
                     );
 
-                require(_pools.contains(pool), "pool");
+                if (!_pools.contains(pool)) _poolError(burns[i].range.feeTier);
 
                 Withdraw memory withdraw =
                     _withdraw(
@@ -215,7 +238,8 @@ contract VaultV2 is
             _applyFees(total.fee0, total.fee1);
             (total.fee0, total.fee1) = _subtractAdminFees(
                 total.fee0,
-                total.fee1
+                total.fee1,
+                managerFeeBPS
             );
 
             require(
@@ -254,17 +278,17 @@ contract VaultV2 is
         uint256 totalFee0 = 0;
         uint256 totalFee1 = 0;
         for (uint256 i = 0; i < rebalanceParams_.removes.length; i++) {
-            IUniswapV3Pool pool =
-                IUniswapV3Pool(
-                    factory.getPool(
-                        address(token0),
-                        address(token1),
-                        rebalanceParams_.removes[i].range.feeTier
-                    )
+            address poolAddr =
+                factory.getPool(
+                    address(token0),
+                    address(token1),
+                    rebalanceParams_.removes[i].range.feeTier
                 );
-            require(_pools.contains(address(pool)), "pool");
+            IUniswapV3Pool pool = IUniswapV3Pool(poolAddr);
+            if (!_pools.contains(poolAddr))
+                _poolError(rebalanceParams_.removes[i].range.feeTier);
 
-            _checkDeviation(pool);
+            _checkDeviation(pool, twapDuration, maxTwapDeviation);
 
             Withdraw memory withdraw =
                 _withdraw(
@@ -277,13 +301,15 @@ contract VaultV2 is
             _applyFees(withdraw.fee0, withdraw.fee1);
             (withdraw.fee0, withdraw.fee1) = _subtractAdminFees(
                 withdraw.fee0,
-                withdraw.fee1
+                withdraw.fee1,
+                managerFeeBPS
             );
             totalFee0 += withdraw.fee0;
             totalFee1 += withdraw.fee1;
         }
 
-        emit FeesEarnedRebalance(totalFee0, totalFee1);
+        if (totalFee0 > 0 || totalFee1 > 0)
+            emit FeesEarnedRebalance(totalFee0, totalFee1);
 
         // Swap
 
@@ -300,21 +326,26 @@ contract VaultV2 is
                 uint256 balance0After = token0.balanceOf(address(this));
                 uint256 balance1After = token1.balanceOf(address(this));
 
-                require(
-                    rebalanceParams_.swap.zeroForOne
-                        ? (balance1After >=
+                if (rebalanceParams_.swap.zeroForOne)
+                    require(
+                        (balance1After >=
                             balance1Before +
                                 rebalanceParams_.swap.expectedMinReturn) &&
                             (balance0After ==
-                                balance0Before - rebalanceParams_.swap.amountIn)
-                        : (balance0After >=
+                                balance0Before -
+                                    rebalanceParams_.swap.amountIn),
+                        "swap failed"
+                    );
+                else
+                    require(
+                        (balance0After >=
                             balance0Before +
                                 rebalanceParams_.swap.expectedMinReturn) &&
                             (balance1After ==
                                 balance1Before -
                                     rebalanceParams_.swap.amountIn),
-                    "swap failed"
-                );
+                        "swap failed"
+                    );
             }
         }
 
@@ -329,7 +360,7 @@ contract VaultV2 is
                         rebalanceParams_.deposits[i].range.feeTier
                     )
                 );
-            _checkDeviation(pool);
+            _checkDeviation(pool, twapDuration, maxTwapDeviation);
             pool.mint(
                 address(this),
                 rebalanceParams_.deposits[i].range.lowerTick,
@@ -361,77 +392,70 @@ contract VaultV2 is
 
     // #region public view functions
 
-    function underlyingWithLeftOver()
-        public
-        view
-        returns (Underlying memory underlying)
-    {
-        (
-            underlying.amount0,
-            underlying.amount1,
-            underlying.fee0,
-            underlying.fee1
-        ) = underlyingWithFees();
-
-        underlying.leftOver0 = token0.balanceOf(address(this));
-        underlying.leftOver1 = token1.balanceOf(address(this));
-    }
-
     function underlying()
         public
         view
         returns (uint256 amount0, uint256 amount1)
     {
-        for (uint256 i = 0; i < ranges.length; i++) {
-            (uint256 a0, uint256 a1, , ) = singleUnderlying(ranges[i]);
-            amount0 += a0;
-            amount1 += a1;
-        }
+        uint256 totalSupply = totalSupply();
+        (amount0, amount1) = totalSupply > 0
+            ? _totalUnderlying(
+                UnderlyingPayload({
+                    ranges: ranges,
+                    factory: factory,
+                    token0: address(token0),
+                    token1: address(token1),
+                    self: address(this)
+                })
+            )
+            : (_init0, _init1);
     }
 
-    function underlyingWithFees()
+    function underlying(uint160 sqrtRatioX96_)
         public
         view
-        returns (
-            uint256 amount0,
-            uint256 amount1,
-            uint256 fee0,
-            uint256 fee1
-        )
+        returns (uint256 amount0, uint256 amount1)
     {
-        for (uint256 i = 0; i < ranges.length; i++) {
-            (uint256 a0, uint256 a1, uint256 f0, uint256 f1) =
-                singleUnderlying(ranges[i]);
-            amount0 += a0;
-            amount1 += a1;
-            fee0 += f0;
-            fee1 += f1;
-        }
+        uint256 totalSupply = totalSupply();
+        (amount0, amount1) = totalSupply > 0
+            ? _totalUnderlyingAtPrice(
+                UnderlyingPayload({
+                    ranges: ranges,
+                    factory: factory,
+                    token0: address(token0),
+                    token1: address(token1),
+                    self: address(this)
+                }),
+                sqrtRatioX96_
+            )
+            : (_init0, _init1);
     }
 
-    function singleUnderlying(Range memory range_)
+    function underlyingWithLeftOver()
         public
         view
-        returns (
-            uint256 amount0,
-            uint256 amount1,
-            uint256 fee0,
-            uint256 fee1
-        )
+        returns (Underlying memory underlying)
     {
-        IUniswapV3Pool v3Pool;
-        {
-            address pool =
-                factory.getPool(
-                    address(token0),
-                    address(token1),
-                    range_.feeTier
-                );
-            require(_pools.contains(pool), "pool");
-            v3Pool = IUniswapV3Pool(pool);
-        }
+        uint256 totalSupply = totalSupply();
+        (
+            underlying.amount0,
+            underlying.amount1,
+            underlying.fee0,
+            underlying.fee1
+        ) = totalSupply > 0
+            ? _totalUnderlyingWithFees(
+                UnderlyingPayload({
+                    ranges: ranges,
+                    factory: factory,
+                    token0: address(token0),
+                    token1: address(token1),
+                    self: address(this)
+                })
+            )
+            : (_init0, _init1, 0, 0);
 
-        (amount0, amount1, fee0, fee1) = _underlying(range_, v3Pool);
+        underlying.leftOver0 = token0.balanceOf(address(this));
+        underlying.leftOver1 = token1.balanceOf(address(this));
     }
 
     /// @notice this function is not marked view because of internal delegatecalls
@@ -448,7 +472,17 @@ contract VaultV2 is
         uint256 totalSupply = totalSupply();
 
         (uint256 current0, uint256 current1) =
-            totalSupply > 0 ? underlying() : (_init0, _init1);
+            totalSupply > 0
+                ? _totalUnderlying(
+                    UnderlyingPayload({
+                        ranges: ranges,
+                        factory: factory,
+                        token0: address(token0),
+                        token1: address(token1),
+                        self: address(this)
+                    })
+                )
+                : (_init0, _init1);
 
         return
             _computeMintAmounts(
@@ -504,265 +538,7 @@ contract VaultV2 is
 
     // #endregion internal functions
 
-    // #region internal view functions
+    // #region public view functions
 
-    function _subtractAdminFees(uint256 rawFee0, uint256 rawFee1)
-        internal
-        view
-        returns (uint256 fee0, uint256 fee1)
-    {
-        uint256 deduct0 = (rawFee0 * (managerFeeBPS)) / 10000;
-        uint256 deduct1 = (rawFee1 * (managerFeeBPS)) / 10000;
-        fee0 = rawFee0 - deduct0;
-        fee1 = rawFee1 - deduct1;
-    }
-
-    function _underlying(Range memory range_, IUniswapV3Pool pool_)
-        internal
-        view
-        returns (
-            uint256 amount0,
-            uint256 amount1,
-            uint256 fee0,
-            uint256 fee1
-        )
-    {
-        uint256 a0;
-        uint256 a1;
-        uint256 f0;
-        uint256 f1;
-        (uint160 sqrtPriceX96, int24 tick, , , , , ) = pool_.slot0();
-        bytes32 positionId = _getPositionId(range_.lowerTick, range_.upperTick);
-        PositionUnderlying memory positionUnderlying =
-            PositionUnderlying({
-                positionId: positionId,
-                sqrtPriceX96: sqrtPriceX96,
-                tick: tick,
-                lowerTick: range_.lowerTick,
-                upperTick: range_.upperTick,
-                pool: pool_
-            });
-        (a0, a1, f0, f1) = _positionUnderlying(positionUnderlying);
-        amount0 += a0;
-        amount1 += a1;
-        fee0 += f0;
-        fee1 += f1;
-    }
-
-    // solhint-disable-next-line ordering
-    struct PositionUnderlying {
-        bytes32 positionId;
-        uint160 sqrtPriceX96;
-        int24 tick;
-        int24 lowerTick;
-        int24 upperTick;
-        IUniswapV3Pool pool;
-    }
-
-    // solhint-disable-next-line function-max-lines
-    function _positionUnderlying(PositionUnderlying memory positionUnderlying_)
-        internal
-        view
-        returns (
-            uint256 amount0,
-            uint256 amount1,
-            uint256 fee0,
-            uint256 fee1
-        )
-    {
-        (
-            uint128 liquidity,
-            uint256 feeGrowthInside0Last,
-            uint256 feeGrowthInside1Last,
-            uint128 tokensOwed0,
-            uint128 tokensOwed1
-        ) = positionUnderlying_.pool.positions(positionUnderlying_.positionId);
-        (amount0, amount1) = LiquidityAmounts.getAmountsForLiquidity(
-            positionUnderlying_.sqrtPriceX96,
-            positionUnderlying_.lowerTick.getSqrtRatioAtTick(),
-            positionUnderlying_.upperTick.getSqrtRatioAtTick(),
-            liquidity
-        );
-        // compute current fees earned
-        fee0 =
-            _computeFeesEarned(
-                ComputeFeesEarned({
-                    feeGrowthInsideLast: feeGrowthInside0Last,
-                    liquidity: liquidity,
-                    tick: positionUnderlying_.tick,
-                    lowerTick: positionUnderlying_.lowerTick,
-                    upperTick: positionUnderlying_.upperTick,
-                    isZero: true,
-                    pool: positionUnderlying_.pool
-                })
-            ) +
-            uint256(tokensOwed0);
-        fee1 =
-            _computeFeesEarned(
-                ComputeFeesEarned({
-                    feeGrowthInsideLast: feeGrowthInside1Last,
-                    liquidity: liquidity,
-                    tick: positionUnderlying_.tick,
-                    lowerTick: positionUnderlying_.lowerTick,
-                    upperTick: positionUnderlying_.upperTick,
-                    isZero: false,
-                    pool: positionUnderlying_.pool
-                })
-            ) +
-            uint256(tokensOwed1);
-    }
-
-    function _getPositionId(int24 lowerTick_, int24 upperTick_)
-        internal
-        view
-        returns (bytes32 positionId)
-    {
-        return
-            keccak256(abi.encodePacked(address(this), lowerTick_, upperTick_));
-    }
-
-    function _getPoolRangeId(
-        int24 lowerTick_,
-        int24 upperTick_,
-        uint24 feeTier_
-    ) internal view returns (bytes32 poolRangeId) {
-        return
-            keccak256(
-                abi.encodePacked(
-                    address(this),
-                    lowerTick_,
-                    upperTick_,
-                    feeTier_
-                )
-            );
-    }
-
-    function _computeMintAmounts(
-        uint256 current0,
-        uint256 current1,
-        uint256 totalSupply,
-        uint256 amount0Max,
-        uint256 amount1Max
-    )
-        internal
-        pure
-        returns (
-            uint256 amount0,
-            uint256 amount1,
-            uint256 mintAmount
-        )
-    {
-        // compute proportional amount of tokens to mint
-        if (current0 == 0 && current1 > 0) {
-            mintAmount = FullMath.mulDiv(amount1Max, totalSupply, current1);
-        } else if (current1 == 0 && current0 > 0) {
-            mintAmount = FullMath.mulDiv(amount0Max, totalSupply, current0);
-        } else if (current0 > 0 && current1 > 0) {
-            uint256 amount0Mint =
-                FullMath.mulDiv(amount0Max, totalSupply, current0);
-            uint256 amount1Mint =
-                FullMath.mulDiv(amount1Max, totalSupply, current1);
-            require(
-                amount0Mint > 0 && amount1Mint > 0,
-                "ArrakisVaultV2: mint 0"
-            );
-
-            mintAmount = amount0Mint < amount1Mint ? amount0Mint : amount1Mint;
-        } else {
-            revert("ArrakisVaultV2: panic");
-        }
-
-        // compute amounts owed to contract
-        amount0 = FullMath.mulDivRoundingUp(mintAmount, current0, totalSupply);
-        amount1 = FullMath.mulDivRoundingUp(mintAmount, current1, totalSupply);
-    }
-
-    struct ComputeFeesEarned {
-        uint256 feeGrowthInsideLast;
-        uint256 liquidity;
-        int24 tick;
-        int24 lowerTick;
-        int24 upperTick;
-        bool isZero;
-        IUniswapV3Pool pool;
-    }
-
-    // solhint-disable-next-line function-max-lines
-    function _computeFeesEarned(ComputeFeesEarned memory computeFeesEarned_)
-        private
-        view
-        returns (uint256 fee)
-    {
-        uint256 feeGrowthOutsideLower;
-        uint256 feeGrowthOutsideUpper;
-        uint256 feeGrowthGlobal;
-        if (computeFeesEarned_.isZero) {
-            feeGrowthGlobal = computeFeesEarned_.pool.feeGrowthGlobal0X128();
-            (, , feeGrowthOutsideLower, , , , , ) = computeFeesEarned_
-                .pool
-                .ticks(computeFeesEarned_.lowerTick);
-            (, , feeGrowthOutsideUpper, , , , , ) = computeFeesEarned_
-                .pool
-                .ticks(computeFeesEarned_.upperTick);
-        } else {
-            feeGrowthGlobal = computeFeesEarned_.pool.feeGrowthGlobal1X128();
-            (, , , feeGrowthOutsideLower, , , , ) = computeFeesEarned_
-                .pool
-                .ticks(computeFeesEarned_.lowerTick);
-            (, , , feeGrowthOutsideUpper, , , , ) = computeFeesEarned_
-                .pool
-                .ticks(computeFeesEarned_.upperTick);
-        }
-
-        unchecked {
-            // calculate fee growth below
-            uint256 feeGrowthBelow;
-            if (computeFeesEarned_.tick >= computeFeesEarned_.lowerTick) {
-                feeGrowthBelow = feeGrowthOutsideLower;
-            } else {
-                feeGrowthBelow = feeGrowthGlobal - feeGrowthOutsideLower;
-            }
-
-            // calculate fee growth above
-            uint256 feeGrowthAbove;
-            if (computeFeesEarned_.tick < computeFeesEarned_.upperTick) {
-                feeGrowthAbove = feeGrowthOutsideUpper;
-            } else {
-                feeGrowthAbove = feeGrowthGlobal - feeGrowthOutsideUpper;
-            }
-
-            uint256 feeGrowthInside =
-                feeGrowthGlobal - feeGrowthBelow - feeGrowthAbove;
-            fee = FullMath.mulDiv(
-                computeFeesEarned_.liquidity,
-                feeGrowthInside - computeFeesEarned_.feeGrowthInsideLast,
-                0x100000000000000000000000000000000
-            );
-        }
-    }
-
-    /// @dev Fetches time-weighted average price in ticks from Uniswap pool.
-    function _getTwap(IUniswapV3Pool pool_) internal view returns (int24) {
-        uint32 _twapDuration = twapDuration;
-        uint32[] memory secondsAgo = new uint32[](2);
-        secondsAgo[0] = _twapDuration;
-        secondsAgo[1] = 0;
-
-        (int56[] memory tickCumulatives, ) = pool_.observe(secondsAgo);
-        return
-            int24(
-                (tickCumulatives[1] - tickCumulatives[0]) /
-                    int56(uint56(_twapDuration))
-            );
-    }
-
-    function _checkDeviation(IUniswapV3Pool pool_) internal view {
-        (, int24 tick, , , , , ) = pool_.slot0();
-        int24 twap = _getTwap(pool_);
-
-        int24 deviation = tick > twap ? tick - twap : twap - tick;
-        require(deviation <= maxTwapDeviation, "maxTwapDeviation");
-    }
-
-    // #endregion internal view functions
+    // #endregion public view functions
 }

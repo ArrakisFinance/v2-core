@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import {
-    IUniswapV3Pool
-} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 struct Position {
     uint128 liquidity;
@@ -59,3 +59,47 @@ struct Underlying {
     uint256 leftOver0;
     uint256 leftOver1;
 }
+
+// #region internal Structs
+
+struct ComputeFeesEarned {
+    uint256 feeGrowthInsideLast;
+    uint256 liquidity;
+    int24 tick;
+    int24 lowerTick;
+    int24 upperTick;
+    bool isZero;
+    IUniswapV3Pool pool;
+}
+
+struct PositionUnderlying {
+    bytes32 positionId;
+    uint160 sqrtPriceX96;
+    int24 tick;
+    int24 lowerTick;
+    int24 upperTick;
+    IUniswapV3Pool pool;
+}
+
+struct Withdraw {
+    uint256 burn0;
+    uint256 burn1;
+    uint256 fee0;
+    uint256 fee1;
+}
+
+struct UnderlyingPayload {
+    Range[] ranges;
+    IUniswapV3Factory factory;
+    address token0;
+    address token1;
+    address self;
+}
+
+struct UnderStruct {
+    address self;
+    Range range;
+    IUniswapV3Pool pool;
+}
+
+// #endregion internal Structs

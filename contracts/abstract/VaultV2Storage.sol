@@ -17,6 +17,7 @@ import {
 import {
     IUniswapV3Factory
 } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
+import {IVaultV2Storage} from "../interfaces/IVaultV2Storage.sol";
 import {
     ERC20Upgradeable
 } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
@@ -24,10 +25,12 @@ import {
     ReentrancyGuardUpgradeable
 } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {OwnableUninitialized} from "./OwnableUninitialized.sol";
+import {_validateTickSpacing} from "../functions/FVaultV2.sol";
 import {Range, InitializeParams} from "../structs/SMultiposition.sol";
 
 // solhint-disable-next-line max-states-count
 abstract contract VaultV2Storage is
+    IVaultV2Storage,
     OwnableUninitialized,
     ERC20Upgradeable,
     ReentrancyGuardUpgradeable
@@ -72,13 +75,15 @@ abstract contract VaultV2Storage is
         factory = factory_;
     }
 
-    function initialize(InitializeParams calldata params_)
-        external
-        initializer
-    {
+    function initialize(
+        string calldata name_,
+        InitializeParams calldata params_
+    ) external initializer {
         require(params_.feeTiers.length > 0, "no fee tier");
         require(params_.token0 != address(0), "token0");
         require(params_.token1 != address(0), "token1");
+
+        __ERC20_init(name_, "ARK-T");
 
         _owner = params_.owner;
 
@@ -96,6 +101,7 @@ abstract contract VaultV2Storage is
                     params_.token1,
                     params_.feeTiers[i]
                 );
+            require(pool != address(0), "pool does not exist");
             _pools.add(pool);
         }
 
@@ -148,9 +154,20 @@ abstract contract VaultV2Storage is
     }
 
     function addRanges(Range[] memory ranges_) external onlyOwner {
+        address token0Addr = address(token0);
+        address token1Addr = address(token1);
         for (uint256 i = 0; i < ranges_.length; i++) {
             (bool exist, ) = rangeExist(ranges_[i]);
             require(!exist, "range");
+            require(
+                _validateTickSpacing(
+                    factory,
+                    token0Addr,
+                    token1Addr,
+                    ranges_[i]
+                ),
+                "range"
+            );
 
             ranges.push(ranges_[i]);
         }
@@ -188,18 +205,18 @@ abstract contract VaultV2Storage is
 
     // #region view/pure functions
 
-    function rangeExist(Range memory range)
+    function rangeExist(Range memory range_)
         public
         view
-        returns (bool exist, uint256 index)
+        returns (bool ok, uint256 index)
     {
         for (uint256 i = 0; i < ranges.length; i++) {
-            exist =
-                range.lowerTick == ranges[i].lowerTick &&
-                range.upperTick == ranges[i].upperTick &&
-                range.feeTier == ranges[i].feeTier;
+            ok =
+                range_.lowerTick == ranges[i].lowerTick &&
+                range_.upperTick == ranges[i].upperTick &&
+                range_.feeTier == ranges[i].feeTier;
             index = i;
-            if (exist) break;
+            if (ok) break;
         }
     }
 

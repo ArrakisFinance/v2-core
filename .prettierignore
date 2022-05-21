@@ -3,4 +3,5 @@ dist
 cache
 coverage
 coverage.json
-
+contracts/VaultV2.sol
+contracts/VaultV2Factory.sol
