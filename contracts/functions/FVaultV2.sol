@@ -18,7 +18,7 @@ function _subtractAdminFees(
     uint256 rawFee0_,
     uint256 rawFee1_,
     uint16 managerFeeBPS_
-) view returns (uint256 fee0, uint256 fee1) {
+) pure returns (uint256 fee0, uint256 fee1) {
     fee0 = rawFee0_ - ((rawFee0_ * (managerFeeBPS_)) / 10000);
     fee1 = rawFee1_ - ((rawFee1_ * (managerFeeBPS_)) / 10000);
 }
@@ -27,7 +27,7 @@ function _getPositionId(
     address self_,
     int24 lowerTick_,
     int24 upperTick_
-) view returns (bytes32 positionId) {
+) pure returns (bytes32 positionId) {
     return keccak256(abi.encodePacked(self_, lowerTick_, upperTick_));
 }
 
@@ -163,8 +163,8 @@ function _mintAmounts(
     uint256 init0_,
     uint256 init1_,
     uint256 totalSupply_,
-    uint256 amount0Max,
-    uint256 amount1Max
+    uint256 amount0Max_,
+    uint256 amount1Max_
 )
     view
     returns (
@@ -182,8 +182,8 @@ function _mintAmounts(
             current0,
             current1,
             totalSupply_ > 0 ? totalSupply_ : 1 ether,
-            amount0Max,
-            amount1Max
+            amount0Max_,
+            amount1Max_
         );
 }
 
