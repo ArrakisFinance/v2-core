@@ -38,7 +38,7 @@ const config: HardhatUserConfig = {
     hardhat: {
       forking: {
         url: `https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_ID}`,
-        blockNumber: 13476568, // ether price $4,168.96
+        blockNumber: 25594591, // ether price $4,168.96
       },
       accounts: {
         accountsBalance: ethers.utils.parseEther("10000").toString(),
