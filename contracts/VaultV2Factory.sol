@@ -1,35 +1,31 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.13;
 
-import {
-    IUniswapV3Factory
-} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
-import {
-    IERC20Metadata
-} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IVaultV2Storage} from "./interfaces/IVaultV2Storage.sol";
 import {EIP173Proxy} from "./vendor/proxy/EIP173Proxy.sol";
 import {IEIP173Proxy} from "./interfaces/IEIP173Proxy.sol";
 import {_getTokenOrder, _append} from "./functions/FVaultV2Factory.sol";
 import {VaultV2FactoryStorage} from "./abstract/VaultV2FactoryStorage.sol";
-import {InitializeParams} from "./structs/SMultiposition.sol";
-import {
-    EnumerableSet
-} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {InitializeParams} from "./structs/SVaultV2.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 contract VaultV2Factory is VaultV2FactoryStorage {
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    constructor(address uniswapV3Factory_)
-        VaultV2FactoryStorage(uniswapV3Factory_)
+    constructor(address uniswapV3Factory_, address poolImplementation_)
+        VaultV2FactoryStorage(uniswapV3Factory_, poolImplementation_)
     {} // solhint-disable-line no-empty-blocks
 
     function deployVault(InitializeParams calldata params_)
         external
         returns (address vault)
     {
-        (address pool, string memory name) =
-            _preDeploy(params_.token0, params_.token1);
+        (address pool, string memory name) = _preDeploy(
+            params_.token0,
+            params_.token1
+        );
 
         IVaultV2Storage(pool).initialize(name, params_);
 
@@ -55,6 +51,22 @@ contract VaultV2Factory is VaultV2FactoryStorage {
                 datas[i]
             );
         }
+    }
+
+    function makePoolsImmutable(address[] memory pools) external onlyOwner {
+        for (uint256 i = 0; i < pools.length; i++) {
+            IEIP173Proxy(pools[i]).transferProxyAdmin(address(0));
+        }
+    }
+
+    function getTokenName(address token0_, address token1_)
+        external
+        view
+        returns (string memory)
+    {
+        string memory symbol0 = IERC20Metadata(token0_).symbol();
+        string memory symbol1 = IERC20Metadata(token1_).symbol();
+        return _append("Arrakis Vault V2 ", symbol0, "/", symbol1);
     }
 
     /// @notice isPoolImmutable checks if a certain Vault is "immutable" i.e. that the
@@ -129,34 +141,6 @@ contract VaultV2Factory is VaultV2FactoryStorage {
         return IEIP173Proxy(pool).proxyAdmin();
     }
 
-    function _getDeployer(uint256 index) internal view returns (address) {
-        return _deployers.at(index);
-    }
-
-    function _getPool(address deployer, uint256 index)
-        internal
-        view
-        returns (address)
-    {
-        return _pools[deployer].at(index);
-    }
-
-    function makePoolsImmutable(address[] memory pools) external onlyOwner {
-        for (uint256 i = 0; i < pools.length; i++) {
-            IEIP173Proxy(pools[i]).transferProxyAdmin(address(0));
-        }
-    }
-
-    function getTokenName(address token0_, address token1_)
-        external
-        view
-        returns (string memory)
-    {
-        string memory symbol0 = IERC20Metadata(token0_).symbol();
-        string memory symbol1 = IERC20Metadata(token1_).symbol();
-        return _append("Arrakis Vault V2 ", symbol0, "/", symbol1);
-    }
-
     function _preDeploy(address tokenA_, address tokenB_)
         internal
         returns (address pool, string memory name)
@@ -167,5 +151,17 @@ contract VaultV2Factory is VaultV2FactoryStorage {
         try this.getTokenName(token0, token1) returns (string memory result) {
             name = result;
         } catch {} // solhint-disable-line no-empty-blocks
+    }
+
+    function _getDeployer(uint256 index) internal view returns (address) {
+        return _deployers.at(index);
+    }
+
+    function _getPool(address deployer, uint256 index)
+        internal
+        view
+        returns (address)
+    {
+        return _pools[deployer].at(index);
     }
 }

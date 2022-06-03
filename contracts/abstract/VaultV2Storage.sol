@@ -1,23 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.13;
 
-import {
-    IERC20,
-    SafeERC20
-} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {
-    Initializable
-} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import {
-    EnumerableSet
-} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {
-    IUniswapV3Pool
-} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {
-    IUniswapV3Factory
-} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
-import {IVaultV2Storage} from "../interfaces/IVaultV2Storage.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {
     ERC20Upgradeable
 } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
@@ -25,17 +11,15 @@ import {
     ReentrancyGuardUpgradeable
 } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {OwnableUninitialized} from "./OwnableUninitialized.sol";
-import {_validateTickSpacing} from "../functions/FVaultV2.sol";
-import {Range, InitializeParams} from "../structs/SMultiposition.sol";
+import {Pool} from "../libraries/Pool.sol";
+import {Range, InitializeParams} from "../structs/SVaultV2.sol";
 
 // solhint-disable-next-line max-states-count
 abstract contract VaultV2Storage is
-    IVaultV2Storage,
     OwnableUninitialized,
     ERC20Upgradeable,
     ReentrancyGuardUpgradeable
 {
-    using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
     IUniswapV3Factory public immutable factory;
@@ -46,8 +30,8 @@ abstract contract VaultV2Storage is
     EnumerableSet.AddressSet internal _operators;
     EnumerableSet.AddressSet internal _pools;
 
-    uint256 internal _init0;
-    uint256 internal _init1;
+    uint256 public init0;
+    uint256 public init1;
 
     Range[] public ranges;
 
@@ -61,20 +45,12 @@ abstract contract VaultV2Storage is
 
     uint24 public burnSlippage;
 
-    // #region modifiers
-
-    modifier onlyOperators() {
-        require(_operators.contains(msg.sender), "no operators");
-        _;
-    }
-
-    // #endregion modifiers
-
     constructor(IUniswapV3Factory factory_) {
         require(address(factory_) != address(0), "factory");
         factory = factory_;
     }
 
+    // solhint-disable-next-line function-max-lines
     function initialize(
         string calldata name_,
         InitializeParams calldata params_
@@ -95,22 +71,23 @@ abstract contract VaultV2Storage is
         }
 
         for (uint256 i = 0; i < params_.feeTiers.length; i++) {
-            address pool =
-                factory.getPool(
-                    params_.token0,
-                    params_.token1,
-                    params_.feeTiers[i]
-                );
+            address pool = factory.getPool(
+                params_.token0,
+                params_.token1,
+                params_.feeTiers[i]
+            );
             require(pool != address(0), "pool does not exist");
             _pools.add(pool);
         }
 
+        // Initialization of ranges array.
+
         for (uint256 i = 0; i < params_.ranges.length; i++) {
-            ranges[i] = params_.ranges[i];
+            ranges.push(params_.ranges[i]);
         }
 
-        _init0 = params_.init0;
-        _init1 = params_.init1;
+        init0 = params_.init0;
+        init1 = params_.init1;
 
         managerTreasury = params_.managerTreasury;
         managerFeeBPS = params_.managerFeeBPS;
@@ -160,7 +137,7 @@ abstract contract VaultV2Storage is
             (bool exist, ) = rangeExist(ranges_[i]);
             require(!exist, "range");
             require(
-                _validateTickSpacing(
+                Pool.validateTickSpacing(
                     factory,
                     token0Addr,
                     token1Addr,
@@ -204,6 +181,14 @@ abstract contract VaultV2Storage is
     // #endregion setter functions
 
     // #region view/pure functions
+
+    function rangesLength() external view returns (uint256) {
+        return ranges.length;
+    }
+
+    function rangesArray() external view returns (Range[] memory) {
+        return ranges;
+    }
 
     function rangeExist(Range memory range_)
         public

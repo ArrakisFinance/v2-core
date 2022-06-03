@@ -3,6 +3,3 @@ coverage
 coverage
 dist
 typechain
-contracts/VaultV2.sol
-contracts/VaultV2Factory.sol
-contracts/abstract/VaultV2Storage.sol

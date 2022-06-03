@@ -7,48 +7,25 @@ import {
 import {
     IUniswapV3SwapCallback
 } from "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
-import {
-    IUniswapV3Factory
-} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
-import {
-    IUniswapV3Pool
-} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {
-    IERC20,
-    SafeERC20
-} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {
-    EnumerableSet
-} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {
-    FullMath,
-    LiquidityAmounts
-} from "./vendor/uniswap/LiquidityAmounts.sol";
+import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
+import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {FullMath, LiquidityAmounts} from "./vendor/uniswap/LiquidityAmounts.sol";
+import {TickMath} from "./vendor/uniswap/TickMath.sol";
 import {VaultV2Storage} from "./abstract/VaultV2Storage.sol";
 import {
-    Range,
-    Position,
     RebalanceParams,
-    Burn,
-    Underlying,
-    ComputeFeesEarned,
     Withdraw,
-    UnderlyingPayload
-} from "./structs/SMultiposition.sol";
-import {
-    _subtractAdminFees,
-    _getPositionId,
-    _computeMintAmounts,
-    _computeFeesEarned,
-    _checkDeviation,
-    _totalUnderlyingWithFees,
-    _totalUnderlying,
-    _totalUnderlyingAtPrice
-} from "./functions/FVaultV2.sol";
-// prettier-ignore-start
+    UnderlyingPayload,
+    Burn,
+    Underlying
+} from "./structs/SVaultV2.sol";
+import {Position} from "./libraries/Position.sol";
+import {Twap} from "./libraries/Twap.sol";
+import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
+import {UniswapV3Amounts} from "./libraries/UniswapV3Amounts.sol";
 import {_liquidityZeroError, _poolError} from "./errors/EVaultV2.sol";
-import "@uniswap/v3-core/contracts/libraries/FixedPoint96.sol";
 
 contract VaultV2 is
     IUniswapV3MintCallback,
@@ -57,8 +34,6 @@ contract VaultV2 is
 {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
-
-    // #region Events
 
     event Minted(
         address receiver,
@@ -84,8 +59,6 @@ contract VaultV2 is
     event FeesEarned(uint256 fee0, uint256 fee1);
     event FeesEarnedRebalance(uint256 fee0, uint256 fee1);
 
-    // #endregion Events
-
     // solhint-disable-next-line no-empty-blocks
     constructor(IUniswapV3Factory factory_) VaultV2Storage(factory_) {}
 
@@ -97,10 +70,8 @@ contract VaultV2 is
     ) external override {
         require(_pools.contains(msg.sender), "callback caller");
 
-        if (amount0Owed > 0)
-            token0.safeTransferFrom(_owner, msg.sender, amount0Owed);
-        if (amount1Owed > 0)
-            token1.safeTransferFrom(_owner, msg.sender, amount1Owed);
+        if (amount0Owed > 0) token0.safeTransfer(msg.sender, amount0Owed);
+        if (amount1Owed > 0) token1.safeTransfer(msg.sender, amount1Owed);
     }
 
     /// @notice Uniswap v3 callback fn, called back on pool.swap
@@ -123,9 +94,13 @@ contract VaultV2 is
         returns (uint256 amount0, uint256 amount1)
     {
         uint256 totalSupply = totalSupply();
-        (uint256 current0, uint256 current1, uint256 fee0, uint256 fee1) =
-            totalSupply > 0
-                ? _totalUnderlyingWithFees(
+        (
+            uint256 current0,
+            uint256 current1,
+            uint256 fee0,
+            uint256 fee1
+        ) = totalSupply > 0
+                ? UnderlyingHelper.totalUnderlyingWithFees(
                     UnderlyingPayload({
                         ranges: ranges,
                         factory: factory,
@@ -134,12 +109,13 @@ contract VaultV2 is
                         self: address(this)
                     })
                 )
-                : (_init0, _init1, 0, 0);
+                : (init0, init1, 0, 0);
         uint256 denominator = totalSupply > 0 ? totalSupply : 1 ether;
         amount0 = FullMath.mulDivRoundingUp(mintAmount_, current0, denominator);
         amount1 = FullMath.mulDivRoundingUp(mintAmount_, current1, denominator);
 
         // transfer amounts owed to contract
+
         if (amount0 > 0) {
             token0.safeTransferFrom(msg.sender, address(this), amount0);
         }
@@ -158,23 +134,37 @@ contract VaultV2 is
         uint256 burnAmount_,
         address receiver_
     ) external nonReentrant returns (uint256 amount0, uint256 amount1) {
-        require(burns.length > 0, "burns");
-
-        Underlying memory underlying = underlyingWithLeftOver();
+        Underlying memory underlying;
+        (
+            underlying.amount0,
+            underlying.amount1,
+            underlying.fee0,
+            underlying.fee1
+        ) = UnderlyingHelper.totalUnderlyingWithFees(
+            UnderlyingPayload({
+                ranges: ranges,
+                factory: factory,
+                token0: address(token0),
+                token1: address(token1),
+                self: address(this)
+            })
+        );
+        underlying.leftOver0 = token0.balanceOf(address(this));
+        underlying.leftOver1 = token1.balanceOf(address(this));
 
         {
             uint256 totalSupply = totalSupply();
             require(totalSupply > 0, "total supply");
 
             {
-                (uint256 fee0, uint256 fee1) =
-                    _subtractAdminFees(
+                (uint256 fee0, uint256 fee1) = UniswapV3Amounts
+                    .subtractAdminFees(
                         underlying.fee0,
                         underlying.fee1,
                         managerFeeBPS
                     );
-                underlying.amount0 += underlying.leftOver0 + fee0;
-                underlying.amount1 += underlying.leftOver1 + fee1;
+                underlying.amount0 -= underlying.fee0 - fee0;
+                underlying.amount1 -= underlying.fee1 - fee1;
             }
 
             // the proportion of user balance.
@@ -206,27 +196,27 @@ contract VaultV2 is
             return (amount0, amount1);
         }
 
+        require(burns.length > 0, "burns");
+
         Withdraw memory total;
         {
             for (uint256 i = 0; i < burns.length; i++) {
                 if (burns[i].liquidity == 0) _liquidityZeroError(burns[i]);
 
-                address pool =
-                    factory.getPool(
-                        address(token0),
-                        address(token1),
-                        burns[i].range.feeTier
-                    );
+                address pool = factory.getPool(
+                    address(token0),
+                    address(token1),
+                    burns[i].range.feeTier
+                );
 
                 if (!_pools.contains(pool)) _poolError(burns[i].range.feeTier);
 
-                Withdraw memory withdraw =
-                    _withdraw(
-                        IUniswapV3Pool(pool),
-                        burns[i].range.lowerTick,
-                        burns[i].range.upperTick,
-                        burns[i].liquidity
-                    );
+                Withdraw memory withdraw = _withdraw(
+                    IUniswapV3Pool(pool),
+                    burns[i].range.lowerTick,
+                    burns[i].range.upperTick,
+                    burns[i].liquidity
+                );
 
                 total.fee0 += withdraw.fee0;
                 total.fee1 += withdraw.fee1;
@@ -236,7 +226,7 @@ contract VaultV2 is
             }
 
             _applyFees(total.fee0, total.fee1);
-            (total.fee0, total.fee1) = _subtractAdminFees(
+            (total.fee0, total.fee1) = UniswapV3Amounts.subtractAdminFees(
                 total.fee0,
                 total.fee1,
                 managerFeeBPS
@@ -244,12 +234,12 @@ contract VaultV2 is
 
             require(
                 total.burn0 + underlying.leftOver0 + total.fee0 <=
-                    FullMath.mulDiv(amount0, burnSlippage, 10000),
+                    amount0 + FullMath.mulDiv(amount0, burnSlippage, 10000),
                 "total burn 0"
             );
             require(
                 total.burn1 + underlying.leftOver1 + total.fee1 <=
-                    FullMath.mulDiv(amount1, burnSlippage, 10000),
+                    amount1 + FullMath.mulDiv(amount1, burnSlippage, 10000),
                 "total burn 1"
             );
         }
@@ -268,38 +258,36 @@ contract VaultV2 is
         emit Burned(receiver_, burnAmount_, amount0, amount1);
     }
 
-    // solhint-disable-next-line function-max-lines
+    // solhint-disable-next-line function-max-lines, code-complexity
     function rebalance(RebalanceParams memory rebalanceParams_)
         external
         nonReentrant
-        onlyOperators
     {
+        require(_operators.contains(msg.sender), "no operators");
         // Burns
         uint256 totalFee0 = 0;
         uint256 totalFee1 = 0;
         for (uint256 i = 0; i < rebalanceParams_.removes.length; i++) {
-            address poolAddr =
-                factory.getPool(
-                    address(token0),
-                    address(token1),
-                    rebalanceParams_.removes[i].range.feeTier
-                );
+            address poolAddr = factory.getPool(
+                address(token0),
+                address(token1),
+                rebalanceParams_.removes[i].range.feeTier
+            );
             IUniswapV3Pool pool = IUniswapV3Pool(poolAddr);
             if (!_pools.contains(poolAddr))
                 _poolError(rebalanceParams_.removes[i].range.feeTier);
 
-            _checkDeviation(pool, twapDuration, maxTwapDeviation);
+            Twap.checkDeviation(pool, twapDuration, maxTwapDeviation);
 
-            Withdraw memory withdraw =
-                _withdraw(
-                    pool,
-                    rebalanceParams_.removes[i].range.lowerTick,
-                    rebalanceParams_.removes[i].range.upperTick,
-                    rebalanceParams_.removes[i].liquidity
-                );
+            Withdraw memory withdraw = _withdraw(
+                pool,
+                rebalanceParams_.removes[i].range.lowerTick,
+                rebalanceParams_.removes[i].range.upperTick,
+                rebalanceParams_.removes[i].liquidity
+            );
 
             _applyFees(withdraw.fee0, withdraw.fee1);
-            (withdraw.fee0, withdraw.fee1) = _subtractAdminFees(
+            (withdraw.fee0, withdraw.fee1) = UniswapV3Amounts.subtractAdminFees(
                 withdraw.fee0,
                 withdraw.fee1,
                 managerFeeBPS
@@ -317,10 +305,9 @@ contract VaultV2 is
             {
                 uint256 balance0Before = token0.balanceOf(address(this));
                 uint256 balance1Before = token1.balanceOf(address(this));
-                (bool success, ) =
-                    rebalanceParams_.swap.router.call(
-                        rebalanceParams_.swap.payload
-                    );
+                (bool success, ) = rebalanceParams_.swap.router.call(
+                    rebalanceParams_.swap.payload
+                );
                 require(success, "swap");
 
                 uint256 balance0After = token0.balanceOf(address(this));
@@ -349,18 +336,19 @@ contract VaultV2 is
             }
         }
 
-        // Mints
-
+        // Mints.
         for (uint256 i = 0; i < rebalanceParams_.deposits.length; i++) {
-            IUniswapV3Pool pool =
-                IUniswapV3Pool(
-                    factory.getPool(
-                        address(token0),
-                        address(token1),
-                        rebalanceParams_.deposits[i].range.feeTier
-                    )
-                );
-            _checkDeviation(pool, twapDuration, maxTwapDeviation);
+            IUniswapV3Pool pool = IUniswapV3Pool(
+                factory.getPool(
+                    address(token0),
+                    address(token1),
+                    rebalanceParams_.deposits[i].range.feeTier
+                )
+            );
+            (, int24 tick, , , , , ) = pool.slot0();
+
+            Twap.checkDeviation(pool, twapDuration, maxTwapDeviation);
+
             pool.mint(
                 address(this),
                 rebalanceParams_.deposits[i].range.lowerTick,
@@ -369,9 +357,6 @@ contract VaultV2 is
                 ""
             );
         }
-
-        // TODO : emit rebalance event.
-        //emit Rebalance();
     }
 
     function withdrawManagerBalance() external {
@@ -389,114 +374,6 @@ contract VaultV2 is
             token1.safeTransfer(managerTreasury, amount1);
         }
     }
-
-    // #region public view functions
-
-    function underlying()
-        public
-        view
-        returns (uint256 amount0, uint256 amount1)
-    {
-        uint256 totalSupply = totalSupply();
-        (amount0, amount1) = totalSupply > 0
-            ? _totalUnderlying(
-                UnderlyingPayload({
-                    ranges: ranges,
-                    factory: factory,
-                    token0: address(token0),
-                    token1: address(token1),
-                    self: address(this)
-                })
-            )
-            : (_init0, _init1);
-    }
-
-    function underlying(uint160 sqrtRatioX96_)
-        public
-        view
-        returns (uint256 amount0, uint256 amount1)
-    {
-        uint256 totalSupply = totalSupply();
-        (amount0, amount1) = totalSupply > 0
-            ? _totalUnderlyingAtPrice(
-                UnderlyingPayload({
-                    ranges: ranges,
-                    factory: factory,
-                    token0: address(token0),
-                    token1: address(token1),
-                    self: address(this)
-                }),
-                sqrtRatioX96_
-            )
-            : (_init0, _init1);
-    }
-
-    function underlyingWithLeftOver()
-        public
-        view
-        returns (Underlying memory underlying)
-    {
-        uint256 totalSupply = totalSupply();
-        (
-            underlying.amount0,
-            underlying.amount1,
-            underlying.fee0,
-            underlying.fee1
-        ) = totalSupply > 0
-            ? _totalUnderlyingWithFees(
-                UnderlyingPayload({
-                    ranges: ranges,
-                    factory: factory,
-                    token0: address(token0),
-                    token1: address(token1),
-                    self: address(this)
-                })
-            )
-            : (_init0, _init1, 0, 0);
-
-        underlying.leftOver0 = token0.balanceOf(address(this));
-        underlying.leftOver1 = token1.balanceOf(address(this));
-    }
-
-    /// @notice this function is not marked view because of internal delegatecalls
-    /// but it should be staticcalled from off chain
-    function mintAmounts(uint256 amount0Max, uint256 amount1Max)
-        public
-        view
-        returns (
-            uint256 amount0,
-            uint256 amount1,
-            uint256 mintAmount
-        )
-    {
-        uint256 totalSupply = totalSupply();
-
-        (uint256 current0, uint256 current1) =
-            totalSupply > 0
-                ? _totalUnderlying(
-                    UnderlyingPayload({
-                        ranges: ranges,
-                        factory: factory,
-                        token0: address(token0),
-                        token1: address(token1),
-                        self: address(this)
-                    })
-                )
-                : (_init0, _init1);
-
-        return
-            _computeMintAmounts(
-                current0,
-                current1,
-                totalSupply > 0 ? totalSupply : 1 ether,
-                amount0Max,
-                amount1Max
-            );
-    }
-
-    // #endregion public view functions
-
-    // #region internal functions
 
     function _withdraw(
         IUniswapV3Pool pool_,
@@ -535,10 +412,4 @@ contract VaultV2 is
         managerBalance0 += (_fee0 * managerFeeBPS) / 10000;
         managerBalance1 += (_fee1 * managerFeeBPS) / 10000;
     }
-
-    // #endregion internal functions
-
-    // #region public view functions
-
-    // #endregion public view functions
 }

@@ -35,6 +35,11 @@ struct RebalanceParams {
     SwapData swap;
 }
 
+struct RangeWeight {
+    Range range;
+    uint256 weight; // should be between 0 and 100%
+}
+
 struct InitializeParams {
     uint24[] feeTiers;
     address token0;
@@ -96,7 +101,7 @@ struct UnderlyingPayload {
     address self;
 }
 
-struct UnderStruct {
+struct RangeData {
     address self;
     Range range;
     IUniswapV3Pool pool;

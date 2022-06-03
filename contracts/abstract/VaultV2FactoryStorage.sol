@@ -35,8 +35,9 @@ contract VaultV2FactoryStorage is
 
     //#endregion events
 
-    constructor(address _uniswapV3Factory) {
+    constructor(address _uniswapV3Factory, address poolImplementation_) {
         factory = _uniswapV3Factory;
+        poolImplementation = poolImplementation_;
     }
 
     function initialize(address _implementation, address _owner_)

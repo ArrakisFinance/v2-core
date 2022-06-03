@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.13;
 
-import {Burn} from "../structs/SMultiposition.sol";
+import {Burn} from "../structs/SVaultV2.sol";
 
 error LiquidityZeroError(int24 lowerTick, int24 upperTick, uint24 feeTier);
 error PoolError(uint24 feeTier);
 
-function _liquidityZeroError(Burn memory burn_) view {
+function _liquidityZeroError(Burn memory burn_) pure {
     revert LiquidityZeroError(
         burn_.range.lowerTick,
         burn_.range.upperTick,
@@ -14,6 +14,6 @@ function _liquidityZeroError(Burn memory burn_) view {
     );
 }
 
-function _poolError(uint24 feeTier_) view {
+function _poolError(uint24 feeTier_) pure {
     revert PoolError(feeTier_);
 }

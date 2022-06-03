@@ -1,7 +1,5 @@
 import { expect } from "chai";
-// import { Signer } from "@ethersproject/abstract-signer";
 import hre = require("hardhat");
-// import { BigNumber } from "@ethersproject/bignumber";
 import { MockFVaultV2Factory, IUniswapV3Pool } from "../../typechain";
 import { Addresses, getAddresses } from "../../src/addresses";
 import { Signer } from "ethers";
