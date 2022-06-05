@@ -1,63 +1,37 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.13;
 
-import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import {IVaultV2Storage} from "./interfaces/IVaultV2Storage.sol";
+import {IVaultV2} from "./interfaces/IVaultV2.sol";
 import {EIP173Proxy} from "./vendor/proxy/EIP173Proxy.sol";
-import {IEIP173Proxy} from "./interfaces/IEIP173Proxy.sol";
-import {_getTokenOrder, _append} from "./functions/FVaultV2Factory.sol";
 import {VaultV2FactoryStorage} from "./abstract/VaultV2FactoryStorage.sol";
 import {InitializeParams} from "./structs/SVaultV2.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {_getTokenOrder, _append} from "./functions/FVaultV2Factory.sol";
 
 contract VaultV2Factory is VaultV2FactoryStorage {
     using EnumerableSet for EnumerableSet.AddressSet;
-
-    constructor(address uniswapV3Factory_, address poolImplementation_)
-        VaultV2FactoryStorage(uniswapV3Factory_, poolImplementation_)
-    {} // solhint-disable-line no-empty-blocks
 
     function deployVault(InitializeParams calldata params_)
         external
         returns (address vault)
     {
-        (address pool, string memory name) = _preDeploy(
-            params_.token0,
-            params_.token1
+        string memory name;
+        (vault, name) = _preDeploy(params_.token0, params_.token1);
+
+        IVaultV2(vault).initialize(
+            name,
+            string(abi.encodePacked("RAKIS-V2-", _uint2str(index + 1))),
+            params_
         );
 
-        IVaultV2Storage(pool).initialize(name, params_);
-
         _deployers.add(params_.managerTreasury);
-        _pools[params_.managerTreasury].add(pool);
-        emit PoolCreated(params_.managerTreasury, pool);
+        _pools[params_.managerTreasury].add(vault);
+        index += 1;
+        emit PoolCreated(params_.managerTreasury, vault);
     }
 
-    function upgradePools(address[] memory pools) external onlyOwner {
-        for (uint256 i = 0; i < pools.length; i++) {
-            IEIP173Proxy(pools[i]).upgradeTo(poolImplementation);
-        }
-    }
-
-    function upgradePoolsAndCall(address[] memory pools, bytes[] calldata datas)
-        external
-        onlyOwner
-    {
-        require(pools.length == datas.length, "mismatching array length");
-        for (uint256 i = 0; i < pools.length; i++) {
-            IEIP173Proxy(pools[i]).upgradeToAndCall(
-                poolImplementation,
-                datas[i]
-            );
-        }
-    }
-
-    function makePoolsImmutable(address[] memory pools) external onlyOwner {
-        for (uint256 i = 0; i < pools.length; i++) {
-            IEIP173Proxy(pools[i]).transferProxyAdmin(address(0));
-        }
-    }
+    // #region public external view functions.
 
     function getTokenName(address token0_, address token1_)
         external
@@ -69,19 +43,11 @@ contract VaultV2Factory is VaultV2FactoryStorage {
         return _append("Arrakis Vault V2 ", symbol0, "/", symbol1);
     }
 
-    /// @notice isPoolImmutable checks if a certain Vault is "immutable" i.e. that the
-    /// proxyAdmin is the zero address and thus the underlying implementation cannot be upgraded
-    /// @param pool address of the Vault
-    /// @return bool signaling if pool is immutable (true) or not (false)
-    function isPoolImmutable(address pool) external view returns (bool) {
-        return address(0) == getProxyAdmin(pool);
-    }
-
-    /// @notice getGelatoPools gets all the Harvesters deployed by Gelato's
+    /// @notice getDeployerPools gets all the Harvesters deployed by Arrakis deployer
     /// default deployer address (since anyone can deploy and manage Harvesters)
-    /// @return list of Gelato managed Vault addresses
-    function getGelatoPools() external view returns (address[] memory) {
-        return getPools(deployer);
+    /// @return list of deployer's managed Vault addresses
+    function getDeployerPools() external view returns (address[] memory) {
+        return getPoolsByDeployer(deployer);
     }
 
     /// @notice getDeployers fetches all addresses that have deployed a Vault
@@ -101,8 +67,19 @@ contract VaultV2Factory is VaultV2FactoryStorage {
     function numPools() public view returns (uint256 result) {
         address[] memory deployers = getDeployers();
         for (uint256 i = 0; i < deployers.length; i++) {
-            result += numPools(deployers[i]);
+            result += numPoolsByDeployer(deployers[i]);
         }
+    }
+
+    /// @notice numPools counts the total number of Harvesters deployed by `deployer`
+    /// @param deployer deployer address
+    /// @return total number of Harvesters deployed by `deployer`
+    function numPoolsByDeployer(address deployer)
+        public
+        view
+        returns (uint256)
+    {
+        return _pools[deployer].length();
     }
 
     /// @notice numDeployers counts the total number of Vault deployer addresses
@@ -111,18 +88,15 @@ contract VaultV2Factory is VaultV2FactoryStorage {
         return _deployers.length();
     }
 
-    /// @notice numPools counts the total number of Harvesters deployed by `deployer`
-    /// @param deployer deployer address
-    /// @return total number of Harvesters deployed by `deployer`
-    function numPools(address deployer) public view returns (uint256) {
-        return _pools[deployer].length();
-    }
-
     /// @notice getPools fetches all the Vault addresses deployed by `deployer`
     /// @param deployer address that has potentially deployed Harvesters (can return empty array)
     /// @return pools the list of Vault addresses deployed by `deployer`
-    function getPools(address deployer) public view returns (address[] memory) {
-        uint256 length = numPools(deployer);
+    function getPoolsByDeployer(address deployer)
+        public
+        view
+        returns (address[] memory)
+    {
+        uint256 length = numPoolsByDeployer(deployer);
         address[] memory pools = new address[](length);
         for (uint256 i = 0; i < length; i++) {
             pools[i] = _getPool(deployer, i);
@@ -131,15 +105,9 @@ contract VaultV2Factory is VaultV2FactoryStorage {
         return pools;
     }
 
-    /// @notice getProxyAdmin gets the current address who controls the underlying implementation
-    /// of a Vault. For most all pools either this contract address or the zero address will
-    /// be the proxyAdmin. If the admin is the zero address the pool's implementation is naturally
-    /// no longer upgradable (no one owns the zero address).
-    /// @param pool address of the Vault
-    /// @return address that controls the Vault implementation (has power to upgrade it)
-    function getProxyAdmin(address pool) public view returns (address) {
-        return IEIP173Proxy(pool).proxyAdmin();
-    }
+    // #endregion public external view functions.
+
+    // #region internal functions
 
     function _preDeploy(address tokenA_, address tokenB_)
         internal
@@ -153,6 +121,10 @@ contract VaultV2Factory is VaultV2FactoryStorage {
         } catch {} // solhint-disable-line no-empty-blocks
     }
 
+    // #endregion internal functions
+
+    // #region internal view functions
+
     function _getDeployer(uint256 index) internal view returns (address) {
         return _deployers.at(index);
     }
@@ -164,4 +136,32 @@ contract VaultV2Factory is VaultV2FactoryStorage {
     {
         return _pools[deployer].at(index);
     }
+
+    function _uint2str(uint256 _i)
+        internal
+        pure
+        returns (string memory _uintAsString)
+    {
+        if (_i == 0) {
+            return "0";
+        }
+        uint256 j = _i;
+        uint256 len;
+        while (j != 0) {
+            len++;
+            j /= 10;
+        }
+        bytes memory bstr = new bytes(len);
+        uint256 k = len;
+        while (_i != 0) {
+            k = k - 1;
+            uint8 temp = (48 + uint8(_i - (_i / 10) * 10));
+            bytes1 b1 = bytes1(temp);
+            bstr[k] = b1;
+            _i /= 10;
+        }
+        return string(bstr);
+    }
+
+    // #endregion internal view functions
 }

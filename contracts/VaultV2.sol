@@ -11,8 +11,7 @@ import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {FullMath, LiquidityAmounts} from "./vendor/uniswap/LiquidityAmounts.sol";
-import {TickMath} from "./vendor/uniswap/TickMath.sol";
+import {FullMath} from "./vendor/uniswap/LiquidityAmounts.sol";
 import {VaultV2Storage} from "./abstract/VaultV2Storage.sol";
 import {
     RebalanceParams,
@@ -21,7 +20,6 @@ import {
     Burn,
     Underlying
 } from "./structs/SVaultV2.sol";
-import {Position} from "./libraries/Position.sol";
 import {Twap} from "./libraries/Twap.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
 import {UniswapV3Amounts} from "./libraries/UniswapV3Amounts.sol";
@@ -60,7 +58,9 @@ contract VaultV2 is
     event FeesEarnedRebalance(uint256 fee0, uint256 fee1);
 
     // solhint-disable-next-line no-empty-blocks
-    constructor(IUniswapV3Factory factory_) VaultV2Storage(factory_) {}
+    constructor(IUniswapV3Factory factory_, address arrakisTreasury_) 
+        VaultV2Storage(factory_, arrakisTreasury_) 
+    {}
 
     /// @notice Uniswap V3 callback fn, called back on pool.mint
     function uniswapV3MintCallback(
@@ -161,7 +161,8 @@ contract VaultV2 is
                     .subtractAdminFees(
                         underlying.fee0,
                         underlying.fee1,
-                        managerFeeBPS
+                        managerFeeBPS,
+                        arrakisFeeBPS
                     );
                 underlying.amount0 -= underlying.fee0 - fee0;
                 underlying.amount1 -= underlying.fee1 - fee1;
@@ -229,18 +230,8 @@ contract VaultV2 is
             (total.fee0, total.fee1) = UniswapV3Amounts.subtractAdminFees(
                 total.fee0,
                 total.fee1,
-                managerFeeBPS
-            );
-
-            require(
-                total.burn0 + underlying.leftOver0 + total.fee0 <=
-                    amount0 + FullMath.mulDiv(amount0, burnSlippage, 10000),
-                "total burn 0"
-            );
-            require(
-                total.burn1 + underlying.leftOver1 + total.fee1 <=
-                    amount1 + FullMath.mulDiv(amount1, burnSlippage, 10000),
-                "total burn 1"
+                managerFeeBPS,
+                arrakisFeeBPS
             );
         }
 
@@ -290,7 +281,8 @@ contract VaultV2 is
             (withdraw.fee0, withdraw.fee1) = UniswapV3Amounts.subtractAdminFees(
                 withdraw.fee0,
                 withdraw.fee1,
-                managerFeeBPS
+                managerFeeBPS,
+                arrakisFeeBPS
             );
             totalFee0 += withdraw.fee0;
             totalFee1 += withdraw.fee1;
@@ -345,7 +337,6 @@ contract VaultV2 is
                     rebalanceParams_.deposits[i].range.feeTier
                 )
             );
-            (, int24 tick, , , , , ) = pool.slot0();
 
             Twap.checkDeviation(pool, twapDuration, maxTwapDeviation);
 
@@ -411,5 +402,7 @@ contract VaultV2 is
     function _applyFees(uint256 _fee0, uint256 _fee1) internal {
         managerBalance0 += (_fee0 * managerFeeBPS) / 10000;
         managerBalance1 += (_fee1 * managerFeeBPS) / 10000;
+        arrakisBalance0 += (_fee0 * arrakisFeeBPS) / 10000;
+        arrakisBalance1 += (_fee1 * arrakisFeeBPS) / 10000;
     }
 }

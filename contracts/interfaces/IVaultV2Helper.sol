@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.13;
 
-import {UnderlyingPayload, Underlying, Range, RangeData} from "../structs/SVaultV2.sol";
+import {UnderlyingPayload, Underlying, Range} from "../structs/SVaultV2.sol";
 import {Amount} from "../structs/SVaultV2Helper.sol";
 
 interface IVaultV2Helper {

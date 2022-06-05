@@ -22,7 +22,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployer } = await getNamedAccounts();
   await deploy("VaultV2", {
     from: deployer,
-    args: [addresses.UniswapV3Factory],
+    args: [addresses.UniswapV3Factory, deployer],
     libraries: {
       Pool: (await ethers.getContract("Pool")).address,
       Position: (await ethers.getContract("Position")).address,

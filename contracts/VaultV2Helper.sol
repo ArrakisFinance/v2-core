@@ -4,8 +4,6 @@ pragma solidity 0.8.13;
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {VaultV2} from "./VaultV2.sol";
-import {Position} from "./libraries/Position.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
 import {UnderlyingPayload, Underlying, Range, RangeData} from "./structs/SVaultV2.sol";
 import {Amount} from "./structs/SVaultV2Helper.sol";

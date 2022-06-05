@@ -127,6 +127,13 @@ describe("Vault V2 integration test!!!", async function () {
       ethers.utils.parseUnits("1", 18)
     );
 
+    await vaultV2Factory.initialize(
+      (
+        await ethers.getContract("VaultV2")
+      ).address,
+      userAddr
+    );
+
     const tx = await vaultV2Factory.deployVault({
       feeTiers: [500],
       token0: addresses.USDC,
@@ -156,7 +163,7 @@ describe("Vault V2 integration test!!!", async function () {
 
     vaultV2 = (await ethers.getContractAt(
       "VaultV2",
-      result?.pool,
+      result?.vault,
       user
     )) as VaultV2;
 

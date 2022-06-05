@@ -42,19 +42,21 @@ describe("Vault V2 smart contract internal functions unit test", function () {
     const rawFee1 = 1_000_000;
 
     const managerFeeBPS = 1_000;
+    const arrakisFeeBPS = 250;
 
     const result = await mockFVaultV2.subtractAdminFees(
       rawFee0,
       rawFee1,
-      managerFeeBPS
+      managerFeeBPS,
+      arrakisFeeBPS
     );
 
     expect(result.fee0.toNumber()).to.be.eq(
-      90_000,
+      87_500,
       "Admin fee 0 calculation not ok."
     );
     expect(result.fee1.toNumber()).to.be.eq(
-      900_000,
+      875_000,
       "Admin fee 0 calculation not ok."
     );
   });

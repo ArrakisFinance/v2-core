@@ -4,13 +4,13 @@ pragma solidity 0.8.13;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
+import {OwnableUninitialized} from "./OwnableUninitialized.sol";
 import {
     ERC20Upgradeable
 } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import {
     ReentrancyGuardUpgradeable
 } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import {OwnableUninitialized} from "./OwnableUninitialized.sol";
 import {Pool} from "../libraries/Pool.sol";
 import {Range, InitializeParams} from "../structs/SVaultV2.sol";
 
@@ -22,7 +22,13 @@ abstract contract VaultV2Storage is
 {
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    // solhint-disable-next-line const-name-snakecase
+    string public constant version = "1.0.0";
+    // solhint-disable-next-line const-name-snakecase
+    uint16 public constant arrakisFeeBPS = 250;
+
     IUniswapV3Factory public immutable factory;
+    address public immutable arrakisTreasury;
 
     IERC20 public token0;
     IERC20 public token1;
@@ -35,6 +41,13 @@ abstract contract VaultV2Storage is
 
     Range[] public ranges;
 
+    // #region Arrakis manager
+
+    uint256 public arrakisBalance0;
+    uint256 public arrakisBalance1;
+
+    // #endregion Arrakis manager
+
     address public managerTreasury;
     uint16 public managerFeeBPS;
     uint256 public managerBalance0;
@@ -43,23 +56,24 @@ abstract contract VaultV2Storage is
     int24 public maxTwapDeviation;
     uint24 public twapDuration;
 
-    uint24 public burnSlippage;
-
-    constructor(IUniswapV3Factory factory_) {
+    constructor(IUniswapV3Factory factory_, address arrakisTreasury_) {
         require(address(factory_) != address(0), "factory");
+        require(arrakisTreasury_ != address(0), "arrakis treasury");
         factory = factory_;
+        arrakisTreasury = arrakisTreasury_;
     }
 
     // solhint-disable-next-line function-max-lines
     function initialize(
         string calldata name_,
+        string calldata symbol_,
         InitializeParams calldata params_
     ) external initializer {
         require(params_.feeTiers.length > 0, "no fee tier");
         require(params_.token0 != address(0), "token0");
         require(params_.token1 != address(0), "token1");
 
-        __ERC20_init(name_, "ARK-T");
+        __ERC20_init(name_, symbol_);
 
         _owner = params_.owner;
 
@@ -93,7 +107,6 @@ abstract contract VaultV2Storage is
         managerFeeBPS = params_.managerFeeBPS;
         maxTwapDeviation = params_.maxTwapDeviation;
         twapDuration = params_.twapDuration;
-        burnSlippage = params_.burnSlippage;
     }
 
     // #region setter functions
@@ -145,6 +158,15 @@ abstract contract VaultV2Storage is
                 ),
                 "range"
             );
+            // check that the pool exist on Uniswap V3.
+            require(
+                factory.getPool(
+                    token0Addr,
+                    token1Addr,
+                    ranges_[i].feeTier
+                ) != address(0),
+                "uniswap pool does not exist"
+            );
 
             ranges.push(ranges_[i]);
         }
@@ -169,13 +191,6 @@ abstract contract VaultV2Storage is
 
     function setTwapDuration(uint24 twapDuration_) external onlyOwner {
         twapDuration = twapDuration_;
-    }
-
-    /// @dev should higher than 10000
-    function setBurnSlippage(uint24 burnSlippage_) external onlyOwner {
-        require(burnSlippage_ > 0, "burn slippage");
-
-        burnSlippage = burnSlippage_;
     }
 
     // #endregion setter functions

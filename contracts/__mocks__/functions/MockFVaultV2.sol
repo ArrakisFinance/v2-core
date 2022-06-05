@@ -14,13 +14,15 @@ contract MockFVaultV2 {
     function subtractAdminFees(
         uint256 rawFee0_,
         uint256 rawFee1_,
-        uint16 managerFeeBPS_
+        uint16 managerFeeBPS_,
+        uint16 arrakisFeeBPS_
     ) external pure returns (uint256 fee0, uint256 fee1) {
         return
             UniswapV3Amounts.subtractAdminFees(
                 rawFee0_,
                 rawFee1_,
-                managerFeeBPS_
+                managerFeeBPS_,
+                arrakisFeeBPS_
             );
     }
 
@@ -28,7 +30,7 @@ contract MockFVaultV2 {
         address self_,
         int24 lowerTick_,
         int24 upperTick_
-    ) external view returns (bytes32 positionId) {
+    ) external pure returns (bytes32 positionId) {
         return PositionHelper.getPositionId(self_, lowerTick_, upperTick_);
     }
 
@@ -40,7 +42,7 @@ contract MockFVaultV2 {
         uint256 amount1Max_
     )
         external
-        view
+        pure
         returns (
             uint256 amount0,
             uint256 amount1,

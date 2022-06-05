@@ -63,10 +63,15 @@ library UniswapV3Amounts {
     function subtractAdminFees(
         uint256 rawFee0_,
         uint256 rawFee1_,
-        uint16 managerFeeBPS_
+        uint16 managerFeeBPS_,
+        uint16 arrakisFeeBPS_
     ) public pure returns (uint256 fee0, uint256 fee1) {
-        fee0 = rawFee0_ - ((rawFee0_ * (managerFeeBPS_)) / 10000);
-        fee1 = rawFee1_ - ((rawFee1_ * (managerFeeBPS_)) / 10000);
+        fee0 =
+            rawFee0_ -
+            ((rawFee0_ * (managerFeeBPS_ + arrakisFeeBPS_)) / 10000);
+        fee1 =
+            rawFee1_ -
+            ((rawFee1_ * (managerFeeBPS_ + arrakisFeeBPS_)) / 10000);
     }
 
     // solhint-disable-next-line function-max-lines
