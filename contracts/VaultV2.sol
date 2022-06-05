@@ -47,11 +47,14 @@ contract VaultV2 is
         uint256 amount1Out
     );
 
+    event LPBurned(
+        address user,
+        uint256 burnAmount0,
+        uint256 burnAmount1
+    );
+
     event Rebalance(
-        int24[] lowerTicks,
-        int24[] upperTicks,
-        uint128[] liquidityBefores,
-        uint128 liquidityAfters
+        RebalanceParams indexed rebalance
     );
 
     event FeesEarned(uint256 fee0, uint256 fee1);
@@ -184,8 +187,6 @@ contract VaultV2 is
         if (
             underlying.leftOver0 >= amount0 && underlying.leftOver1 >= amount1
         ) {
-            _burn(msg.sender, burnAmount_);
-
             if (amount0 > 0) {
                 token0.safeTransfer(receiver_, amount0);
             }
@@ -193,6 +194,9 @@ contract VaultV2 is
             if (amount1 > 0) {
                 token1.safeTransfer(receiver_, amount1);
             }
+
+            _burn(msg.sender, burnAmount_);
+
             emit Burned(receiver_, burnAmount_, amount0, amount1);
             return (amount0, amount1);
         }
@@ -235,8 +239,6 @@ contract VaultV2 is
             );
         }
 
-        _burn(msg.sender, burnAmount_);
-
         if (amount0 > 0) {
             token0.safeTransfer(receiver_, amount0);
         }
@@ -244,6 +246,11 @@ contract VaultV2 is
         if (amount1 > 0) {
             token1.safeTransfer(receiver_, amount1);
         }
+
+        _burn(msg.sender, burnAmount_);
+
+        // For monitoring how much user burn LP token for getting their token back.
+        emit LPBurned(msg.sender, total.burn0, total.burn1);
 
         emit FeesEarned(total.fee0, total.fee1);
         emit Burned(receiver_, burnAmount_, amount0, amount1);
@@ -297,10 +304,20 @@ contract VaultV2 is
             {
                 uint256 balance0Before = token0.balanceOf(address(this));
                 uint256 balance1Before = token1.balanceOf(address(this));
+
+                token0.safeApprove(address(rebalanceParams_.swap.router), 0);
+                token1.safeApprove(address(rebalanceParams_.swap.router), 0);
+
+                token0.safeApprove(address(rebalanceParams_.swap.router), balance0Before);
+                token1.safeApprove(address(rebalanceParams_.swap.router), balance1Before);
+
                 (bool success, ) = rebalanceParams_.swap.router.call(
                     rebalanceParams_.swap.payload
                 );
                 require(success, "swap");
+
+                token0.safeApprove(address(rebalanceParams_.swap.router), 0);
+                token1.safeApprove(address(rebalanceParams_.swap.router), 0);
 
                 uint256 balance0After = token0.balanceOf(address(this));
                 uint256 balance1After = token1.balanceOf(address(this));
@@ -348,6 +365,8 @@ contract VaultV2 is
                 ""
             );
         }
+
+        emit Rebalance(rebalanceParams_);
     }
 
     function withdrawManagerBalance() external {
@@ -363,6 +382,22 @@ contract VaultV2 is
 
         if (amount1 > 0) {
             token1.safeTransfer(managerTreasury, amount1);
+        }
+    }
+
+    function withdrawArrakisBalance() external {
+        uint256 amount0 = arrakisBalance0;
+        uint256 amount1 = arrakisBalance1;
+
+        arrakisBalance0 = 0;
+        arrakisBalance1 = 0;
+
+        if (amount0 > 0) {
+            token0.safeTransfer(arrakisTreasury, amount0);
+        }
+
+        if (amount1 > 0) {
+            token1.safeTransfer(arrakisTreasury, amount1);
         }
     }
 
