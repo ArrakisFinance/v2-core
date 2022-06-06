@@ -36,11 +36,11 @@ describe("Factory helper functions unit test", function () {
   });
 
   it("#0: Pool immutable check for managed proxy should be false", async () => {
-    expect(await factoryHelper.isPoolImmutable(mock.address)).to.be.false;
+    expect(await factoryHelper.isVaultImmutable(mock.address)).to.be.false;
   });
 
   it("#1: Pool immutable check for no managed proxy should be false", async () => {
     proxy.transferProxyAdmin(ethers.constants.AddressZero);
-    expect(await factoryHelper.isPoolImmutable(mock.address)).to.be.true;
+    expect(await factoryHelper.isVaultImmutable(mock.address)).to.be.true;
   });
 });

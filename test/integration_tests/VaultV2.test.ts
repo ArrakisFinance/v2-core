@@ -157,7 +157,7 @@ describe("Vault V2 integration test!!!", async function () {
     });
 
     const rc = await tx.wait();
-    const event = rc?.events?.find((event) => event.event === "PoolCreated");
+    const event = rc?.events?.find((event) => event.event === "VaultCreated");
     // eslint-disable-next-line no-unsafe-optional-chaining
     const result = event?.args;
 

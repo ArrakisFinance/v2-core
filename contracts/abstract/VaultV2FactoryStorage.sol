@@ -22,12 +22,12 @@ abstract contract VaultV2FactoryStorage is
     // solhint-disable-next-line const-name-snakecase
     string public constant version = "1.0.0";
 
-    address public poolImplementation;
+    address public vaultImplementation;
     address public deployer;
     uint256 public index;
 
     EnumerableSet.AddressSet internal _deployers;
-    mapping(address => EnumerableSet.AddressSet) internal _pools;
+    mapping(address => EnumerableSet.AddressSet) internal _vaults;
 
     // APPPEND ADDITIONAL STATE VARS BELOW:
 
@@ -42,46 +42,49 @@ abstract contract VaultV2FactoryStorage is
 
     // #endregion constructor.
 
-    function initialize(address _implementation, address _owner_)
+    function initialize(address implementation_, address _owner_)
         external
         initializer
     {
-        poolImplementation = _implementation;
+        vaultImplementation = implementation_;
         _owner = _owner_;
     }
 
     // #region admin set functions
 
-    function setPoolImplementation(address nextImplementation)
+    function setVaultImplementation(address nextImplementation_)
         external
         onlyOwner
     {
-        emit UpdatePoolImplementation(poolImplementation, nextImplementation);
-        poolImplementation = nextImplementation;
+        vaultImplementation = nextImplementation_;
+        emit UpdateVaultImplementation(
+            vaultImplementation,
+            nextImplementation_
+        );
     }
 
-    function upgradePools(address[] memory pools) external onlyOwner {
-        for (uint256 i = 0; i < pools.length; i++) {
-            IEIP173Proxy(pools[i]).upgradeTo(poolImplementation);
+    function upgradeVaults(address[] memory vaults_) external onlyOwner {
+        for (uint256 i = 0; i < vaults_.length; i++) {
+            IEIP173Proxy(vaults_[i]).upgradeTo(vaultImplementation);
         }
     }
 
-    function upgradePoolsAndCall(address[] memory pools, bytes[] calldata datas)
-        external
-        onlyOwner
-    {
-        require(pools.length == datas.length, "mismatching array length");
-        for (uint256 i = 0; i < pools.length; i++) {
-            IEIP173Proxy(pools[i]).upgradeToAndCall(
-                poolImplementation,
-                datas[i]
+    function upgradeVaultsAndCall(
+        address[] memory vaults_,
+        bytes[] calldata datas_
+    ) external onlyOwner {
+        require(vaults_.length == datas_.length, "mismatching array length");
+        for (uint256 i = 0; i < vaults_.length; i++) {
+            IEIP173Proxy(vaults_[i]).upgradeToAndCall(
+                vaultImplementation,
+                datas_[i]
             );
         }
     }
 
-    function makePoolsImmutable(address[] memory pools) external onlyOwner {
-        for (uint256 i = 0; i < pools.length; i++) {
-            IEIP173Proxy(pools[i]).transferProxyAdmin(address(0));
+    function makeVaultsImmutable(address[] memory vaults_) external onlyOwner {
+        for (uint256 i = 0; i < vaults_.length; i++) {
+            IEIP173Proxy(vaults_[i]).transferProxyAdmin(address(0));
         }
     }
 

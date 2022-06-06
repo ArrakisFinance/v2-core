@@ -67,28 +67,28 @@ contract VaultV2 is
 
     /// @notice Uniswap V3 callback fn, called back on pool.mint
     function uniswapV3MintCallback(
-        uint256 amount0Owed,
-        uint256 amount1Owed,
+        uint256 amount0Owed_,
+        uint256 amount1Owed_,
         bytes calldata /*_data*/
     ) external override {
         require(_pools.contains(msg.sender), "callback caller");
 
-        if (amount0Owed > 0) token0.safeTransfer(msg.sender, amount0Owed);
-        if (amount1Owed > 0) token1.safeTransfer(msg.sender, amount1Owed);
+        if (amount0Owed_ > 0) token0.safeTransfer(msg.sender, amount0Owed_);
+        if (amount1Owed_ > 0) token1.safeTransfer(msg.sender, amount1Owed_);
     }
 
     /// @notice Uniswap v3 callback fn, called back on pool.swap
     function uniswapV3SwapCallback(
-        int256 amount0Delta,
-        int256 amount1Delta,
+        int256 amount0Delta_,
+        int256 amount1Delta_,
         bytes calldata /*data*/
     ) external override {
         require(_pools.contains(msg.sender), "callback caller");
 
-        if (amount0Delta > 0)
-            token0.safeTransferFrom(_owner, msg.sender, uint256(amount0Delta));
-        else if (amount1Delta > 0)
-            token1.safeTransferFrom(_owner, msg.sender, uint256(amount1Delta));
+        if (amount0Delta_ > 0)
+            token0.safeTransferFrom(_owner, msg.sender, uint256(amount0Delta_));
+        else if (amount1Delta_ > 0)
+            token1.safeTransferFrom(_owner, msg.sender, uint256(amount1Delta_));
     }
 
     function mint(uint256 mintAmount_, address receiver_)
@@ -435,10 +435,10 @@ contract VaultV2 is
             withdraw.burn1;
     }
 
-    function _applyFees(uint256 _fee0, uint256 _fee1) internal {
-        managerBalance0 += (_fee0 * managerFeeBPS) / 10000;
-        managerBalance1 += (_fee1 * managerFeeBPS) / 10000;
-        arrakisBalance0 += (_fee0 * arrakisFeeBPS) / 10000;
-        arrakisBalance1 += (_fee1 * arrakisFeeBPS) / 10000;
+    function _applyFees(uint256 fee0_, uint256 fee1_) internal {
+        managerBalance0 += (fee0_ * managerFeeBPS) / 10000;
+        managerBalance1 += (fee1_ * managerFeeBPS) / 10000;
+        arrakisBalance0 += (fee0_ * arrakisFeeBPS) / 10000;
+        arrakisBalance1 += (fee1_ * arrakisFeeBPS) / 10000;
     }
 }

@@ -26,9 +26,9 @@ contract VaultV2Factory is VaultV2FactoryStorage {
         );
 
         _deployers.add(params_.managerTreasury);
-        _pools[params_.managerTreasury].add(vault);
+        _vaults[params_.managerTreasury].add(vault);
         index += 1;
-        emit PoolCreated(params_.managerTreasury, vault);
+        emit VaultCreated(params_.managerTreasury, vault);
     }
 
     // #region public external view functions.
@@ -43,11 +43,11 @@ contract VaultV2Factory is VaultV2FactoryStorage {
         return _append("Arrakis Vault V2 ", symbol0, "/", symbol1);
     }
 
-    /// @notice getDeployerPools gets all the Harvesters deployed by Arrakis deployer
+    /// @notice getDeployerVaults gets all the Harvesters deployed by Arrakis deployer
     /// default deployer address (since anyone can deploy and manage Harvesters)
     /// @return list of deployer's managed Vault addresses
-    function getDeployerPools() external view returns (address[] memory) {
-        return getPoolsByDeployer(deployer);
+    function getDeployerVaults() external view returns (address[] memory) {
+        return getVaultsByDeployer(deployer);
     }
 
     /// @notice getDeployers fetches all addresses that have deployed a Vault
@@ -62,24 +62,24 @@ contract VaultV2Factory is VaultV2FactoryStorage {
         return deployers;
     }
 
-    /// @notice numPools counts the total number of Harvesters in existence
+    /// @notice numVaults counts the total number of Harvesters in existence
     /// @return result total number of Harvesters deployed
-    function numPools() public view returns (uint256 result) {
+    function numVaults() public view returns (uint256 result) {
         address[] memory deployers = getDeployers();
         for (uint256 i = 0; i < deployers.length; i++) {
-            result += numPoolsByDeployer(deployers[i]);
+            result += numVaultsByDeployer(deployers[i]);
         }
     }
 
-    /// @notice numPools counts the total number of Harvesters deployed by `deployer`
+    /// @notice numVaults counts the total number of Harvesters deployed by `deployer`
     /// @param deployer deployer address
     /// @return total number of Harvesters deployed by `deployer`
-    function numPoolsByDeployer(address deployer)
+    function numVaultsByDeployer(address deployer)
         public
         view
         returns (uint256)
     {
-        return _pools[deployer].length();
+        return _vaults[deployer].length();
     }
 
     /// @notice numDeployers counts the total number of Vault deployer addresses
@@ -88,21 +88,21 @@ contract VaultV2Factory is VaultV2FactoryStorage {
         return _deployers.length();
     }
 
-    /// @notice getPools fetches all the Vault addresses deployed by `deployer`
+    /// @notice getVaults fetches all the Vault addresses deployed by `deployer`
     /// @param deployer address that has potentially deployed Harvesters (can return empty array)
-    /// @return pools the list of Vault addresses deployed by `deployer`
-    function getPoolsByDeployer(address deployer)
+    /// @return vaults the list of Vault addresses deployed by `deployer`
+    function getVaultsByDeployer(address deployer)
         public
         view
         returns (address[] memory)
     {
-        uint256 length = numPoolsByDeployer(deployer);
-        address[] memory pools = new address[](length);
+        uint256 length = numVaultsByDeployer(deployer);
+        address[] memory vaults = new address[](length);
         for (uint256 i = 0; i < length; i++) {
-            pools[i] = _getPool(deployer, i);
+            vaults[i] = _getVault(deployer, i);
         }
 
-        return pools;
+        return vaults;
     }
 
     // #endregion public external view functions.
@@ -111,10 +111,12 @@ contract VaultV2Factory is VaultV2FactoryStorage {
 
     function _preDeploy(address tokenA_, address tokenB_)
         internal
-        returns (address pool, string memory name)
+        returns (address vault, string memory name)
     {
         (address token0, address token1) = _getTokenOrder(tokenA_, tokenB_);
-        pool = address(new EIP173Proxy(poolImplementation, address(this), ""));
+        vault = address(
+            new EIP173Proxy(vaultImplementation, address(this), "")
+        );
         name = "Arrakis Vault V2";
         try this.getTokenName(token0, token1) returns (string memory result) {
             name = result;
@@ -129,12 +131,12 @@ contract VaultV2Factory is VaultV2FactoryStorage {
         return _deployers.at(index);
     }
 
-    function _getPool(address deployer, uint256 index)
+    function _getVault(address deployer, uint256 index)
         internal
         view
         returns (address)
     {
-        return _pools[deployer].at(index);
+        return _vaults[deployer].at(index);
     }
 
     function _uint2str(uint256 _i)

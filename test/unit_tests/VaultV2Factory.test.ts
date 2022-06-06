@@ -100,7 +100,7 @@ describe("Factory function unit test", function () {
     });
 
     const rc = await tx.wait();
-    const event = rc?.events?.find((event) => event.event === "PoolCreated");
+    const event = rc?.events?.find((event) => event.event === "VaultCreated");
     // eslint-disable-next-line no-unsafe-optional-chaining
     const result = event?.args;
 
@@ -119,11 +119,11 @@ describe("Factory function unit test", function () {
     ).to.be.eq("Arrakis Vault V2 USDC/WETH");
   });
 
-  it("#2: unit test get deployer pool", async () => {
-    expect((await vaultV2Factory.getDeployerPools()).length).to.be.eq(0);
+  it("#2: unit test get deployer vault", async () => {
+    expect((await vaultV2Factory.getDeployerVaults()).length).to.be.eq(0);
   });
 
-  it("#3: unit test get deployer pool", async () => {
+  it("#3: unit test get deployer vault", async () => {
     const slot0 = await uniswapV3Pool.slot0();
     const tickSpacing = await uniswapV3Pool.tickSpacing();
 
@@ -160,7 +160,7 @@ describe("Factory function unit test", function () {
       burnSlippage: 100,
     });
 
-    expect((await vaultV2Factory.getDeployerPools()).length).to.be.eq(1);
+    expect((await vaultV2Factory.getDeployerVaults()).length).to.be.eq(1);
   });
 
   it("#4: unit test get deployers", async () => {
@@ -208,11 +208,11 @@ describe("Factory function unit test", function () {
     expect((await vaultV2Factory.getDeployers()).length).to.be.eq(2);
   });
 
-  it("#6: unit test get num Pools", async () => {
-    expect(await vaultV2Factory.numPools()).to.be.eq(0);
+  it("#6: unit test get num Vaults", async () => {
+    expect(await vaultV2Factory.numVaults()).to.be.eq(0);
   });
 
-  it("#7: unit test get num Pools", async () => {
+  it("#7: unit test get num Vaults", async () => {
     const slot0 = await uniswapV3Pool.slot0();
     const tickSpacing = await uniswapV3Pool.tickSpacing();
 
@@ -249,14 +249,14 @@ describe("Factory function unit test", function () {
       burnSlippage: 100,
     });
 
-    expect(await vaultV2Factory.numPools()).to.be.eq(1);
+    expect(await vaultV2Factory.numVaults()).to.be.eq(1);
   });
 
-  it("#8: unit test get num Pools by Deployer", async () => {
-    expect(await vaultV2Factory.numPoolsByDeployer(userAddr)).to.be.eq(0);
+  it("#8: unit test get num Vaults by Deployer", async () => {
+    expect(await vaultV2Factory.numVaultsByDeployer(userAddr)).to.be.eq(0);
   });
 
-  it("#9: unit test get num Pools by Deployer", async () => {
+  it("#9: unit test get num Vaults by Deployer", async () => {
     const slot0 = await uniswapV3Pool.slot0();
     const tickSpacing = await uniswapV3Pool.tickSpacing();
 
@@ -293,20 +293,20 @@ describe("Factory function unit test", function () {
       burnSlippage: 100,
     });
 
-    expect(await vaultV2Factory.numPoolsByDeployer(userAddr)).to.be.eq(1);
+    expect(await vaultV2Factory.numVaultsByDeployer(userAddr)).to.be.eq(1);
   });
 
   it("#10: unit test get num of deployers", async () => {
     expect(await vaultV2Factory.numDeployers()).to.be.eq(1);
   });
 
-  it("#11: unit test get pools by deployers", async () => {
-    expect((await vaultV2Factory.getPoolsByDeployer(userAddr)).length).to.be.eq(
-      0
-    );
+  it("#11: unit test get vaults by deployers", async () => {
+    expect(
+      (await vaultV2Factory.getVaultsByDeployer(userAddr)).length
+    ).to.be.eq(0);
   });
 
-  it("#12: unit test get pools by deployers", async () => {
+  it("#12: unit test get vaults by deployers", async () => {
     const slot0 = await uniswapV3Pool.slot0();
     const tickSpacing = await uniswapV3Pool.tickSpacing();
 
@@ -343,21 +343,21 @@ describe("Factory function unit test", function () {
       burnSlippage: 100,
     });
 
-    expect((await vaultV2Factory.getPoolsByDeployer(userAddr)).length).to.be.eq(
-      1
-    );
+    expect(
+      (await vaultV2Factory.getVaultsByDeployer(userAddr)).length
+    ).to.be.eq(1);
   });
 
   // #region owner setting functions.
 
-  it("#13: unit test set pool implementation", async () => {
-    expect(await vaultV2Factory.poolImplementation()).to.not.eq(
+  it("#13: unit test set vault implementation", async () => {
+    expect(await vaultV2Factory.vaultImplementation()).to.not.eq(
       ethers.constants.AddressZero
     );
 
-    await vaultV2Factory.setPoolImplementation(ethers.constants.AddressZero);
+    await vaultV2Factory.setVaultImplementation(ethers.constants.AddressZero);
 
-    expect(await vaultV2Factory.poolImplementation()).to.eq(
+    expect(await vaultV2Factory.vaultImplementation()).to.eq(
       ethers.constants.AddressZero
     );
   });
@@ -366,7 +366,7 @@ describe("Factory function unit test", function () {
     await expect(
       vaultV2Factory
         .connect(user2)
-        .setPoolImplementation(ethers.constants.AddressZero)
+        .setVaultImplementation(ethers.constants.AddressZero)
     ).to.be.revertedWith("Ownable: caller is not the owner");
   });
 
