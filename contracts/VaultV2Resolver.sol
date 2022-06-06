@@ -86,7 +86,7 @@ contract VaultV2Resolver {
 
         // TODO check if sum of weight is < 10000
 
-        requireWeightUnder100(rangeWeights_);
+        _requireWeightUnder100(rangeWeights_);
 
         rebalanceParams.deposits = new Position[](rangeWeights_.length);
 
@@ -253,33 +253,6 @@ contract VaultV2Resolver {
                 );
     }
 
-    function getRangeIndexesForAmount(
-        uint256 amount_,
-        uint256[] memory amounts_
-    ) external pure returns (uint256[] memory indexes) {
-        uint256 amount = 0;
-        uint256 i = 0;
-        while (amount < amount_) {
-            (uint256 max, uint256 index) = getMax(amounts_);
-
-            delete amounts_[index];
-            indexes[i] = max;
-            i++;
-        }
-    }
-
-    function requireWeightUnder100(RangeWeight[] memory rangeWeights_)
-        public
-        pure
-    {
-        uint256 totalWeight;
-        for (uint256 i; i < rangeWeights_.length; i++) {
-            totalWeight += rangeWeights_[i].weight;
-        }
-
-        require(totalWeight <= 10000, "total weight");
-    }
-
     function getAmountsForLiquidity(
         int24 currentTick_,
         int24 lowerTick_,
@@ -295,16 +268,19 @@ contract VaultV2Resolver {
             );
     }
 
-    function getMax(uint256[] memory amounts_)
-        public
+    // #region view internal functions.
+
+    function _requireWeightUnder100(RangeWeight[] memory rangeWeights_)
+        internal
         pure
-        returns (uint256 max, uint256 index)
     {
-        for (uint256 i = 0; i < amounts_.length; i++) {
-            if (amounts_[i] > max) {
-                max = amounts_[i];
-                index = i;
-            }
+        uint256 totalWeight;
+        for (uint256 i; i < rangeWeights_.length; i++) {
+            totalWeight += rangeWeights_[i].weight;
         }
+
+        require(totalWeight <= 10000, "total weight");
     }
+
+    // #endregion view internal functions.
 }

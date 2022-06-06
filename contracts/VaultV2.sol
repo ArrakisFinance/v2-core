@@ -118,7 +118,6 @@ contract VaultV2 is
         amount1 = FullMath.mulDivRoundingUp(mintAmount_, current1, denominator);
 
         // transfer amounts owed to contract
-
         if (amount0 > 0) {
             token0.safeTransferFrom(msg.sender, address(this), amount0);
         }
@@ -257,11 +256,11 @@ contract VaultV2 is
     }
 
     // solhint-disable-next-line function-max-lines, code-complexity
-    function rebalance(RebalanceParams memory rebalanceParams_)
+    function rebalance(RebalanceParams calldata rebalanceParams_)
         external
         nonReentrant
     {
-        require(_operators.contains(msg.sender), "no operators");
+        require(_operators.contains(msg.sender), "no operator");
         // Burns
         uint256 totalFee0 = 0;
         uint256 totalFee1 = 0;
@@ -284,19 +283,21 @@ contract VaultV2 is
                 rebalanceParams_.removes[i].liquidity
             );
 
-            _applyFees(withdraw.fee0, withdraw.fee1);
-            (withdraw.fee0, withdraw.fee1) = UniswapV3Amounts.subtractAdminFees(
-                withdraw.fee0,
-                withdraw.fee1,
-                managerFeeBPS,
-                arrakisFeeBPS
-            );
             totalFee0 += withdraw.fee0;
             totalFee1 += withdraw.fee1;
         }
 
-        if (totalFee0 > 0 || totalFee1 > 0)
+        if (totalFee0 > 0 || totalFee1 > 0) {
+            _applyFees(totalFee0, totalFee1);
+            (totalFee0, totalFee1) = UniswapV3Amounts.subtractAdminFees(
+                totalFee0,
+                totalFee1,
+                managerFeeBPS,
+                arrakisFeeBPS
+            );
+
             emit FeesEarnedRebalance(totalFee0, totalFee1);
+        }
 
         // Swap
 

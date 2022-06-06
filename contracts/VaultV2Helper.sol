@@ -16,7 +16,7 @@ contract VaultV2Helper {
     }
 
     function totalUnderlyingWithFeesAndLeftOver(
-        UnderlyingPayload memory underlyingPayload_
+        UnderlyingPayload calldata underlyingPayload_
     ) external view returns (Underlying memory underlying) {
         (
             underlying.amount0,
@@ -34,7 +34,7 @@ contract VaultV2Helper {
     }
 
     function totalUnderlyingWithFees(
-        UnderlyingPayload memory underlyingPayload_
+        UnderlyingPayload calldata underlyingPayload_
     )
         external
         view
@@ -49,7 +49,7 @@ contract VaultV2Helper {
             .totalUnderlyingWithFees(underlyingPayload_);
     }
 
-    function totalUnderlying(UnderlyingPayload memory underlyingPayload_)
+    function totalUnderlying(UnderlyingPayload calldata underlyingPayload_)
         external
         view
         returns (uint256 amount0, uint256 amount1)
@@ -72,7 +72,7 @@ contract VaultV2Helper {
         returns (Amount[] memory amount0s, Amount[] memory amount1s)
     {
         for (uint256 i = 0; i < ranges_.length; i++) {
-            (uint256 amount0, uint256 amount1) = getAmountsFromLiquidity(
+            (uint256 amount0, uint256 amount1) = _getAmountsFromLiquidity(
                 token0_,
                 token1_,
                 ranges_[i],
@@ -88,12 +88,12 @@ contract VaultV2Helper {
 
     // #region internal functions
 
-    function getAmountsFromLiquidity(
+    function _getAmountsFromLiquidity(
         address token0_,
         address token1_,
-        Range memory range_,
+        Range calldata range_,
         address vaultV2_
-    ) public view returns (uint256 amount0, uint256 amount1) {
+    ) internal view returns (uint256 amount0, uint256 amount1) {
         (token0_, token1_) = token0_ < token1_
             ? (token0_, token1_)
             : (token1_, token0_);
@@ -104,13 +104,15 @@ contract VaultV2Helper {
 
         (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
 
-        (amount0, amount1, , ) = UnderlyingHelper.underlying(
+        uint256 fee0;
+        uint256 fee1;
+        (amount0, amount1, fee0, fee1) = UnderlyingHelper.underlying(
             RangeData({self: vaultV2_, range: range_, pool: pool}),
             sqrtPriceX96
         );
 
-        amount0 += IERC20(token0_).balanceOf(vaultV2_);
-        amount1 += IERC20(token1_).balanceOf(vaultV2_);
+        amount0 += fee0;
+        amount1 += fee1;
     }
 
     // #endregion internal functions
