@@ -81,7 +81,6 @@ interface IUniswapV3Factory {
     function enableFeeAmount(uint24 fee, int24 tickSpacing) external;
 }
 
-
 // File @uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolImmutables.sol@v1.0.1
 
 // SPDX-License-Identifier: GPL-2.0-or-later
@@ -119,7 +118,6 @@ interface IUniswapV3PoolImmutables {
     /// @return The max amount of liquidity per tick
     function maxLiquidityPerTick() external view returns (uint128);
 }
-
 
 // File @uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolState.sol@v1.0.1
 
@@ -166,7 +164,10 @@ interface IUniswapV3PoolState {
 
     /// @notice The amounts of token0 and token1 that are owed to the protocol
     /// @dev Protocol fees will never exceed uint128 max in either token
-    function protocolFees() external view returns (uint128 token0, uint128 token1);
+    function protocolFees()
+        external
+        view
+        returns (uint128 token0, uint128 token1);
 
     /// @notice The currently in range liquidity available to the pool
     /// @dev This value has no relationship to the total liquidity across all ticks
@@ -240,7 +241,6 @@ interface IUniswapV3PoolState {
         );
 }
 
-
 // File @uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol@v1.0.1
 
 // SPDX-License-Identifier: GPL-2.0-or-later
@@ -263,7 +263,10 @@ interface IUniswapV3PoolDerivedState {
     function observe(uint32[] calldata secondsAgos)
         external
         view
-        returns (int56[] memory tickCumulatives, uint160[] memory secondsPerLiquidityCumulativeX128s);
+        returns (
+            int56[] memory tickCumulatives,
+            uint160[] memory secondsPerLiquidityCumulativeX128s
+        );
 
     /// @notice Returns a snapshot of the tick cumulative, seconds per liquidity and seconds inside a tick range
     /// @dev Snapshots must only be compared to other snapshots, taken over a period for which a position existed.
@@ -283,7 +286,6 @@ interface IUniswapV3PoolDerivedState {
             uint32 secondsInside
         );
 }
-
 
 // File @uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolActions.sol@v1.0.1
 
@@ -388,9 +390,10 @@ interface IUniswapV3PoolActions {
     /// @dev This method is no-op if the pool already has an observationCardinalityNext greater than or equal to
     /// the input observationCardinalityNext.
     /// @param observationCardinalityNext The desired minimum number of observations for the pool to store
-    function increaseObservationCardinalityNext(uint16 observationCardinalityNext) external;
+    function increaseObservationCardinalityNext(
+        uint16 observationCardinalityNext
+    ) external;
 }
-
 
 // File @uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolOwnerActions.sol@v1.0.1
 
@@ -417,7 +420,6 @@ interface IUniswapV3PoolOwnerActions {
         uint128 amount1Requested
     ) external returns (uint128 amount0, uint128 amount1);
 }
-
 
 // File @uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolEvents.sol@v1.0.1
 
@@ -533,26 +535,30 @@ interface IUniswapV3PoolEvents {
     /// @param feeProtocol1Old The previous value of the token1 protocol fee
     /// @param feeProtocol0New The updated value of the token0 protocol fee
     /// @param feeProtocol1New The updated value of the token1 protocol fee
-    event SetFeeProtocol(uint8 feeProtocol0Old, uint8 feeProtocol1Old, uint8 feeProtocol0New, uint8 feeProtocol1New);
+    event SetFeeProtocol(
+        uint8 feeProtocol0Old,
+        uint8 feeProtocol1Old,
+        uint8 feeProtocol0New,
+        uint8 feeProtocol1New
+    );
 
     /// @notice Emitted when the collected protocol fees are withdrawn by the factory owner
     /// @param sender The address that collects the protocol fees
     /// @param recipient The address that receives the collected protocol fees
     /// @param amount0 The amount of token0 protocol fees that is withdrawn
     /// @param amount0 The amount of token1 protocol fees that is withdrawn
-    event CollectProtocol(address indexed sender, address indexed recipient, uint128 amount0, uint128 amount1);
+    event CollectProtocol(
+        address indexed sender,
+        address indexed recipient,
+        uint128 amount0,
+        uint128 amount1
+    );
 }
-
 
 // File @uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol@v1.0.1
 
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity >=0.5.0;
-
-
-
-
-
 
 /// @title The interface for a Uniswap V3 Pool
 /// @notice A Uniswap pool facilitates swapping and automated market making between any two assets that strictly conform
@@ -568,7 +574,6 @@ interface IUniswapV3Pool is
 {
 
 }
-
 
 // File @openzeppelin/contracts/token/ERC20/IERC20.sol@v4.6.0
 
@@ -593,7 +598,11 @@ interface IERC20 {
      * @dev Emitted when the allowance of a `spender` for an `owner` is set by
      * a call to {approve}. `value` is the new allowance.
      */
-    event Approval(address indexed owner, address indexed spender, uint256 value);
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
 
     /**
      * @dev Returns the amount of tokens in existence.
@@ -621,7 +630,10 @@ interface IERC20 {
      *
      * This value changes when {approve} or {transferFrom} are called.
      */
-    function allowance(address owner, address spender) external view returns (uint256);
+    function allowance(address owner, address spender)
+        external
+        view
+        returns (uint256);
 
     /**
      * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
@@ -655,12 +667,10 @@ interface IERC20 {
     ) external returns (bool);
 }
 
-
 // File contracts/structs/SVaultV2.sol
 
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
-
 
 struct PositionData {
     uint128 liquidity;
@@ -765,14 +775,10 @@ struct RangeData {
 
 // #endregion internal Structs
 
-
 // File contracts/interfaces/IVaultV2.sol
 
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.13;
-
-
-
 
 interface IVaultV2 {
     function initialize(
@@ -802,7 +808,6 @@ interface IVaultV2 {
     function arrakisFeeBPS() external view returns (uint16);
 }
 
-
 // File contracts/structs/SVaultV2Helper.sol
 
 // SPDX-License-Identifier: GPL-3.0
@@ -813,12 +818,10 @@ struct Amount {
     uint256 amount;
 }
 
-
 // File contracts/interfaces/IVaultV2Helper.sol
 
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.13;
-
 
 interface IVaultV2Helper {
     function totalUnderlyingWithFeesAndLeftOver(
@@ -859,7 +862,6 @@ interface IVaultV2Helper {
         address vaultV2_
     ) external view returns (uint256 amount0, uint256 amount1);
 }
-
 
 // File contracts/vendor/uniswap/FullMath.sol
 
@@ -993,7 +995,6 @@ library FullMath {
     }
 }
 
-
 // File @uniswap/v3-core/contracts/libraries/FixedPoint96.sol@v1.0.1
 
 // SPDX-License-Identifier: GPL-2.0-or-later
@@ -1007,12 +1008,10 @@ library FixedPoint96 {
     uint256 internal constant Q96 = 0x1000000000000000000000000;
 }
 
-
 // File contracts/vendor/uniswap/LiquidityAmounts.sol
 
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.5.0;
-
 
 /// @title Liquidity amount functions
 /// @notice Provides functions for computing liquidity amounts from token amounts and prices
@@ -1191,7 +1190,6 @@ library LiquidityAmounts {
         }
     }
 }
-
 
 // File contracts/vendor/uniswap/TickMath.sol
 
@@ -1448,12 +1446,10 @@ library TickMath {
     }
 }
 
-
 // File contracts/libraries/UniswapV3Amounts.sol
 
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.13;
-
 
 library UniswapV3Amounts {
     // solhint-disable-next-line function-max-lines
@@ -1581,7 +1577,6 @@ library UniswapV3Amounts {
     }
 }
 
-
 // File contracts/libraries/Position.sol
 
 // SPDX-License-Identifier: GPL-3.0
@@ -1597,17 +1592,10 @@ library Position {
     }
 }
 
-
 // File contracts/libraries/Underlying.sol
 
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.13;
-
-
-
-
-
-
 
 library Underlying {
     // solhint-disable-next-line function-max-lines
@@ -1751,7 +1739,6 @@ library Underlying {
     }
 }
 
-
 // File @openzeppelin/contracts/utils/math/SafeCast.sol@v4.6.0
 
 // SPDX-License-Identifier: MIT
@@ -1786,7 +1773,10 @@ library SafeCast {
      * - input must fit into 224 bits
      */
     function toUint224(uint256 value) internal pure returns (uint224) {
-        require(value <= type(uint224).max, "SafeCast: value doesn't fit in 224 bits");
+        require(
+            value <= type(uint224).max,
+            "SafeCast: value doesn't fit in 224 bits"
+        );
         return uint224(value);
     }
 
@@ -1801,7 +1791,10 @@ library SafeCast {
      * - input must fit into 128 bits
      */
     function toUint128(uint256 value) internal pure returns (uint128) {
-        require(value <= type(uint128).max, "SafeCast: value doesn't fit in 128 bits");
+        require(
+            value <= type(uint128).max,
+            "SafeCast: value doesn't fit in 128 bits"
+        );
         return uint128(value);
     }
 
@@ -1816,7 +1809,10 @@ library SafeCast {
      * - input must fit into 96 bits
      */
     function toUint96(uint256 value) internal pure returns (uint96) {
-        require(value <= type(uint96).max, "SafeCast: value doesn't fit in 96 bits");
+        require(
+            value <= type(uint96).max,
+            "SafeCast: value doesn't fit in 96 bits"
+        );
         return uint96(value);
     }
 
@@ -1831,7 +1827,10 @@ library SafeCast {
      * - input must fit into 64 bits
      */
     function toUint64(uint256 value) internal pure returns (uint64) {
-        require(value <= type(uint64).max, "SafeCast: value doesn't fit in 64 bits");
+        require(
+            value <= type(uint64).max,
+            "SafeCast: value doesn't fit in 64 bits"
+        );
         return uint64(value);
     }
 
@@ -1846,7 +1845,10 @@ library SafeCast {
      * - input must fit into 32 bits
      */
     function toUint32(uint256 value) internal pure returns (uint32) {
-        require(value <= type(uint32).max, "SafeCast: value doesn't fit in 32 bits");
+        require(
+            value <= type(uint32).max,
+            "SafeCast: value doesn't fit in 32 bits"
+        );
         return uint32(value);
     }
 
@@ -1861,7 +1863,10 @@ library SafeCast {
      * - input must fit into 16 bits
      */
     function toUint16(uint256 value) internal pure returns (uint16) {
-        require(value <= type(uint16).max, "SafeCast: value doesn't fit in 16 bits");
+        require(
+            value <= type(uint16).max,
+            "SafeCast: value doesn't fit in 16 bits"
+        );
         return uint16(value);
     }
 
@@ -1876,7 +1881,10 @@ library SafeCast {
      * - input must fit into 8 bits.
      */
     function toUint8(uint256 value) internal pure returns (uint8) {
-        require(value <= type(uint8).max, "SafeCast: value doesn't fit in 8 bits");
+        require(
+            value <= type(uint8).max,
+            "SafeCast: value doesn't fit in 8 bits"
+        );
         return uint8(value);
     }
 
@@ -1906,7 +1914,10 @@ library SafeCast {
      * _Available since v3.1._
      */
     function toInt128(int256 value) internal pure returns (int128) {
-        require(value >= type(int128).min && value <= type(int128).max, "SafeCast: value doesn't fit in 128 bits");
+        require(
+            value >= type(int128).min && value <= type(int128).max,
+            "SafeCast: value doesn't fit in 128 bits"
+        );
         return int128(value);
     }
 
@@ -1924,7 +1935,10 @@ library SafeCast {
      * _Available since v3.1._
      */
     function toInt64(int256 value) internal pure returns (int64) {
-        require(value >= type(int64).min && value <= type(int64).max, "SafeCast: value doesn't fit in 64 bits");
+        require(
+            value >= type(int64).min && value <= type(int64).max,
+            "SafeCast: value doesn't fit in 64 bits"
+        );
         return int64(value);
     }
 
@@ -1942,7 +1956,10 @@ library SafeCast {
      * _Available since v3.1._
      */
     function toInt32(int256 value) internal pure returns (int32) {
-        require(value >= type(int32).min && value <= type(int32).max, "SafeCast: value doesn't fit in 32 bits");
+        require(
+            value >= type(int32).min && value <= type(int32).max,
+            "SafeCast: value doesn't fit in 32 bits"
+        );
         return int32(value);
     }
 
@@ -1960,7 +1977,10 @@ library SafeCast {
      * _Available since v3.1._
      */
     function toInt16(int256 value) internal pure returns (int16) {
-        require(value >= type(int16).min && value <= type(int16).max, "SafeCast: value doesn't fit in 16 bits");
+        require(
+            value >= type(int16).min && value <= type(int16).max,
+            "SafeCast: value doesn't fit in 16 bits"
+        );
         return int16(value);
     }
 
@@ -1978,7 +1998,10 @@ library SafeCast {
      * _Available since v3.1._
      */
     function toInt8(int256 value) internal pure returns (int8) {
-        require(value >= type(int8).min && value <= type(int8).max, "SafeCast: value doesn't fit in 8 bits");
+        require(
+            value >= type(int8).min && value <= type(int8).max,
+            "SafeCast: value doesn't fit in 8 bits"
+        );
         return int8(value);
     }
 
@@ -1991,27 +2014,18 @@ library SafeCast {
      */
     function toInt256(uint256 value) internal pure returns (int256) {
         // Note: Unsafe cast below is okay because `type(int256).max` is guaranteed to be positive
-        require(value <= uint256(type(int256).max), "SafeCast: value doesn't fit in an int256");
+        require(
+            value <= uint256(type(int256).max),
+            "SafeCast: value doesn't fit in an int256"
+        );
         return int256(value);
     }
 }
-
 
 // File contracts/VaultV2Resolver.sol
 
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.13;
-
-
-
-
-
-
-
-
-
-
-
 
 contract VaultV2Resolver {
     IUniswapV3Factory public immutable factory;
@@ -2028,7 +2042,6 @@ contract VaultV2Resolver {
         RangeWeight[] memory rangeWeights_,
         IVaultV2 vaultV2_
     ) external view returns (RebalanceParams memory rebalanceParams) {
-
         uint256 amount0;
         uint256 amount1;
         address token0Addr;
@@ -2132,8 +2145,12 @@ contract VaultV2Resolver {
                     self: address(vaultV2_)
                 })
             );
-            underlying.leftOver0 = vaultV2_.token0().balanceOf(address(vaultV2_));
-            underlying.leftOver1 = vaultV2_.token1().balanceOf(address(vaultV2_));
+            underlying.leftOver0 = vaultV2_.token0().balanceOf(
+                address(vaultV2_)
+            );
+            underlying.leftOver1 = vaultV2_.token1().balanceOf(
+                address(vaultV2_)
+            );
 
             // #region get amount to burn.
 
