@@ -1,0 +1,70 @@
+import { ethers } from "hardhat";
+import { VaultV2, VaultV2Resolver } from "../typechain";
+
+// This script use standard burn method. Not optimized.
+const vaultV2 = ""; // vault v2 address
+const amountToBurn = ethers.constants.Zero; // amount of Arrakis Vault token you want to burn.
+
+async function main() {
+  const [user] = await ethers.getSigners();
+  const vaultV2Resolver = (await ethers.getContract(
+    "VaultV2Resolver"
+  )) as VaultV2Resolver;
+
+  const vault = (await ethers.getContractAt(
+    "VaultV2",
+    vaultV2,
+    user
+  )) as VaultV2;
+
+  const token0Contract = new ethers.Contract(
+    await vault.token0(),
+    [
+      "function decimals() external view returns (uint8)",
+      "function balanceOf(address account) public view returns (uint256)",
+      "function approve(address spender, uint256 amount) external returns (bool)",
+      " function name() public view virtual override returns (string memory)",
+    ],
+    user
+  );
+
+  const token1Contract = new ethers.Contract(
+    await vault.token1(),
+    [
+      "function decimals() external view returns (uint8)",
+      "function balanceOf(address account) public view returns (uint256)",
+      "function approve(address spender, uint256 amount) external returns (bool)",
+      " function name() external view returns (string memory)",
+    ],
+    user
+  );
+
+  const userAddr = await user.getAddress();
+  const token0Name = await token0Contract.name();
+  const token1Name = await token1Contract.name();
+  let balance0 = await token0Contract.balanceOf(userAddr);
+  let balance1 = await token1Contract.balanceOf(userAddr);
+
+  console.log(`Before Burn balance 0: ${balance0} ${token0Name}`);
+  console.log(`Before Burn balance 1: ${balance1} ${token1Name}`);
+
+  const result = await vaultV2Resolver.standardBurnParams(
+    amountToBurn,
+    vaultV2
+  );
+
+  await vault.burn(result, amountToBurn, userAddr);
+
+  balance0 = await token0Contract.balanceOf(userAddr);
+  balance1 = await token1Contract.balanceOf(userAddr);
+
+  console.log(`After Burn balance 0: ${balance0} ${token0Name}`);
+  console.log(`After Burn balance 1: ${balance1} ${token1Name}`);
+}
+
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });

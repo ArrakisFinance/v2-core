@@ -12,7 +12,8 @@
     "lint:sol": "solhint 'contracts/**/*.sol'",
     "postinstall": "yarn husky install",
     "test": "npx hardhat test",
-    "verify": "npx hardhat etherscan-verify"
+    "verify": "npx hardhat etherscan-verify",
+    "script-matic:create-vault-v2": "npx hardhat --network matic run ./scripts/createVaultV2.ts"
   },
   "devDependencies": {
     "@gelatonetwork/core": "1.6.1",
@@ -30,6 +31,7 @@
     "@typescript-eslint/eslint-plugin": "5.25.0",
     "@typescript-eslint/parser": "5.25.0",
     "@uniswap/v3-core": "1.0.1",
+    "@uniswap/v3-sdk": "^3.8.2",
     "chai": "4.3.6",
     "dotenv": "16.0.1",
     "eslint": "8.15.0",
@@ -40,6 +42,7 @@
     "hardhat": "2.9.6",
     "hardhat-deploy": "0.11.5",
     "husky": "8.0.1",
+    "jsbi": "^4.3.0",
     "lint-staged": "13.0.0",
     "node-fetch": "3.2.4",
     "prettier": "2.6.2",

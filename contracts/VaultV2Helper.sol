@@ -5,7 +5,7 @@ import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
-import {UnderlyingPayload, Underlying, Range, RangeData} from "./structs/SVaultV2.sol";
+import {UnderlyingPayload, UnderlyingData, Range, RangeData} from "./structs/SVaultV2.sol";
 import {Amount} from "./structs/SVaultV2Helper.sol";
 
 contract VaultV2Helper {
@@ -17,7 +17,7 @@ contract VaultV2Helper {
 
     function totalUnderlyingWithFeesAndLeftOver(
         UnderlyingPayload calldata underlyingPayload_
-    ) external view returns (Underlying memory underlying) {
+    ) external view returns (UnderlyingData memory underlying) {
         (
             underlying.amount0,
             underlying.amount1,

@@ -12,9 +12,9 @@ import {FullMath} from "./vendor/uniswap/FullMath.sol";
 import {TickMath} from "./vendor/uniswap/TickMath.sol";
 import {LiquidityAmounts} from "./vendor/uniswap/LiquidityAmounts.sol";
 import {
-    Burn,
-    Position,
-    Underlying,
+    BurnData,
+    PositionData,
+    UnderlyingData,
     UnderlyingPayload,
     Range,
     RangeWeight,
@@ -77,7 +77,7 @@ contract VaultV2Resolver {
                 }
 
                 if (liquidity > 0)
-                    rebalanceParams.removes[i] = Position({
+                    rebalanceParams.removes[i] = PositionData({
                         liquidity: liquidity,
                         range: ranges[i]
                     });
@@ -88,7 +88,7 @@ contract VaultV2Resolver {
 
         _requireWeightUnder100(rangeWeights_);
 
-        rebalanceParams.deposits = new Position[](rangeWeights_.length);
+        rebalanceParams.deposits = new PositionData[](rangeWeights_.length);
 
         for (uint256 i = 0; i < rangeWeights_.length; i++) {
             RangeWeight memory rangeWeight = rangeWeights_[i];
@@ -108,7 +108,7 @@ contract VaultV2Resolver {
                 FullMath.mulDiv(amount1, rangeWeight.weight, 10000)
             );
 
-            rebalanceParams.deposits[i] = Position({
+            rebalanceParams.deposits[i] = PositionData({
                 liquidity: liquidity,
                 range: rangeWeight.range
             });
@@ -119,14 +119,14 @@ contract VaultV2Resolver {
     function standardBurnParams(uint256 amountToBurn_, IVaultV2 vaultV2_)
         external
         view
-        returns (Burn[] memory burns)
+        returns (BurnData[] memory burns)
     {
         uint256 totalSupply = vaultV2_.totalSupply();
 
         Range[] memory ranges = vaultV2_.rangesArray();
 
         {
-            Underlying memory underlying;
+            UnderlyingData memory underlying;
             (
                 underlying.amount0,
                 underlying.amount1,
@@ -180,7 +180,7 @@ contract VaultV2Resolver {
         }
         // #endregion get amount to burn.
 
-        burns = new Burn[](ranges.length);
+        burns = new BurnData[](ranges.length);
 
         for (uint256 i = 0; i < ranges.length; i++) {
             uint128 liquidity;
@@ -200,7 +200,7 @@ contract VaultV2Resolver {
                     );
             }
 
-            burns[i] = Burn({
+            burns[i] = BurnData({
                 liquidity: SafeCast.toUint128(
                     FullMath.mulDiv(liquidity, amountToBurn_, totalSupply)
                 ),

@@ -31,7 +31,6 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       UniswapV3Amounts: (await ethers.getContract("UniswapV3Amounts")).address,
     },
     log: hre.network.name != "hardhat" ? true : false,
-    gasLimit: 30000000,
   });
 };
 

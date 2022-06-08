@@ -1,0 +1,86 @@
+{
+  "address": "0xb69728a998049F7d09940251Efb8b747B1744ff2",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "self_",
+          "type": "address"
+        },
+        {
+          "internalType": "int24",
+          "name": "lowerTick_",
+          "type": "int24"
+        },
+        {
+          "internalType": "int24",
+          "name": "upperTick_",
+          "type": "int24"
+        }
+      ],
+      "name": "getPositionId",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "positionId",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x850f6a20ef1c93cb1d213de30abcf9502ba849390909541a8f43e15a3c15b3a0",
+  "receipt": {
+    "to": null,
+    "from": "0xF953c3d475dc0a9877329F71e2CE3d2519a519A2",
+    "contractAddress": "0xb69728a998049F7d09940251Efb8b747B1744ff2",
+    "transactionIndex": 29,
+    "gasUsed": "123910",
+    "logsBloom": "0x00000000000000000000000400000010000000000000000000000000000000000000000000000000000000000000001000008000000000000000000000000000000000000000000000000000000000800000000000000000000100000000000000000020000000000002000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000004000000000000000000001000000000000000000000000000000100000000000000000000002000000000000000000000000000000000000000000000000100000",
+    "blockHash": "0x9672c14f4e73768423edc059849a143a2c359c1e240cb7043478e9b16362647f",
+    "transactionHash": "0x850f6a20ef1c93cb1d213de30abcf9502ba849390909541a8f43e15a3c15b3a0",
+    "logs": [
+      {
+        "transactionIndex": 29,
+        "blockNumber": 29313319,
+        "transactionHash": "0x850f6a20ef1c93cb1d213de30abcf9502ba849390909541a8f43e15a3c15b3a0",
+        "address": "0x0000000000000000000000000000000000001010",
+        "topics": [
+          "0x4dfe1bbbcf077ddc3e01291eea2d5c70c2b422b415d95645b9adcfd678cb1d63",
+          "0x0000000000000000000000000000000000000000000000000000000000001010",
+          "0x000000000000000000000000f953c3d475dc0a9877329f71e2ce3d2519a519a2",
+          "0x000000000000000000000000ec20607aa654d823dd01beb8780a44863c57ed07"
+        ],
+        "data": "0x000000000000000000000000000000000000000000000000001478571821355800000000000000000000000000000000000000000000000f8b7e1e39ce2cc703000000000000000000000000000000000000000000000427c7487fa2086c372f00000000000000000000000000000000000000000000000f8b69a5e2b60b91ab000000000000000000000000000000000000000000000427c75cf7f9208d6c87",
+        "logIndex": 98,
+        "blockHash": "0x9672c14f4e73768423edc059849a143a2c359c1e240cb7043478e9b16362647f"
+      }
+    ],
+    "blockNumber": 29313319,
+    "cumulativeGasUsed": "4601772",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "de4bbdb2c30f07e725acec434a5302e5",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.13+commit.abaa5c0e\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"self_\",\"type\":\"address\"},{\"internalType\":\"int24\",\"name\":\"lowerTick_\",\"type\":\"int24\"},{\"internalType\":\"int24\",\"name\":\"upperTick_\",\"type\":\"int24\"}],\"name\":\"getPositionId\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"positionId\",\"type\":\"bytes32\"}],\"stateMutability\":\"pure\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/libraries/Position.sol\":\"Position\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":1},\"remappings\":[]},\"sources\":{\"contracts/libraries/Position.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0\\npragma solidity 0.8.13;\\n\\nlibrary Position {\\n    function getPositionId(\\n        address self_,\\n        int24 lowerTick_,\\n        int24 upperTick_\\n    ) public pure returns (bytes32 positionId) {\\n        return keccak256(abi.encodePacked(self_, lowerTick_, upperTick_));\\n    }\\n}\\n\",\"keccak256\":\"0xd8c81d20624328df27aa2c8f094c84f558ea2fa90757b42585f444c9a75be9be\",\"license\":\"GPL-3.0\"}},\"version\":1}",
+  "bytecode": "0x61014661003a600b82828239805160001a60731461002d57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600436106100355760003560e01c80631208efca1461003a575b600080fd5b6100966100483660046100bf565b6040516001600160601b0319606085901b16602082015260e883811b603483015282901b6037820152600090603a016040516020818303038152906040528051906020012090509392505050565b60405190815260200160405180910390f35b8035600281900b81146100ba57600080fd5b919050565b6000806000606084860312156100d457600080fd5b83356001600160a01b03811681146100eb57600080fd5b92506100f9602085016100a8565b9150610107604085016100a8565b9050925092509256fea2646970667358221220f3cf86105adaa4484e7cc4a067a237fe3af868835ab7a4aa76f5f431632eb0ee64736f6c634300080d0033",
+  "deployedBytecode": "0x73000000000000000000000000000000000000000030146080604052600436106100355760003560e01c80631208efca1461003a575b600080fd5b6100966100483660046100bf565b6040516001600160601b0319606085901b16602082015260e883811b603483015282901b6037820152600090603a016040516020818303038152906040528051906020012090509392505050565b60405190815260200160405180910390f35b8035600281900b81146100ba57600080fd5b919050565b6000806000606084860312156100d457600080fd5b83356001600160a01b03811681146100eb57600080fd5b92506100f9602085016100a8565b9150610107604085016100a8565b9050925092509256fea2646970667358221220f3cf86105adaa4484e7cc4a067a237fe3af868835ab7a4aa76f5f431632eb0ee64736f6c634300080d0033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [],
+    "types": null
+  }
+}

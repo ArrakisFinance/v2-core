@@ -4,12 +4,12 @@ pragma solidity 0.8.13;
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 
-struct Position {
+struct PositionData {
     uint128 liquidity;
     Range range;
 }
 
-struct Burn {
+struct BurnData {
     uint128 liquidity;
     Range range;
 }
@@ -29,8 +29,8 @@ struct Range {
 }
 
 struct RebalanceParams {
-    Position[] removes;
-    Position[] deposits;
+    PositionData[] removes;
+    PositionData[] deposits;
     SwapData swap;
 }
 
@@ -52,10 +52,9 @@ struct InitializeParams {
     uint16 managerFeeBPS;
     int24 maxTwapDeviation;
     uint24 twapDuration;
-    uint24 burnSlippage;
 }
 
-struct Underlying {
+struct UnderlyingData {
     uint256 amount0;
     uint256 amount1;
     uint256 fee0;

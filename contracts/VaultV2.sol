@@ -17,8 +17,8 @@ import {
     RebalanceParams,
     Withdraw,
     UnderlyingPayload,
-    Burn,
-    Underlying
+    BurnData,
+    UnderlyingData
 } from "./structs/SVaultV2.sol";
 import {Twap} from "./libraries/Twap.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
@@ -132,11 +132,11 @@ contract VaultV2 is
 
     // solhint-disable-next-line function-max-lines, code-complexity
     function burn(
-        Burn[] calldata burns,
+        BurnData[] calldata burns,
         uint256 burnAmount_,
         address receiver_
     ) external nonReentrant returns (uint256 amount0, uint256 amount1) {
-        Underlying memory underlying;
+        UnderlyingData memory underlying;
         (
             underlying.amount0,
             underlying.amount1,
