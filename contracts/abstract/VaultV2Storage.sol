@@ -1,9 +1,8 @@
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {OwnableUninitialized} from "./OwnableUninitialized.sol";
 import {
     ERC20Upgradeable
@@ -11,8 +10,9 @@ import {
 import {
     ReentrancyGuardUpgradeable
 } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {Pool} from "../libraries/Pool.sol";
-import {Range, InitializeParams} from "../structs/SVaultV2.sol";
+import {Range, InitializePayload} from "../structs/SVaultV2.sol";
 
 // solhint-disable-next-line max-states-count
 abstract contract VaultV2Storage is
@@ -75,28 +75,27 @@ abstract contract VaultV2Storage is
     function initialize(
         string calldata name_,
         string calldata symbol_,
-        InitializeParams calldata params_
+        InitializePayload calldata params_
     ) external initializer {
-        require(params_.operators.length > 0, "no operators");
         require(params_.feeTiers.length > 0, "no fee tier");
-        require(params_.ranges.length > 0, "no ranges");
         require(params_.token0 != address(0), "token0");
         require(params_.token1 != address(0), "token1");
+        require(params_.operators.length > 0, "no operators");
+        require(params_.ranges.length > 0, "no ranges");
+
+        require(params_.init0 > 0, "init0");
+        require(params_.init1 > 0, "init1");
 
         if(params_.managerTreasury == address(0))
             require(params_.managerFeeBPS == 0, "no Address Zero Manager");
+        else
+            require(params_.managerFeeBPS <= 10000, "managerFeeBPS");
+
+        require(params_.maxTwapDeviation > 0, "maxTwapDeviation");
+        require(params_.twapDuration > 0, "maxTwapDeviation");
 
         __ERC20_init(name_, symbol_);
         __ReentrancyGuard_init();
-
-        _owner = params_.owner;
-
-        token0 = IERC20(params_.token0);
-        token1 = IERC20(params_.token1);
-
-        for (uint256 i = 0; i < params_.operators.length; i++) {
-            _operators.add(params_.operators[i]);
-        }
 
         for (uint256 i = 0; i < params_.feeTiers.length; i++) {
             address pool = factory.getPool(
@@ -105,22 +104,18 @@ abstract contract VaultV2Storage is
                 params_.feeTiers[i]
             );
             require(pool != address(0), "pool does not exist");
+            require(!_pools.contains(pool), "pool");
             _pools.add(pool);
         }
 
-        // Initialization of ranges array.
+        token0 = IERC20(params_.token0);
+        token1 = IERC20(params_.token1);
 
-        for (uint256 i = 0; i < params_.ranges.length; i++) {
-            address pool = factory.getPool(
-                params_.token0,
-                params_.token1,
-                params_.ranges[i].feeTier
-            );
+        _owner = params_.owner;
 
-            require(_pools.contains(pool), "pool no whitelisted");
+        _addOperators(params_.operators);
 
-            ranges.push(params_.ranges[i]);
-        }
+        _addRanges(params_.ranges, params_.token0, params_.token1);
 
         init0 = params_.init0;
         init1 = params_.init1;
@@ -134,33 +129,25 @@ abstract contract VaultV2Storage is
     // #region setter functions
 
     function addOperators(address[] calldata operators_) external onlyOwner {
-        for (uint256 i = 0; i < operators_.length; i++) {
-            require(!_operators.contains(operators_[i]), "operator");
-
-            _operators.add(operators_[i]);
-        }
+        _addOperators(operators_);
     }
 
     function removeOperators(address[] calldata operators_) external onlyOwner {
         for (uint256 i = 0; i < operators_.length; i++) {
-            require(_operators.contains(operators_[i]), "not operator");
+            require(operators_[i] != address(0), "address Zero");
+            require(_operators.contains(operators_[i]), "not an operator");
 
             _operators.remove(operators_[i]);
         }
     }
 
     function addPools(address[] calldata pools_) external onlyOwner {
-        for (uint256 i = 0; i < pools_.length; i++) {
-            // explicit
-            require(!_pools.contains(pools_[i]), "pool");
-
-            _pools.add(pools_[i]);
-        }
+        _addPools(pools_);
     }
 
     function removePools(address[] calldata pools_) external onlyOwner {
         for (uint256 i = 0; i < pools_.length; i++) {
-            // explicit
+            require(pools_[i] != address(0), "address Zero");
             require(_pools.contains(pools_[i]), "not pool");
 
             _pools.remove(pools_[i]);
@@ -168,32 +155,7 @@ abstract contract VaultV2Storage is
     }
 
     function addRanges(Range[] calldata ranges_) external onlyOwner {
-        address token0Addr = address(token0);
-        address token1Addr = address(token1);
-        for (uint256 i = 0; i < ranges_.length; i++) {
-            (bool exist, ) = rangeExist(ranges_[i]);
-            require(!exist, "range");
-            // check that the pool exist on Uniswap V3.
-            require(
-                factory.getPool(
-                    token0Addr,
-                    token1Addr,
-                    ranges_[i].feeTier
-                ) != address(0),
-                "uniswap pool does not exist"
-            );
-            require(
-                Pool.validateTickSpacing(
-                    factory,
-                    token0Addr,
-                    token1Addr,
-                    ranges_[i]
-                ),
-                "range"
-            );
-
-            ranges.push(ranges_[i]);
-        }
+        _addRanges(ranges_, address(token0), address(token1));
     }
 
     function removeRanges(Range[] calldata ranges_) external onlyOwner {
@@ -245,4 +207,61 @@ abstract contract VaultV2Storage is
     }
 
     // #endregion view/pure functions
+
+    // #region internal functions
+
+    function _addOperators(
+        address[] calldata operators_
+    ) internal {
+        for (uint256 i = 0; i < operators_.length; i++) {
+            require(operators_[i] != address(0), "address Zero");
+            require(!_operators.contains(operators_[i]), "operator");
+
+            _operators.add(operators_[i]);
+        }
+    }
+
+    function _addPools(address[] calldata pools_) internal {
+        for (uint256 i = 0; i < pools_.length; i++) {
+            // explicit
+            require(pools_[i] != address(0), "address Zero");
+            require(!_pools.contains(pools_[i]), "pool");
+
+            _pools.add(pools_[i]);
+        }
+    }
+
+    function _addRanges(
+        Range[] calldata ranges_,
+        address token0Addr_,
+        address token1Addr_
+    ) internal {
+
+        for (uint256 i = 0; i < ranges_.length; i++) {
+            (bool exist, ) = rangeExist(ranges_[i]);
+            require(!exist, "range");
+            // check that the pool exist on Uniswap V3.
+            require(
+                factory.getPool(
+                    token0Addr_,
+                    token1Addr_,
+                    ranges_[i].feeTier
+                ) != address(0),
+                "uniswap pool does not exist"
+            );
+            require(
+                Pool.validateTickSpacing(
+                    factory,
+                    token0Addr_,
+                    token1Addr_,
+                    ranges_[i]
+                ),
+                "range"
+            );
+
+            ranges.push(ranges_[i]);
+        }
+    }
+
+    // #endregion internal functions
 }

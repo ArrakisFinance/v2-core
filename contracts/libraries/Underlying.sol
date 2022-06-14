@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
@@ -9,7 +9,7 @@ import {
     UnderlyingPayload,
     RangeData,
     PositionUnderlying,
-    ComputeFeesEarned
+    FeesEarnedPayload
 } from "../structs/SVaultV2.sol";
 import {UniswapV3Amounts} from "./UniswapV3Amounts.sol";
 import {Position} from "./Position.sol";
@@ -129,7 +129,7 @@ library Underlying {
         // compute current fees earned
         fee0 =
             UniswapV3Amounts.computeFeesEarned(
-                ComputeFeesEarned({
+                FeesEarnedPayload({
                     feeGrowthInsideLast: feeGrowthInside0Last,
                     liquidity: liquidity,
                     tick: positionUnderlying_.tick,
@@ -142,7 +142,7 @@ library Underlying {
             uint256(tokensOwed0);
         fee1 =
             UniswapV3Amounts.computeFeesEarned(
-                ComputeFeesEarned({
+                FeesEarnedPayload({
                     feeGrowthInsideLast: feeGrowthInside1Last,
                     liquidity: liquidity,
                     tick: positionUnderlying_.tick,

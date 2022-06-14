@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
+import {IVaultV2Resolver} from  "./interfaces/IVaultV2Resolver.sol";
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
-import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {IVaultV2} from "./interfaces/IVaultV2.sol";
 import {IVaultV2Helper} from "./interfaces/IVaultV2Helper.sol";
+import {IVaultV2} from "./interfaces/IVaultV2.sol";
+import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
 import {UniswapV3Amounts} from "./libraries/UniswapV3Amounts.sol";
 import {Position as PositionHelper} from "./libraries/Position.sol";
@@ -12,17 +13,17 @@ import {FullMath} from "./vendor/uniswap/FullMath.sol";
 import {TickMath} from "./vendor/uniswap/TickMath.sol";
 import {LiquidityAmounts} from "./vendor/uniswap/LiquidityAmounts.sol";
 import {
-    BurnData,
-    PositionData,
-    UnderlyingData,
+    BurnLiquidity,
+    PositionLiquidity,
+    UnderlyingOutput,
     UnderlyingPayload,
     Range,
     RangeWeight,
-    RebalanceParams
+    Rebalance
 } from "./structs/SVaultV2.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-contract VaultV2Resolver {
+contract VaultV2Resolver is IVaultV2Resolver {
     IUniswapV3Factory public immutable factory;
     IVaultV2Helper public immutable helper;
 
@@ -33,10 +34,10 @@ contract VaultV2Resolver {
 
     // no swapping. Standard rebalance.
     // solhint-disable-next-line function-max-lines
-    function standardRebalanceParams(
+    function standardRebalance(
         RangeWeight[] memory rangeWeights_,
         IVaultV2 vaultV2_
-    ) external view returns (RebalanceParams memory rebalanceParams) {
+    ) external view returns (Rebalance memory rebalanceParams) {
 
         uint256 amount0;
         uint256 amount1;
@@ -49,13 +50,7 @@ contract VaultV2Resolver {
             token1Addr = address(vaultV2_.token1());
 
             (amount0, amount1) = helper.totalUnderlying(
-                UnderlyingPayload({
-                    ranges: ranges,
-                    factory: factory,
-                    token0: token0Addr,
-                    token1: token1Addr,
-                    self: address(vaultV2_)
-                })
+                vaultV2_
             );
 
             for (uint256 i = 0; i < ranges.length; i++) {
@@ -77,7 +72,7 @@ contract VaultV2Resolver {
                 }
 
                 if (liquidity > 0)
-                    rebalanceParams.removes[i] = PositionData({
+                    rebalanceParams.removes[i] = PositionLiquidity({
                         liquidity: liquidity,
                         range: ranges[i]
                     });
@@ -88,7 +83,7 @@ contract VaultV2Resolver {
 
         _requireWeightUnder100(rangeWeights_);
 
-        rebalanceParams.deposits = new PositionData[](rangeWeights_.length);
+        rebalanceParams.deposits = new PositionLiquidity[](rangeWeights_.length);
 
         for (uint256 i = 0; i < rangeWeights_.length; i++) {
             RangeWeight memory rangeWeight = rangeWeights_[i];
@@ -108,7 +103,7 @@ contract VaultV2Resolver {
                 FullMath.mulDiv(amount1, rangeWeight.weight, 10000)
             );
 
-            rebalanceParams.deposits[i] = PositionData({
+            rebalanceParams.deposits[i] = PositionLiquidity({
                 liquidity: liquidity,
                 range: rangeWeight.range
             });
@@ -119,14 +114,15 @@ contract VaultV2Resolver {
     function standardBurnParams(uint256 amountToBurn_, IVaultV2 vaultV2_)
         external
         view
-        returns (BurnData[] memory burns)
+        returns (BurnLiquidity[] memory burns)
     {
         uint256 totalSupply = vaultV2_.totalSupply();
+        require(totalSupply > 0, "total supply");
 
         Range[] memory ranges = vaultV2_.rangesArray();
 
         {
-            UnderlyingData memory underlying;
+            UnderlyingOutput memory underlying;
             (
                 underlying.amount0,
                 underlying.amount1,
@@ -143,10 +139,6 @@ contract VaultV2Resolver {
             );
             underlying.leftOver0 = vaultV2_.token0().balanceOf(address(vaultV2_));
             underlying.leftOver1 = vaultV2_.token1().balanceOf(address(vaultV2_));
-
-            // #region get amount to burn.
-
-            require(totalSupply > 0, "total supply");
 
             {
                 (uint256 fee0, uint256 fee1) = UniswapV3Amounts
@@ -180,7 +172,7 @@ contract VaultV2Resolver {
         }
         // #endregion get amount to burn.
 
-        burns = new BurnData[](ranges.length);
+        burns = new BurnLiquidity[](ranges.length);
 
         for (uint256 i = 0; i < ranges.length; i++) {
             uint128 liquidity;
@@ -200,7 +192,7 @@ contract VaultV2Resolver {
                     );
             }
 
-            burns[i] = BurnData({
+            burns[i] = BurnLiquidity({
                 liquidity: SafeCast.toUint128(
                     FullMath.mulDiv(liquidity, amountToBurn_, totalSupply)
                 ),
@@ -224,14 +216,9 @@ contract VaultV2Resolver {
         )
     {
         (uint256 current0, uint256 current1) = helper.totalUnderlying(
-            UnderlyingPayload({
-                ranges: vaultV2_.rangesArray(),
-                factory: vaultV2_.factory(),
-                token0: address(vaultV2_.token0()),
-                token1: address(vaultV2_.token1()),
-                self: address(vaultV2_)
-            })
+            vaultV2_
         );
+
         uint256 totalSupply = vaultV2_.totalSupply();
         if (totalSupply > 0) {
             (amount0, amount1, mintAmount) = UniswapV3Amounts
@@ -257,14 +244,14 @@ contract VaultV2Resolver {
         int24 currentTick_,
         int24 lowerTick_,
         int24 upperTick_,
-        uint128 liquidity
+        uint128 liquidity_
     ) public pure returns (uint256 amount0, uint256 amount1) {
         return
             LiquidityAmounts.getAmountsForLiquidity(
                 TickMath.getSqrtRatioAtTick(currentTick_),
                 TickMath.getSqrtRatioAtTick(lowerTick_),
                 TickMath.getSqrtRatioAtTick(upperTick_),
-                liquidity
+                liquidity_
             );
     }
 

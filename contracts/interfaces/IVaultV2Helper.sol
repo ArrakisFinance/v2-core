@@ -1,17 +1,17 @@
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import {UnderlyingPayload, UnderlyingData, Range} from "../structs/SVaultV2.sol";
+import {IVaultV2} from "./IVaultV2.sol";
+import {UnderlyingPayload, UnderlyingOutput, Range} from "../structs/SVaultV2.sol";
 import {Amount} from "../structs/SVaultV2Helper.sol";
 
 interface IVaultV2Helper {
-    function totalUnderlyingWithFeesAndLeftOver(
-        UnderlyingPayload memory underlyingPayload_
-    ) external view returns (UnderlyingData memory underlying);
+    function totalUnderlyingWithFeesAndLeftOver(IVaultV2 vault_)
+        external
+        view
+        returns (UnderlyingOutput memory underlying);
 
-    function totalUnderlyingWithFees(
-        UnderlyingPayload memory underlyingPayload_
-    )
+    function totalUnderlyingWithFees(IVaultV2 vault_)
         external
         view
         returns (
@@ -21,7 +21,7 @@ interface IVaultV2Helper {
             uint256 fee1
         );
 
-    function totalUnderlying(UnderlyingPayload memory underlyingPayload_)
+    function totalUnderlying(IVaultV2 vault_)
         external
         view
         returns (uint256 amount0, uint256 amount1);
@@ -35,11 +35,4 @@ interface IVaultV2Helper {
         external
         view
         returns (Amount[] memory amount0s, Amount[] memory amount1s);
-
-    function getAmountsFromLiquidity(
-        address token0_,
-        address token1_,
-        Range memory range_,
-        address vaultV2_
-    ) external view returns (uint256 amount0, uint256 amount1);
 }

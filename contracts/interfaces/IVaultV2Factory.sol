@@ -1,17 +1,19 @@
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import {InitializeParams} from "../structs/SVaultV2.sol";
+import {InitializePayload} from "../structs/SVaultV2.sol";
 
 interface IVaultV2Factory {
     event VaultCreated(address indexed manager, address indexed vault);
+
+    event InitFactory(address implementation);
 
     event UpdateVaultImplementation(
         address previousImplementation,
         address newImplementation
     );
 
-    function deployVault(InitializeParams calldata params_)
+    function deployVault(InitializePayload calldata params_)
         external
         returns (address vault);
 

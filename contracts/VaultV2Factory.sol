@@ -1,18 +1,18 @@
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IVaultV2} from "./interfaces/IVaultV2.sol";
 import {EIP173Proxy} from "./vendor/proxy/EIP173Proxy.sol";
 import {VaultV2FactoryStorage} from "./abstract/VaultV2FactoryStorage.sol";
-import {InitializeParams} from "./structs/SVaultV2.sol";
+import {InitializePayload} from "./structs/SVaultV2.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {_getTokenOrder, _append} from "./functions/FVaultV2Factory.sol";
 
 contract VaultV2Factory is VaultV2FactoryStorage {
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    function deployVault(InitializeParams calldata params_)
+    function deployVault(InitializePayload calldata params_)
         external
         returns (address vault)
     {

@@ -18,10 +18,7 @@ async function main() {
     user
   )) as VaultV2;
 
-  const result = await vaultV2Resolver.standardRebalanceParams(
-    rangeWeights,
-    vaultV2
-  );
+  const result = await vaultV2Resolver.standardRebalance(rangeWeights, vaultV2);
 
   await vault.rebalance(result);
 }

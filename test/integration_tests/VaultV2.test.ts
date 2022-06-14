@@ -329,14 +329,10 @@ describe("Vault V2 integration test!!!", async function () {
     // #endregion mint arrakis token by Lp.
     // #region rebalance to deposit user token into the uniswap v3 pool.
 
-    const rebalanceParams = await vaultV2Resolver.standardRebalanceParams(
+    const rebalanceParams = await vaultV2Resolver.standardRebalance(
       [{ range: { lowerTick, upperTick, feeTier: 500 }, weight: 10000 }],
       vaultV2.address
     );
-
-    // console.log(rebalanceParams.removes);
-    // console.log(rebalanceParams.swap);
-    // console.log(rebalanceParams.deposits);
 
     await vaultV2.rebalance(rebalanceParams);
 

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
 import {
@@ -14,11 +14,11 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 import {FullMath} from "./vendor/uniswap/LiquidityAmounts.sol";
 import {VaultV2Storage} from "./abstract/VaultV2Storage.sol";
 import {
-    RebalanceParams,
+    Rebalance,
     Withdraw,
     UnderlyingPayload,
-    BurnData,
-    UnderlyingData
+    BurnLiquidity,
+    UnderlyingOutput
 } from "./structs/SVaultV2.sol";
 import {Twap} from "./libraries/Twap.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
@@ -53,12 +53,11 @@ contract VaultV2 is
         uint256 burnAmount1
     );
 
-    event Rebalance(
-        RebalanceParams indexed rebalance
-    );
-
     event FeesEarned(uint256 fee0, uint256 fee1);
     event FeesEarnedRebalance(uint256 fee0, uint256 fee1);
+
+    event WithdrawManagerBalance(uint256 amount0, uint256 amount1);
+    event WithdrawArrakisBalance(uint256 amount0, uint256 amount1);
 
     // solhint-disable-next-line no-empty-blocks
     constructor(IUniswapV3Factory factory_, address arrakisTreasury_) 
@@ -96,6 +95,7 @@ contract VaultV2 is
         nonReentrant
         returns (uint256 amount0, uint256 amount1)
     {
+        require(mintAmount_ > 0, "mint amount");
         uint256 totalSupply = totalSupply();
         (
             uint256 current0,
@@ -117,6 +117,8 @@ contract VaultV2 is
         amount0 = FullMath.mulDivRoundingUp(mintAmount_, current0, denominator);
         amount1 = FullMath.mulDivRoundingUp(mintAmount_, current1, denominator);
 
+        _mint(receiver_, mintAmount_);
+
         // transfer amounts owed to contract
         if (amount0 > 0) {
             token0.safeTransferFrom(msg.sender, address(this), amount0);
@@ -125,18 +127,20 @@ contract VaultV2 is
             token1.safeTransferFrom(msg.sender, address(this), amount1);
         }
 
-        _mint(receiver_, mintAmount_);
         emit FeesEarned(fee0, fee1);
         emit Minted(receiver_, mintAmount_, amount0, amount1);
     }
 
     // solhint-disable-next-line function-max-lines, code-complexity
     function burn(
-        BurnData[] calldata burns,
+        BurnLiquidity[] calldata burns,
         uint256 burnAmount_,
         address receiver_
     ) external nonReentrant returns (uint256 amount0, uint256 amount1) {
-        UnderlyingData memory underlying;
+        uint256 totalSupply = totalSupply();
+        require(totalSupply > 0, "total supply");
+        
+        UnderlyingOutput memory underlying;
         (
             underlying.amount0,
             underlying.amount1,
@@ -155,9 +159,6 @@ contract VaultV2 is
         underlying.leftOver1 = token1.balanceOf(address(this));
 
         {
-            uint256 totalSupply = totalSupply();
-            require(totalSupply > 0, "total supply");
-
             {
                 (uint256 fee0, uint256 fee1) = UniswapV3Amounts
                     .subtractAdminFees(
@@ -186,6 +187,8 @@ contract VaultV2 is
         if (
             underlying.leftOver0 >= amount0 && underlying.leftOver1 >= amount1
         ) {
+            _burn(msg.sender, burnAmount_);
+
             if (amount0 > 0) {
                 token0.safeTransfer(receiver_, amount0);
             }
@@ -194,13 +197,14 @@ contract VaultV2 is
                 token1.safeTransfer(receiver_, amount1);
             }
 
-            _burn(msg.sender, burnAmount_);
-
             emit Burned(receiver_, burnAmount_, amount0, amount1);
             return (amount0, amount1);
         }
 
+        // not at the begining of the function
         require(burns.length > 0, "burns");
+
+        _burn(msg.sender, burnAmount_);
 
         Withdraw memory total;
         {
@@ -246,8 +250,6 @@ contract VaultV2 is
             token1.safeTransfer(receiver_, amount1);
         }
 
-        _burn(msg.sender, burnAmount_);
-
         // For monitoring how much user burn LP token for getting their token back.
         emit LPBurned(msg.sender, total.burn0, total.burn1);
 
@@ -256,7 +258,7 @@ contract VaultV2 is
     }
 
     // solhint-disable-next-line function-max-lines, code-complexity
-    function rebalance(RebalanceParams calldata rebalanceParams_)
+    function rebalance(Rebalance calldata rebalanceParams_)
         external
         nonReentrant
     {
@@ -366,8 +368,6 @@ contract VaultV2 is
                 ""
             );
         }
-
-        emit Rebalance(rebalanceParams_);
     }
 
     function withdrawManagerBalance() external {
@@ -384,6 +384,8 @@ contract VaultV2 is
         if (amount1 > 0) {
             token1.safeTransfer(managerTreasury, amount1);
         }
+
+        emit WithdrawManagerBalance(amount0, amount1);
     }
 
     function withdrawArrakisBalance() external {
@@ -400,6 +402,8 @@ contract VaultV2 is
         if (amount1 > 0) {
             token1.safeTransfer(arrakisTreasury, amount1);
         }
+
+        emit WithdrawArrakisBalance(amount0, amount1);
     }
 
     function _withdraw(

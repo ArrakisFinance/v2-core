@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
 import {_getTokenOrder, _append} from "../../functions/FVaultV2Factory.sol";

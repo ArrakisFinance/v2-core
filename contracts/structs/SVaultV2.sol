@@ -4,17 +4,17 @@ pragma solidity 0.8.13;
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 
-struct PositionData {
+struct PositionLiquidity {
     uint128 liquidity;
     Range range;
 }
 
-struct BurnData {
+struct BurnLiquidity {
     uint128 liquidity;
     Range range;
 }
 
-struct SwapData {
+struct SwapPayload {
     bytes payload;
     address router;
     uint256 amountIn;
@@ -28,10 +28,10 @@ struct Range {
     uint24 feeTier;
 }
 
-struct RebalanceParams {
-    PositionData[] removes;
-    PositionData[] deposits;
-    SwapData swap;
+struct Rebalance {
+    PositionLiquidity[] removes;
+    PositionLiquidity[] deposits;
+    SwapPayload swap;
 }
 
 struct RangeWeight {
@@ -39,7 +39,7 @@ struct RangeWeight {
     uint256 weight; // should be between 0 and 100%
 }
 
-struct InitializeParams {
+struct InitializePayload {
     uint24[] feeTiers;
     address token0;
     address token1;
@@ -54,7 +54,9 @@ struct InitializeParams {
     uint24 twapDuration;
 }
 
-struct UnderlyingData {
+// #region internal Structs
+
+struct UnderlyingOutput {
     uint256 amount0;
     uint256 amount1;
     uint256 fee0;
@@ -63,9 +65,7 @@ struct UnderlyingData {
     uint256 leftOver1;
 }
 
-// #region internal Structs
-
-struct ComputeFeesEarned {
+struct FeesEarnedPayload {
     uint256 feeGrowthInsideLast;
     uint256 liquidity;
     int24 tick;

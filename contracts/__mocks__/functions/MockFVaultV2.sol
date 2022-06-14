@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
@@ -8,7 +8,7 @@ import {Twap} from "../../libraries/Twap.sol";
 import {Underlying as UnderlyingHelper} from "../../libraries/Underlying.sol";
 import {UniswapV3Amounts} from "../../libraries/UniswapV3Amounts.sol";
 import {Pool} from "../../libraries/Pool.sol";
-import {ComputeFeesEarned, UnderlyingPayload, RangeData, PositionUnderlying, Range} from "../../structs/SVaultV2.sol";
+import {FeesEarnedPayload, UnderlyingPayload, RangeData, PositionUnderlying, Range} from "../../structs/SVaultV2.sol";
 
 contract MockFVaultV2 {
     function subtractAdminFees(
@@ -59,7 +59,7 @@ contract MockFVaultV2 {
             );
     }
 
-    function computeFeesEarned(ComputeFeesEarned calldata computeFeesEarned_)
+    function computeFeesEarned(FeesEarnedPayload calldata computeFeesEarned_)
         external
         view
         returns (uint256 fee)

@@ -1,7 +1,7 @@
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import {IEIP173Proxy} from "./interfaces/IEIP173Proxy.sol";
+import {IEIP173Proxy} from "./vendor/proxy/interfaces/IEIP173Proxy.sol";
 import {IVaultV2Factory} from "./interfaces/IVaultV2Factory.sol";
 
 contract VaultV2FactoryHelper {

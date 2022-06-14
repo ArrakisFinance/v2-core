@@ -1,41 +1,51 @@
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IVaultV2Helper} from "./interfaces/IVaultV2Helper.sol";
+import {IVaultV2} from "./interfaces/IVaultV2.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
-import {UnderlyingPayload, UnderlyingData, Range, RangeData} from "./structs/SVaultV2.sol";
+import {UnderlyingPayload, UnderlyingOutput, Range, RangeData} from "./structs/SVaultV2.sol";
 import {Amount} from "./structs/SVaultV2Helper.sol";
 
-contract VaultV2Helper {
+contract VaultV2Helper is IVaultV2Helper {
     IUniswapV3Factory public immutable factory;
 
     constructor(IUniswapV3Factory factory_) {
         factory = factory_;
     }
 
-    function totalUnderlyingWithFeesAndLeftOver(
-        UnderlyingPayload calldata underlyingPayload_
-    ) external view returns (UnderlyingData memory underlying) {
+    function totalUnderlyingWithFeesAndLeftOver(IVaultV2 vault_)
+        external
+        view
+        returns (UnderlyingOutput memory underlying)
+    {
+        UnderlyingPayload memory underlyingPayload = UnderlyingPayload({
+            ranges: vault_.rangesArray(),
+            factory: vault_.factory(),
+            token0: address(vault_.token0()),
+            token1: address(vault_.token1()),
+            self: address(vault_)
+        });
+
         (
             underlying.amount0,
             underlying.amount1,
             underlying.fee0,
             underlying.fee1
-        ) = UnderlyingHelper.totalUnderlyingWithFees(underlyingPayload_);
+        ) = UnderlyingHelper.totalUnderlyingWithFees(underlyingPayload);
 
-        underlying.leftOver0 = IERC20(underlyingPayload_.token0).balanceOf(
-            underlyingPayload_.self
+        underlying.leftOver0 = IERC20(underlyingPayload.token0).balanceOf(
+            underlyingPayload.self
         );
-        underlying.leftOver1 = IERC20(underlyingPayload_.token1).balanceOf(
-            underlyingPayload_.self
+        underlying.leftOver1 = IERC20(underlyingPayload.token1).balanceOf(
+            underlyingPayload.self
         );
     }
 
-    function totalUnderlyingWithFees(
-        UnderlyingPayload calldata underlyingPayload_
-    )
+    function totalUnderlyingWithFees(IVaultV2 vault_)
         external
         view
         returns (
@@ -45,17 +55,33 @@ contract VaultV2Helper {
             uint256 fee1
         )
     {
+        UnderlyingPayload memory underlyingPayload = UnderlyingPayload({
+            ranges: vault_.rangesArray(),
+            factory: vault_.factory(),
+            token0: address(vault_.token0()),
+            token1: address(vault_.token1()),
+            self: address(vault_)
+        });
+
         (amount0, amount1, fee0, fee1) = UnderlyingHelper
-            .totalUnderlyingWithFees(underlyingPayload_);
+            .totalUnderlyingWithFees(underlyingPayload);
     }
 
-    function totalUnderlying(UnderlyingPayload calldata underlyingPayload_)
+    function totalUnderlying(IVaultV2 vault_)
         external
         view
         returns (uint256 amount0, uint256 amount1)
     {
+        UnderlyingPayload memory underlyingPayload = UnderlyingPayload({
+            ranges: vault_.rangesArray(),
+            factory: vault_.factory(),
+            token0: address(vault_.token0()),
+            token1: address(vault_.token1()),
+            self: address(vault_)
+        });
+
         (amount0, amount1, , ) = UnderlyingHelper.totalUnderlyingWithFees(
-            underlyingPayload_
+            underlyingPayload
         );
     }
 

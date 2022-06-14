@@ -1,16 +1,16 @@
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {InitializeParams} from "../structs/SVaultV2.sol";
+import {InitializePayload} from "../structs/SVaultV2.sol";
 import {Range} from "../structs/SVaultV2.sol";
 
 interface IVaultV2 {
     function initialize(
         string calldata name_,
         string calldata symbol_,
-        InitializeParams calldata params_
+        InitializePayload calldata params_
     ) external;
 
     function totalSupply() external view returns (uint256);

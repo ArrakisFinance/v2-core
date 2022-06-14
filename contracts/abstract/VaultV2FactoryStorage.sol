@@ -1,8 +1,8 @@
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
 import {IVaultV2Factory} from "../interfaces/IVaultV2Factory.sol";
-import {IEIP173Proxy} from "../interfaces/IEIP173Proxy.sol";
+import {IEIP173Proxy} from "../vendor/proxy/interfaces/IEIP173Proxy.sol";
 import {OwnableUninitialized} from "./OwnableUninitialized.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -48,6 +48,8 @@ abstract contract VaultV2FactoryStorage is
     {
         vaultImplementation = implementation_;
         _owner = _owner_;
+
+        emit InitFactory(vaultImplementation);
     }
 
     // #region admin set functions
