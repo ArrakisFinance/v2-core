@@ -3,8 +3,13 @@ import { VaultV2, VaultV2Resolver } from "../typechain";
 import { RangeWeightStruct } from "../typechain/contracts/VaultV2Resolver";
 
 //standard mint.
-const rangeWeights: RangeWeightStruct[] = []; // list of rangeWeigth.
-const vaultV2 = "";
+const rangeWeights: RangeWeightStruct[] = [
+  {
+    range: { lowerTick: "-81120", upperTick: "-76000", feeTier: 500 },
+    weight: "5000",
+  },
+]; // list of rangeWeigth.
+const vaultV2 = "0xe6F6f62a2e2802980dA493FfD14b4aaFE71972D0";
 
 async function main() {
   const [user] = await ethers.getSigners();

@@ -241,13 +241,18 @@ abstract contract VaultV2Storage is
             (bool exist, ) = rangeExist(ranges_[i]);
             require(!exist, "range");
             // check that the pool exist on Uniswap V3.
-            require(
-                factory.getPool(
+            address pool = factory.getPool(
                     token0Addr_,
                     token1Addr_,
                     ranges_[i].feeTier
-                ) != address(0),
+                );
+            require(
+                pool != address(0),
                 "uniswap pool does not exist"
+            );
+            require(
+                _pools.contains(pool),
+                "pool"
             );
             require(
                 Pool.validateTickSpacing(

@@ -2,8 +2,8 @@ import { ethers } from "hardhat";
 import { VaultV2, VaultV2Resolver } from "../typechain";
 
 // This script use standard burn method. Not optimized.
-const vaultV2 = ""; // vault v2 address
-const amountToBurn = ethers.constants.Zero; // amount of Arrakis Vault token you want to burn.
+const vaultV2 = "0xe6F6f62a2e2802980dA493FfD14b4aaFE71972D0"; // vault v2 address
+const amountToBurn = "227333571037108851"; // amount of Arrakis Vault token you want to burn.
 
 async function main() {
   const [user] = await ethers.getSigners();

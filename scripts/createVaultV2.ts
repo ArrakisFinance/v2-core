@@ -9,17 +9,17 @@ import { getNearestTick } from "../src/utils";
 
 // #region input values.
 
-const feeTier = 0; // uniswap v3 feeTier.
-const token0 = ""; // token0 address. token0 < token1
-const token1 = ""; // token1 address. token0 < token1
-const owner = ""; // owner address.
-const managerTreasury = ""; // manager addres.
+const feeTier = 500; // uniswap v3 feeTier.
+const token0 = "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270"; // token0 address. token0 < token1 USDC on polygon
+const token1 = "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619"; // token1 address. token0 < token1 WETH on polygon
+let owner = ""; // owner address.
+let managerTreasury = ""; // manager addres.
 const managerFeeBPS = 100; // manager fee.
 const maxTwapDeviation = 100; // twap deviation max value.
 const twapDuration = 2000; // number of seconds.
 
-const lowerPrice = ethers.constants.Zero; // lower price limit.
-const upperPrice = ethers.constants.Zero; // upper price limit.
+const lowerPrice = ethers.utils.parseUnits("0.0003", 18); // lower price limit.
+const upperPrice = ethers.utils.parseUnits("0.0005", 18); // upper price limit.
 
 // #endregion input values.
 
@@ -43,6 +43,13 @@ async function main() {
     await uniswapV3Factory.getPool(token0, token1, feeTier),
     user
   )) as IUniswapV3Pool;
+
+  // #region set owner and manager. Can be custmized.
+
+  owner = operator;
+  managerTreasury = operator;
+
+  // #endregion set owner and manager. Can be customized.
 
   // #region ERC20 contracts.
 

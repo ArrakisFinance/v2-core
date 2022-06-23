@@ -2,9 +2,9 @@ import { ethers } from "hardhat";
 import { VaultV2, VaultV2Resolver } from "../typechain";
 import { BigNumber } from "ethers";
 
-const vaultV2 = ""; // vault V2 address
-const amount0 = 0; // max amount of token0.
-const amount1 = 0; // max amount of token1.
+const vaultV2 = "0xe6F6f62a2e2802980dA493FfD14b4aaFE71972D0"; // vault V2 address
+const amount0 = ethers.utils.parseUnits("2", 18); // max amount of token0.
+const amount1 = ethers.utils.parseUnits("0.001", 18); // max amount of token1.
 
 async function main() {
   const [user] = await ethers.getSigners();
@@ -52,8 +52,8 @@ async function main() {
   if (!(token0Balance.gte(result.amount0) && token1Balance.gte(result.amount1)))
     throw new Error("Balance not enough");
 
-  await token0Contract.approv(vault.address, result.amount0);
-  await token1Contract.approv(vault.address, result.amount1);
+  await token0Contract.approve(vault.address, result.amount0);
+  await token1Contract.approve(vault.address, result.amount1);
 
   await vault.mint(result.mintAmount, userAddr);
 }

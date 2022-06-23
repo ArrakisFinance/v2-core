@@ -358,6 +358,9 @@ contract VaultV2 is
                 )
             );
 
+            (bool exist, ) = rangeExist(rebalanceParams_.deposits[i].range);
+            require(exist, "not range");
+
             Twap.checkDeviation(pool, twapDuration, maxTwapDeviation);
 
             pool.mint(
