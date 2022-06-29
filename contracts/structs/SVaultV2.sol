@@ -16,6 +16,7 @@ struct BurnLiquidity {
 
 struct SwapPayload {
     bytes payload;
+    address pool;
     address router;
     uint256 amountIn;
     uint256 expectedMinReturn;
@@ -52,6 +53,7 @@ struct InitializePayload {
     uint16 managerFeeBPS;
     int24 maxTwapDeviation;
     uint24 twapDuration;
+    uint24 maxSlippage;
 }
 
 // #region internal Structs

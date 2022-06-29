@@ -153,6 +153,7 @@ describe("Vault V2 integration test!!!", async function () {
       managerFeeBPS: 100,
       maxTwapDeviation: 100,
       twapDuration: 2000,
+      maxSlippage: 100,
     });
 
     const rc = await tx.wait();

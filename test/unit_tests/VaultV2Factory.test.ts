@@ -96,6 +96,7 @@ describe("Factory function unit test", function () {
       managerFeeBPS: 100,
       maxTwapDeviation: 100,
       twapDuration: 2000,
+      maxSlippage: 100,
     });
 
     const rc = await tx.wait();
@@ -156,6 +157,7 @@ describe("Factory function unit test", function () {
       managerFeeBPS: 100,
       maxTwapDeviation: 100,
       twapDuration: 2000,
+      maxSlippage: 100,
     });
 
     expect((await vaultV2Factory.getDeployerVaults()).length).to.be.eq(1);
@@ -200,6 +202,7 @@ describe("Factory function unit test", function () {
       managerFeeBPS: 100,
       maxTwapDeviation: 100,
       twapDuration: 2000,
+      maxSlippage: 100,
     });
 
     expect((await vaultV2Factory.getDeployers()).length).to.be.eq(2);
@@ -243,6 +246,7 @@ describe("Factory function unit test", function () {
       managerFeeBPS: 100,
       maxTwapDeviation: 100,
       twapDuration: 2000,
+      maxSlippage: 100,
     });
 
     expect(await vaultV2Factory.numVaults()).to.be.eq(1);
@@ -286,6 +290,7 @@ describe("Factory function unit test", function () {
       managerFeeBPS: 100,
       maxTwapDeviation: 100,
       twapDuration: 2000,
+      maxSlippage: 100,
     });
 
     expect(await vaultV2Factory.numVaultsByDeployer(userAddr)).to.be.eq(1);
@@ -335,6 +340,7 @@ describe("Factory function unit test", function () {
       managerFeeBPS: 100,
       maxTwapDeviation: 100,
       twapDuration: 2000,
+      maxSlippage: 100,
     });
 
     expect(

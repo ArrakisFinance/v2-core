@@ -10,6 +10,7 @@ import {
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {FullMath} from "./vendor/uniswap/LiquidityAmounts.sol";
 import {VaultV2Storage} from "./abstract/VaultV2Storage.sol";
@@ -305,6 +306,8 @@ contract VaultV2 is
 
         if (rebalanceParams_.swap.amountIn > 0) {
             {
+                require(!_pools.contains(rebalanceParams_.swap.pool), "no pool");
+
                 uint256 balance0Before = token0.balanceOf(address(this));
                 uint256 balance1Before = token1.balanceOf(address(this));
 
@@ -325,7 +328,24 @@ contract VaultV2 is
                 uint256 balance0After = token0.balanceOf(address(this));
                 uint256 balance1After = token1.balanceOf(address(this));
 
-                if (rebalanceParams_.swap.zeroForOne)
+                uint8 token0Decimals = ERC20(address(token0)).decimals();
+                uint8 token1Decimals = ERC20(address(token1)).decimals();
+                if (rebalanceParams_.swap.zeroForOne) {
+                    require(
+                        FullMath.mulDiv(
+                            rebalanceParams_.swap.expectedMinReturn,
+                            10**token0Decimals,
+                            rebalanceParams_.swap.amountIn
+                        ) > FullMath.mulDiv(
+                            Twap.getPrice0(
+                                IUniswapV3Pool(rebalanceParams_.swap.pool),
+                                twapDuration
+                            ),
+                            maxSlippage,
+                            10000
+                        ),
+                        "slippage"
+                    );
                     require(
                         (balance1After >=
                             balance1Before +
@@ -335,7 +355,23 @@ contract VaultV2 is
                                     rebalanceParams_.swap.amountIn),
                         "swap failed"
                     );
-                else
+                }
+                else {
+                    require(
+                        FullMath.mulDiv(
+                            rebalanceParams_.swap.expectedMinReturn,
+                            10**token1Decimals,
+                            rebalanceParams_.swap.amountIn
+                        ) > FullMath.mulDiv(
+                            Twap.getPrice1(
+                                IUniswapV3Pool(rebalanceParams_.swap.pool),
+                                twapDuration
+                            ),
+                            maxSlippage,
+                            10000
+                        ),
+                        "slippage"
+                    );
                     require(
                         (balance0After >=
                             balance0Before +
@@ -345,6 +381,7 @@ contract VaultV2 is
                                     rebalanceParams_.swap.amountIn),
                         "swap failed"
                     );
+                }
             }
         }
 

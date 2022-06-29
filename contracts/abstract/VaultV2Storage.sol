@@ -59,6 +59,8 @@ abstract contract VaultV2Storage is
     int24 public maxTwapDeviation;
     uint24 public twapDuration;
 
+    uint24 public maxSlippage;
+
     // #endregion Twap
 
     EnumerableSet.AddressSet internal _operators;
@@ -85,6 +87,8 @@ abstract contract VaultV2Storage is
 
         require(params_.init0 > 0, "init0");
         require(params_.init1 > 0, "init1");
+
+        require(params_.maxSlippage > 0, "max slippage 0");
 
         if(params_.managerTreasury == address(0))
             require(params_.managerFeeBPS == 0, "no Address Zero Manager");
@@ -124,6 +128,7 @@ abstract contract VaultV2Storage is
         managerFeeBPS = params_.managerFeeBPS;
         maxTwapDeviation = params_.maxTwapDeviation;
         twapDuration = params_.twapDuration;
+        maxSlippage = params_.maxSlippage;
     }
 
     // #region setter functions
