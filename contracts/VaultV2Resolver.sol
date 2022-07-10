@@ -53,6 +53,9 @@ contract VaultV2Resolver is IVaultV2Resolver {
                 vaultV2_
             );
 
+            PositionLiquidity[] memory pl = new PositionLiquidity[](ranges.length);
+            uint256 numberOfPosLiq;
+
             for (uint256 i = 0; i < ranges.length; i++) {
                 uint128 liquidity;
                 {
@@ -72,10 +75,22 @@ contract VaultV2Resolver is IVaultV2Resolver {
                 }
 
                 if (liquidity > 0)
-                    rebalanceParams.removes[i] = PositionLiquidity({
+                    numberOfPosLiq++;
+                    
+                pl[i] = PositionLiquidity({
                         liquidity: liquidity,
                         range: ranges[i]
                     });
+            }
+
+            rebalanceParams.removes = new PositionLiquidity[](numberOfPosLiq);
+            uint256 j;
+
+            for (uint256 i = 0; i < pl.length; i++) {
+                if(pl[i].liquidity > 0) {
+                    rebalanceParams.removes[j] = pl[i];
+                    j++;
+                }
             }
         }
 

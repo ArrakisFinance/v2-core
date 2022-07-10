@@ -19,7 +19,8 @@ import {
     Withdraw,
     UnderlyingPayload,
     BurnLiquidity,
-    UnderlyingOutput
+    UnderlyingOutput,
+    Range
 } from "./structs/SVaultV2.sol";
 import {Twap} from "./libraries/Twap.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
@@ -258,12 +259,30 @@ contract VaultV2 is
         emit Burned(receiver_, burnAmount_, amount0, amount1);
     }
 
-    // solhint-disable-next-line function-max-lines, code-complexity
+    function addRangeAndRebalance(Range[] calldata ranges_, Rebalance calldata rebalanceParams_)
+        external
+    {
+        require(
+            _operators.contains(msg.sender)
+            , "no operator");
+        _addRanges(ranges_, address(token0), address(token1));
+        _rebalance(rebalanceParams_);
+    }
+
     function rebalance(Rebalance calldata rebalanceParams_)
         external
+    {
+        require(
+            _operators.contains(msg.sender)
+            , "no operator");
+        _rebalance(rebalanceParams_);
+    }
+
+    // solhint-disable-next-line function-max-lines, code-complexity
+    function _rebalance(Rebalance calldata rebalanceParams_)
+        internal
         nonReentrant
     {
-        require(_operators.contains(msg.sender), "no operator");
         // Burns
         uint256 totalFee0 = 0;
         uint256 totalFee1 = 0;

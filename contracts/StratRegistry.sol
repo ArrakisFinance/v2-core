@@ -6,11 +6,14 @@ import {IVaultV2} from "./interfaces/IVaultV2.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract StratRegistry is Ownable {
+    bytes32 public constant STRING_EMPTY = keccak256(abi.encodePacked(""));
+
     // #region events.
 
     event AddStratType(string indexed stratType);
     event RemoveStratType(string indexed stratType);
 
+    // #region events related to Vault.
     event SubscribeRebalance(address indexed vaultV2, string stratType);
     event UnSubscribe(address indexed vaultV2);
     event ChangeSubscription(
@@ -18,6 +21,7 @@ contract StratRegistry is Ownable {
         string oldStratType,
         string newStratType
     );
+    // #endregion events related to Vault.
 
     // #endregion events.
 
@@ -83,6 +87,10 @@ contract StratRegistry is Ownable {
         onlyVaultManager(vaultV2_)
         onlyVaultV2(vaultV2_)
     {
+        require(
+            keccak256(abi.encodePacked(vaultByStrat[vaultV2_])) == STRING_EMPTY,
+            "subscribe"
+        );
         require(stratExist[stratType_], "no strat");
 
         vaultByStrat[vaultV2_] = stratType_;
@@ -95,8 +103,7 @@ contract StratRegistry is Ownable {
         onlyVaultV2(vaultV2_)
     {
         require(
-            keccak256(abi.encode(vaultByStrat[vaultV2_])) !=
-                keccak256(abi.encode("")),
+            keccak256(abi.encodePacked(vaultByStrat[vaultV2_])) != STRING_EMPTY,
             "no subscribe"
         );
 
