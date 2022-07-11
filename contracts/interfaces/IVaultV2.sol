@@ -34,4 +34,6 @@ interface IVaultV2 {
     function arrakisFeeBPS() external view returns (uint16);
 
     function managerTreasury() external view returns (address);
+
+    function twapDuration() external view returns (uint24);
 }

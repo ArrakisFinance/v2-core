@@ -25,11 +25,13 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     args: [
       addresses.UniswapV3Factory,
       (await ethers.getContract("VaultV2Helper")).address,
+      addresses.SwapRouter,
     ],
     libraries: {
       Position: (await ethers.getContract("Position")).address,
       Underlying: (await ethers.getContract("Underlying")).address,
       UniswapV3Amounts: (await ethers.getContract("UniswapV3Amounts")).address,
+      Twap: (await ethers.getContract("Twap")).address,
     },
     log: hre.network.name != "hardhat" ? true : false,
   });
@@ -51,5 +53,6 @@ func.dependencies = [
   "Position",
   "Twap",
   "Underlying",
+  "Twap",
   "UniswapV3Amounts",
 ];
