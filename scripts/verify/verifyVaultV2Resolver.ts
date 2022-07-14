@@ -9,6 +9,7 @@ async function main() {
     constructorArguments: [
       addresses.UniswapV3Factory,
       (await hre.ethers.getContract("VaultV2Helper")).address,
+      addresses.SwapRouter,
     ],
     // other args
     libraries: {
