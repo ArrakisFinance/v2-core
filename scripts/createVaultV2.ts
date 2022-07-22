@@ -17,6 +17,7 @@ let managerTreasury = ""; // manager addres.
 const managerFeeBPS = 100; // manager fee.
 const maxTwapDeviation = 100; // twap deviation max value.
 const twapDuration = 2000; // number of seconds.
+const maxSlippage = 100;
 
 const lowerPrice = ethers.utils.parseUnits("0.0003", 18); // lower price limit.
 const upperPrice = ethers.utils.parseUnits("0.0005", 18); // upper price limit.
@@ -125,6 +126,7 @@ async function main() {
     managerFeeBPS,
     maxTwapDeviation,
     twapDuration,
+    maxSlippage,
   });
 
   const rc = await tx.wait();
