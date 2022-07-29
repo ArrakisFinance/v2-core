@@ -17,9 +17,10 @@ let managerTreasury = ""; // manager addres.
 const managerFeeBPS = 100; // manager fee.
 const maxTwapDeviation = 100; // twap deviation max value.
 const twapDuration = 2000; // number of seconds.
+const maxSlippage = 100; // number of seconds.
 
-const lowerPrice = ethers.utils.parseUnits("0.0003", 18); // lower price limit.
-const upperPrice = ethers.utils.parseUnits("0.0005", 18); // upper price limit.
+const lowerPrice = ethers.utils.parseUnits("0.0001", 18); // lower price limit.
+const upperPrice = ethers.utils.parseUnits("0.001", 18); // upper price limit.
 
 // #endregion input values.
 
@@ -104,6 +105,9 @@ async function main() {
     ethers.utils.parseUnits("1", 18)
   );
 
+  console.log(res.amount0.toString());
+  console.log(res.amount1.toString());
+
   // #endregion get tick from price.
 
   const tx = await vaultV2Factory.deployVault({
@@ -125,6 +129,7 @@ async function main() {
     managerFeeBPS,
     maxTwapDeviation,
     twapDuration,
+    maxSlippage,
   });
 
   const rc = await tx.wait();
