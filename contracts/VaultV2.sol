@@ -166,7 +166,7 @@ contract VaultV2 is
                     .subtractAdminFees(
                         underlying.fee0,
                         underlying.fee1,
-                        managerFeeBPS,
+                        manager.managerFeeBPS(),
                         arrakisFeeBPS
                     );
                 underlying.amount0 -= underlying.fee0 - fee0;
@@ -239,7 +239,7 @@ contract VaultV2 is
             (total.fee0, total.fee1) = UniswapV3Amounts.subtractAdminFees(
                 total.fee0,
                 total.fee1,
-                managerFeeBPS,
+                manager.managerFeeBPS(),
                 arrakisFeeBPS
             );
         }
@@ -259,23 +259,30 @@ contract VaultV2 is
         emit Burned(receiver_, burnAmount_, amount0, amount1);
     }
 
-    function addRangeAndRebalance(Range[] calldata ranges_, Rebalance calldata rebalanceParams_)
+    // function addRangeAndRebalance(
+    //         Range[] calldata ranges_,
+    //         Rebalance calldata rebalanceParams_,
+    //         Range[] calldata rangesToRemove_
+    //     )
+    //     external
+    //     onlyManager
+    // {
+    //     _addRanges(ranges_, address(token0), address(token1));
+    //     _rebalance(rebalanceParams_);
+    //     _removeRanges(rangesToRemove_);
+    // }
+
+    function rebalance(
+        Range[] calldata ranges_,
+        Rebalance calldata rebalanceParams_,
+        Range[] calldata rangesToRemove_
+    )
         external
+        onlyManager
     {
-        require(
-            _operators.contains(msg.sender)
-            , "no operator");
         _addRanges(ranges_, address(token0), address(token1));
         _rebalance(rebalanceParams_);
-    }
-
-    function rebalance(Rebalance calldata rebalanceParams_)
-        external
-    {
-        require(
-            _operators.contains(msg.sender)
-            , "no operator");
-        _rebalance(rebalanceParams_);
+        _removeRanges(rangesToRemove_);
     }
 
     // solhint-disable-next-line function-max-lines, code-complexity
@@ -314,7 +321,7 @@ contract VaultV2 is
             (totalFee0, totalFee1) = UniswapV3Amounts.subtractAdminFees(
                 totalFee0,
                 totalFee1,
-                managerFeeBPS,
+                manager.managerFeeBPS(),
                 arrakisFeeBPS
             );
 
@@ -437,11 +444,11 @@ contract VaultV2 is
         managerBalance1 = 0;
 
         if (amount0 > 0) {
-            token0.safeTransfer(managerTreasury, amount0);
+            token0.safeTransfer(address(manager), amount0);
         }
 
         if (amount1 > 0) {
-            token1.safeTransfer(managerTreasury, amount1);
+            token1.safeTransfer(address(manager), amount1);
         }
 
         emit WithdrawManagerBalance(amount0, amount1);
@@ -499,6 +506,7 @@ contract VaultV2 is
     }
 
     function _applyFees(uint256 fee0_, uint256 fee1_) internal {
+        uint16 managerFeeBPS = manager.managerFeeBPS();
         managerBalance0 += (fee0_ * managerFeeBPS) / 10000;
         managerBalance1 += (fee1_ * managerFeeBPS) / 10000;
         arrakisBalance0 += (fee0_ * arrakisFeeBPS) / 10000;

@@ -46,11 +46,9 @@ struct InitializePayload {
     address token1;
     address owner;
     address[] operators;
-    Range[] ranges;
     uint256 init0;
     uint256 init1;
-    address managerTreasury;
-    uint16 managerFeeBPS;
+    address manager;
     int24 maxTwapDeviation;
     uint24 twapDuration;
     uint24 maxSlippage;

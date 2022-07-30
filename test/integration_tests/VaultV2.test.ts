@@ -11,6 +11,7 @@ import {
 import { Addresses, getAddresses } from "../../src/addresses";
 import { Signer } from "ethers";
 import { Contract } from "ethers";
+import { ManagerProxyMock } from "../../typechain/contracts/__mocks__/ManagerProxyMock";
 
 const { ethers, deployments } = hre;
 
@@ -31,6 +32,8 @@ describe("Vault V2 integration test!!!", async function () {
   let addresses: Addresses;
   let lowerTick: number;
   let upperTick: number;
+
+  let managerProxyMock: ManagerProxyMock;
 
   beforeEach("Setting up for V2 functions integration test", async function () {
     if (hre.network.name !== "hardhat") {
@@ -58,6 +61,10 @@ describe("Vault V2 integration test!!!", async function () {
       addresses.UniswapV3Factory,
       user
     )) as IUniswapV3Factory;
+
+    managerProxyMock = (await ethers.getContract(
+      "ManagerProxyMock"
+    )) as ManagerProxyMock;
 
     uniswapV3Pool = (await ethers.getContractAt(
       "IUniswapV3Pool",
@@ -140,17 +147,9 @@ describe("Vault V2 integration test!!!", async function () {
       token1: addresses.WETH,
       owner: userAddr,
       operators: [userAddr],
-      ranges: [
-        {
-          lowerTick: lowerTick,
-          upperTick: upperTick,
-          feeTier: 500,
-        },
-      ],
       init0: res.amount0,
       init1: res.amount1,
-      managerTreasury: userAddr,
-      managerFeeBPS: 100,
+      manager: managerProxyMock.address,
       maxTwapDeviation: 100,
       twapDuration: 2000,
       maxSlippage: 100,
@@ -335,7 +334,12 @@ describe("Vault V2 integration test!!!", async function () {
       vaultV2.address
     );
 
-    await vaultV2.rebalance(rebalanceParams);
+    await managerProxyMock.rebalance(
+      vaultV2.address,
+      [{ lowerTick, upperTick, feeTier: 500 }],
+      rebalanceParams,
+      []
+    );
 
     // #endregion rebalance to deposit user token into the uniswap v3 pool.
     // #region burn token to get back token to user.

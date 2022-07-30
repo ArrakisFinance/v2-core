@@ -112,17 +112,9 @@ describe("Strategy registry unit test", function () {
       token1: addresses.WETH,
       owner: userAddr,
       operators: [userAddr],
-      ranges: [
-        {
-          lowerTick: lowerTick,
-          upperTick: upperTick,
-          feeTier: 500,
-        },
-      ],
       init0: res.amount0,
       init1: res.amount1,
-      managerTreasury: userAddr,
-      managerFeeBPS: 100,
+      manager: userAddr,
       maxTwapDeviation: 100,
       twapDuration: 2000,
       maxSlippage: 100,

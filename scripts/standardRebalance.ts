@@ -25,7 +25,11 @@ async function main() {
 
   const result = await vaultV2Resolver.standardRebalance(rangeWeights, vaultV2);
 
-  await vault.rebalance(result);
+  await vault.rebalance(
+    [{ lowerTick: "-81120", upperTick: "-76000", feeTier: 500 }],
+    result,
+    []
+  );
 }
 
 main()

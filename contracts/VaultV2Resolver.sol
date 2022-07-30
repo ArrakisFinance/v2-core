@@ -298,7 +298,7 @@ contract VaultV2Resolver is IVaultV2Resolver {
                     .subtractAdminFees(
                         underlying.fee0,
                         underlying.fee1,
-                        vaultV2_.managerFeeBPS(),
+                        vaultV2_.manager().managerFeeBPS(),
                         vaultV2_.arrakisFeeBPS()
                     );
                 underlying.amount0 += underlying.leftOver0 + fee0;

@@ -13,6 +13,7 @@ import {
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {Pool} from "../libraries/Pool.sol";
 import {Range, InitializePayload} from "../structs/SVaultV2.sol";
+import {IManagerProxy} from "../interfaces/IManagerProxy.sol";
 
 // solhint-disable-next-line max-states-count
 abstract contract VaultV2Storage is
@@ -47,8 +48,7 @@ abstract contract VaultV2Storage is
 
     // #region manager data
 
-    address public managerTreasury;
-    uint16 public managerFeeBPS;
+    IManagerProxy public manager;
     uint256 public managerBalance0;
     uint256 public managerBalance1;
 
@@ -65,6 +65,13 @@ abstract contract VaultV2Storage is
 
     EnumerableSet.AddressSet internal _operators;
     EnumerableSet.AddressSet internal _pools;
+
+    modifier onlyManager() {
+        require(
+           address(manager) == msg.sender
+            , "no manager");
+        _;
+    }
 
     constructor(IUniswapV3Factory factory_, address arrakisTreasury_) {
         require(address(factory_) != address(0), "factory");
@@ -83,17 +90,13 @@ abstract contract VaultV2Storage is
         require(params_.token0 != address(0), "token0");
         require(params_.token1 != address(0), "token1");
         require(params_.operators.length > 0, "no operators");
-        require(params_.ranges.length > 0, "no ranges");
 
         require(params_.init0 > 0, "init0");
         require(params_.init1 > 0, "init1");
 
         require(params_.maxSlippage > 0, "max slippage 0");
 
-        if(params_.managerTreasury == address(0))
-            require(params_.managerFeeBPS == 0, "no Address Zero Manager");
-        else
-            require(params_.managerFeeBPS <= 10000, "managerFeeBPS");
+        require(params_.manager != address(0), "no Address Zero Manager");
 
         require(params_.maxTwapDeviation > 0, "maxTwapDeviation");
         require(params_.twapDuration > 0, "maxTwapDeviation");
@@ -119,13 +122,10 @@ abstract contract VaultV2Storage is
 
         _addOperators(params_.operators);
 
-        _addRanges(params_.ranges, params_.token0, params_.token1);
-
         init0 = params_.init0;
         init1 = params_.init1;
 
-        managerTreasury = params_.managerTreasury;
-        managerFeeBPS = params_.managerFeeBPS;
+        manager = IManagerProxy(params_.manager);
         maxTwapDeviation = params_.maxTwapDeviation;
         twapDuration = params_.twapDuration;
         maxSlippage = params_.maxSlippage;
@@ -159,21 +159,8 @@ abstract contract VaultV2Storage is
         }
     }
 
-    function addRanges(Range[] calldata ranges_) external onlyOwner {
-        _addRanges(ranges_, address(token0), address(token1));
-    }
-
-    function removeRanges(Range[] calldata ranges_) external onlyOwner {
-        for (uint256 i = 0; i < ranges_.length; i++) {
-            (bool exist, uint256 index) = rangeExist(ranges_[i]);
-            require(exist, "not range");
-
-            delete ranges[index];
-        }
-    }
-
-    function setManagerTreasury(address managerTreasury_) external onlyOwner {
-        managerTreasury = managerTreasury_;
+    function setManager(IManagerProxy manager_) external onlyOwner {
+        manager = manager_;
     }
 
     function setMaxTwapDeviation(int24 maxTwapDeviation_) external onlyOwner {
@@ -270,6 +257,15 @@ abstract contract VaultV2Storage is
             );
 
             ranges.push(ranges_[i]);
+        }
+    }
+
+    function _removeRanges(Range[] calldata ranges_) internal {
+        for (uint256 i = 0; i < ranges_.length; i++) {
+            (bool exist, uint256 index) = rangeExist(ranges_[i]);
+            require(exist, "not range");
+
+            delete ranges[index];
         }
     }
 

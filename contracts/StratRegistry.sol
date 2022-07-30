@@ -39,7 +39,7 @@ contract StratRegistry is Ownable {
 
     modifier onlyVaultV2(address vaultV2_) {
         address[] memory vaults = _factory.getVaultsByDeployer(
-            IVaultV2(vaultV2_).managerTreasury()
+            address(IVaultV2(vaultV2_).manager())
         );
 
         bool contain = false;
@@ -56,7 +56,7 @@ contract StratRegistry is Ownable {
 
     modifier onlyVaultManager(address vaultV2_) {
         require(
-            IVaultV2(vaultV2_).managerTreasury() == msg.sender,
+            address(IVaultV2(vaultV2_).manager()) == msg.sender,
             "not vault manager"
         );
         _;

@@ -25,10 +25,10 @@ contract VaultV2Factory is VaultV2FactoryStorage {
             params_
         );
 
-        _deployers.add(params_.managerTreasury);
-        _vaults[params_.managerTreasury].add(vault);
+        _deployers.add(params_.manager);
+        _vaults[params_.manager].add(vault);
         index += 1;
-        emit VaultCreated(params_.managerTreasury, vault);
+        emit VaultCreated(params_.manager, vault);
     }
 
     // #region public external view functions.
