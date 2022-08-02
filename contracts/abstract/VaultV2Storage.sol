@@ -3,6 +3,7 @@ pragma solidity 0.8.13;
 
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IManagerProxyV2} from "../interfaces/IManagerProxyV2.sol";
 import {OwnableUninitialized} from "./OwnableUninitialized.sol";
 import {
     ERC20Upgradeable
@@ -13,7 +14,6 @@ import {
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {Pool} from "../libraries/Pool.sol";
 import {Range, InitializePayload} from "../structs/SVaultV2.sol";
-import {IManagerProxy} from "../interfaces/IManagerProxy.sol";
 
 // solhint-disable-next-line max-states-count
 abstract contract VaultV2Storage is
@@ -48,7 +48,7 @@ abstract contract VaultV2Storage is
 
     // #region manager data
 
-    IManagerProxy public manager;
+    IManagerProxyV2 public manager;
     uint256 public managerBalance0;
     uint256 public managerBalance1;
 
@@ -125,7 +125,7 @@ abstract contract VaultV2Storage is
         init0 = params_.init0;
         init1 = params_.init1;
 
-        manager = IManagerProxy(params_.manager);
+        manager = IManagerProxyV2(params_.manager);
         maxTwapDeviation = params_.maxTwapDeviation;
         twapDuration = params_.twapDuration;
         maxSlippage = params_.maxSlippage;
@@ -159,7 +159,7 @@ abstract contract VaultV2Storage is
         }
     }
 
-    function setManager(IManagerProxy manager_) external onlyOwner {
+    function setManager(IManagerProxyV2 manager_) external onlyOwner {
         manager = manager_;
     }
 

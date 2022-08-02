@@ -3,8 +3,9 @@ pragma solidity 0.8.13;
 
 import {IVaultV2} from "./../interfaces/IVaultV2.sol";
 import {Range, Rebalance} from "./../structs/SVaultV2.sol";
+import {IManagerProxyV2} from "../interfaces/IManagerProxyV2.sol";
 
-contract ManagerProxyMock {
+contract ManagerProxyMock is IManagerProxyV2 {
     uint16 public constant managerFeeBPS = 100;
 
     function rebalance(
@@ -18,5 +19,10 @@ contract ManagerProxyMock {
             rebalanceParams_,
             rangesToRemove_
         );
+    }
+
+    // solhint-disable-next-line no-empty-blocks
+    function fundVaultBalance(address vault) external payable {
+        // empty
     }
 }

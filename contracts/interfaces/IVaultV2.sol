@@ -3,7 +3,7 @@ pragma solidity 0.8.13;
 
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IManagerProxy} from "./IManagerProxy.sol";
+import {IManagerProxyV2} from "./IManagerProxyV2.sol";
 import {InitializePayload} from "../structs/SVaultV2.sol";
 import {Range, Rebalance} from "../structs/SVaultV2.sol";
 
@@ -42,7 +42,7 @@ interface IVaultV2 {
 
     function arrakisFeeBPS() external view returns (uint16);
 
-    function manager() external view returns (IManagerProxy);
+    function manager() external view returns (IManagerProxyV2);
 
     function twapDuration() external view returns (uint24);
 }
