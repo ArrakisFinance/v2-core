@@ -259,19 +259,6 @@ contract VaultV2 is
         emit Burned(receiver_, burnAmount_, amount0, amount1);
     }
 
-    // function addRangeAndRebalance(
-    //         Range[] calldata ranges_,
-    //         Rebalance calldata rebalanceParams_,
-    //         Range[] calldata rangesToRemove_
-    //     )
-    //     external
-    //     onlyManager
-    // {
-    //     _addRanges(ranges_, address(token0), address(token1));
-    //     _rebalance(rebalanceParams_);
-    //     _removeRanges(rangesToRemove_);
-    // }
-
     function rebalance(
         Range[] calldata ranges_,
         Rebalance calldata rebalanceParams_,
