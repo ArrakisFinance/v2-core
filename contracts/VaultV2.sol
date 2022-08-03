@@ -97,6 +97,10 @@ contract VaultV2 is
         nonReentrant
         returns (uint256 amount0, uint256 amount1)
     {
+        require(
+            restrictedMintToggle != 11111 || msg.sender == address(manager),
+            "restricted"
+        );
         require(mintAmount_ > 0, "mint amount");
         uint256 totalSupply = totalSupply();
         (

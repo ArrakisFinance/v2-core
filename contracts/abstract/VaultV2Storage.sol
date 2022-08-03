@@ -27,6 +27,8 @@ abstract contract VaultV2Storage is
     string public constant version = "1.0.0";
     // solhint-disable-next-line const-name-snakecase
     uint16 public constant arrakisFeeBPS = 250;
+    // above 10000 to safely avoid collisions for repurposed state var
+    uint16 public constant RESTRICTED_MINT_ENABLED = 11111;
 
     IUniswapV3Factory public immutable factory;
     address public immutable arrakisTreasury;
@@ -51,6 +53,7 @@ abstract contract VaultV2Storage is
     IManagerProxyV2 public manager;
     uint256 public managerBalance0;
     uint256 public managerBalance1;
+    uint16 public restrictedMintToggle;
 
     // #endregion manager data
 
@@ -161,6 +164,14 @@ abstract contract VaultV2Storage is
 
     function setManager(IManagerProxyV2 manager_) external onlyOwner {
         manager = manager_;
+    }
+
+    function toggleRestrictMint() external onlyManager {
+        if (restrictedMintToggle == RESTRICTED_MINT_ENABLED) {
+            restrictedMintToggle = 0;
+        } else {
+            restrictedMintToggle = RESTRICTED_MINT_ENABLED;
+        }
     }
 
     function setMaxTwapDeviation(int24 maxTwapDeviation_) external onlyOwner {
