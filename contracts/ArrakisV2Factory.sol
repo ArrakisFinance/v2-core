@@ -1,15 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import {IVaultV2} from "./interfaces/IVaultV2.sol";
+import {
+    IERC20Metadata
+} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {IArrakisV2} from "./interfaces/IArrakisV2.sol";
 import {EIP173Proxy} from "./vendor/proxy/EIP173Proxy.sol";
-import {VaultV2FactoryStorage} from "./abstract/VaultV2FactoryStorage.sol";
-import {InitializePayload} from "./structs/SVaultV2.sol";
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {_getTokenOrder, _append} from "./functions/FVaultV2Factory.sol";
+import {ArrakisV2FactoryStorage} from "./abstract/ArrakisV2FactoryStorage.sol";
+import {InitializePayload} from "./structs/SArrakisV2.sol";
+import {
+    EnumerableSet
+} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {_getTokenOrder, _append} from "./functions/FArrakisV2Factory.sol";
 
-contract VaultV2Factory is VaultV2FactoryStorage {
+contract ArrakisV2Factory is ArrakisV2FactoryStorage {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     function deployVault(InitializePayload calldata params_)
@@ -19,7 +23,7 @@ contract VaultV2Factory is VaultV2FactoryStorage {
         string memory name;
         (vault, name) = _preDeploy(params_.token0, params_.token1);
 
-        IVaultV2(vault).initialize(
+        IArrakisV2(vault).initialize(
             name,
             string(abi.encodePacked("RAKIS-V2-", _uint2str(index + 1))),
             params_

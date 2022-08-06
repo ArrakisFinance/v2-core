@@ -1,5 +1,5 @@
 import { ethers } from "hardhat";
-import { VaultV2, VaultV2Resolver } from "../typechain";
+import { ArrakisV2, ArrakisV2Resolver } from "../typechain";
 import { BigNumber } from "ethers";
 
 const vaultV2 = "0xe6F6f62a2e2802980dA493FfD14b4aaFE71972D0"; // vault V2 address
@@ -10,8 +10,8 @@ async function main() {
   const [user] = await ethers.getSigners();
 
   const vaultV2Resolver = (await ethers.getContract(
-    "VaultV2Resolver"
-  )) as VaultV2Resolver;
+    "ArrakisV2Resolver"
+  )) as ArrakisV2Resolver;
 
   const result = await vaultV2Resolver.getMintAmounts(
     vaultV2,
@@ -20,10 +20,10 @@ async function main() {
   );
 
   const vault = (await ethers.getContractAt(
-    "VaultV2",
+    "ArrakisV2",
     vaultV2,
     user
-  )) as VaultV2;
+  )) as ArrakisV2;
 
   const token0Contract = new ethers.Contract(
     await vault.token0(),

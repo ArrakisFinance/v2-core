@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import {BurnLiquidity} from "../structs/SVaultV2.sol";
+import {BurnLiquidity} from "../structs/SArrakisV2.sol";
 
 error LiquidityZeroError(int24 lowerTick, int24 upperTick, uint24 feeTier);
 error PoolError(uint24 feeTier);

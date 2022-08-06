@@ -1,64 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
+import {
+    IUniswapV3Pool
+} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {
+    IUniswapV3Factory
+} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {Position as PositionHelper} from "../../libraries/Position.sol";
 import {Twap} from "../../libraries/Twap.sol";
 import {Underlying as UnderlyingHelper} from "../../libraries/Underlying.sol";
 import {UniswapV3Amounts} from "../../libraries/UniswapV3Amounts.sol";
 import {Pool} from "../../libraries/Pool.sol";
-import {FeesEarnedPayload, UnderlyingPayload, RangeData, PositionUnderlying, Range} from "../../structs/SVaultV2.sol";
+import {
+    FeesEarnedPayload,
+    UnderlyingPayload,
+    RangeData,
+    PositionUnderlying,
+    Range
+} from "../../structs/SArrakisV2.sol";
 
-contract MockFVaultV2 {
-    function subtractAdminFees(
-        uint256 rawFee0_,
-        uint256 rawFee1_,
-        uint16 managerFeeBPS_,
-        uint16 arrakisFeeBPS_
-    ) external pure returns (uint256 fee0, uint256 fee1) {
-        return
-            UniswapV3Amounts.subtractAdminFees(
-                rawFee0_,
-                rawFee1_,
-                managerFeeBPS_,
-                arrakisFeeBPS_
-            );
-    }
-
-    function getPositionId(
-        address self_,
-        int24 lowerTick_,
-        int24 upperTick_
-    ) external pure returns (bytes32 positionId) {
-        return PositionHelper.getPositionId(self_, lowerTick_, upperTick_);
-    }
-
-    function computeMintAmounts(
-        uint256 current0_,
-        uint256 current1_,
-        uint256 totalSupply_,
-        uint256 amount0Max_,
-        uint256 amount1Max_
-    )
-        external
-        pure
-        returns (
-            uint256 amount0,
-            uint256 amount1,
-            uint256 mintAmount
-        )
-    {
-        return
-            UniswapV3Amounts.computeMintAmounts(
-                current0_,
-                current1_,
-                totalSupply_,
-                amount0Max_,
-                amount1Max_
-            );
-    }
-
+contract MockFArrakisV2 {
     function computeFeesEarned(FeesEarnedPayload calldata computeFeesEarned_)
         external
         view
@@ -124,5 +86,53 @@ contract MockFVaultV2 {
         Range memory range_
     ) external view returns (bool) {
         return Pool.validateTickSpacing(factory_, token0_, token1_, range_);
+    }
+
+    function subtractAdminFees(
+        uint256 rawFee0_,
+        uint256 rawFee1_,
+        uint16 managerFeeBPS_,
+        uint16 arrakisFeeBPS_
+    ) external pure returns (uint256 fee0, uint256 fee1) {
+        return
+            UniswapV3Amounts.subtractAdminFees(
+                rawFee0_,
+                rawFee1_,
+                managerFeeBPS_,
+                arrakisFeeBPS_
+            );
+    }
+
+    function getPositionId(
+        address self_,
+        int24 lowerTick_,
+        int24 upperTick_
+    ) external pure returns (bytes32 positionId) {
+        return PositionHelper.getPositionId(self_, lowerTick_, upperTick_);
+    }
+
+    function computeMintAmounts(
+        uint256 current0_,
+        uint256 current1_,
+        uint256 totalSupply_,
+        uint256 amount0Max_,
+        uint256 amount1Max_
+    )
+        external
+        pure
+        returns (
+            uint256 amount0,
+            uint256 amount1,
+            uint256 mintAmount
+        )
+    {
+        return
+            UniswapV3Amounts.computeMintAmounts(
+                current0_,
+                current1_,
+                totalSupply_,
+                amount0Max_,
+                amount1Max_
+            );
     }
 }

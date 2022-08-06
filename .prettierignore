@@ -4,7 +4,3 @@ cache
 coverage
 coverage.json
 contracts/functions
-contracts/VaultV2.sol
-contracts/VaultV2Resolver.sol
-contracts/abstract/VaultV2Storage.sol
-contracts/libraries/Underlying.sol

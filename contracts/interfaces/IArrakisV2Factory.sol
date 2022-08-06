@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import {InitializePayload} from "../structs/SVaultV2.sol";
+import {InitializePayload} from "../structs/SArrakisV2.sol";
 
-interface IVaultV2Factory {
+interface IArrakisV2Factory {
     event VaultCreated(address indexed manager, address indexed vault);
 
     event InitFactory(address implementation);

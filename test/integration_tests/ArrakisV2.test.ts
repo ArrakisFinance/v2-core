@@ -1,12 +1,12 @@
 import { expect } from "chai";
 import hre = require("hardhat");
 import {
-  VaultV2,
-  VaultV2Factory,
+  ArrakisV2,
+  ArrakisV2Factory,
   IUniswapV3Factory,
   IUniswapV3Pool,
   ISwapRouter,
-  VaultV2Resolver,
+  ArrakisV2Resolver,
 } from "../../typechain";
 import { Addresses, getAddresses } from "../../src/addresses";
 import { Signer } from "ethers";
@@ -15,16 +15,16 @@ import { ManagerProxyMock } from "../../typechain/contracts/__mocks__/ManagerPro
 
 const { ethers, deployments } = hre;
 
-describe("Vault V2 integration test!!!", async function () {
+describe("Arrakis V2 integration test!!!", async function () {
   this.timeout(0);
 
   let user: Signer;
   let userAddr: string;
-  let vaultV2Factory: VaultV2Factory;
-  let vaultV2: VaultV2;
+  let arrakisV2Factory: ArrakisV2Factory;
+  let vaultV2: ArrakisV2;
   let uniswapV3Factory: IUniswapV3Factory;
   let uniswapV3Pool: IUniswapV3Pool;
-  let vaultV2Resolver: VaultV2Resolver;
+  let arrakisV2Resolver: ArrakisV2Resolver;
   let swapRouter: ISwapRouter;
   let wMatic: Contract;
   let wEth: Contract;
@@ -48,13 +48,13 @@ describe("Vault V2 integration test!!!", async function () {
     addresses = getAddresses(hre.network.name);
     await deployments.fixture();
 
-    vaultV2Factory = (await ethers.getContract(
-      "VaultV2Factory"
-    )) as VaultV2Factory;
+    arrakisV2Factory = (await ethers.getContract(
+      "ArrakisV2Factory"
+    )) as ArrakisV2Factory;
 
-    vaultV2Resolver = (await ethers.getContract(
-      "VaultV2Resolver"
-    )) as VaultV2Resolver;
+    arrakisV2Resolver = (await ethers.getContract(
+      "ArrakisV2Resolver"
+    )) as ArrakisV2Resolver;
 
     uniswapV3Factory = (await ethers.getContractAt(
       "IUniswapV3Factory",
@@ -127,21 +127,21 @@ describe("Vault V2 integration test!!!", async function () {
     // #endregion Price computation.
 
     // For initialization.
-    const res = await vaultV2Resolver.getAmountsForLiquidity(
+    const res = await arrakisV2Resolver.getAmountsForLiquidity(
       slot0.tick,
       lowerTick,
       upperTick,
       ethers.utils.parseUnits("1", 18)
     );
 
-    await vaultV2Factory.initialize(
+    await arrakisV2Factory.initialize(
       (
-        await ethers.getContract("VaultV2")
+        await ethers.getContract("ArrakisV2")
       ).address,
       userAddr
     );
 
-    const tx = await vaultV2Factory.deployVault({
+    const tx = await arrakisV2Factory.deployVault({
       feeTiers: [500],
       token0: addresses.USDC,
       token1: addresses.WETH,
@@ -161,10 +161,10 @@ describe("Vault V2 integration test!!!", async function () {
     const result = event?.args;
 
     vaultV2 = (await ethers.getContractAt(
-      "VaultV2",
+      "ArrakisV2",
       result?.vault,
       user
-    )) as VaultV2;
+    )) as ArrakisV2;
 
     // #region get some USDC and WETH tokens from Uniswap V3.
 
@@ -241,7 +241,7 @@ describe("Vault V2 integration test!!!", async function () {
 
     // #region mint arrakis vault V2 token.
 
-    const result = await vaultV2Resolver.getMintAmounts(
+    const result = await arrakisV2Resolver.getMintAmounts(
       vaultV2.address,
       usdcBalance,
       wethBalance
@@ -273,7 +273,7 @@ describe("Vault V2 integration test!!!", async function () {
 
     // #region mint arrakis vault V2 token.
 
-    const result = await vaultV2Resolver.getMintAmounts(
+    const result = await arrakisV2Resolver.getMintAmounts(
       vaultV2.address,
       usdcBalance,
       wethBalance
@@ -314,7 +314,7 @@ describe("Vault V2 integration test!!!", async function () {
 
     // #region mint arrakis vault V2 token.
 
-    const result = await vaultV2Resolver.getMintAmounts(
+    const result = await arrakisV2Resolver.getMintAmounts(
       vaultV2.address,
       usdcBalance,
       wethBalance
@@ -329,7 +329,7 @@ describe("Vault V2 integration test!!!", async function () {
     // #endregion mint arrakis token by Lp.
     // #region rebalance to deposit user token into the uniswap v3 pool.
 
-    const rebalanceParams = await vaultV2Resolver.standardRebalance(
+    const rebalanceParams = await arrakisV2Resolver.standardRebalance(
       [{ range: { lowerTick, upperTick, feeTier: 500 }, weight: 10000 }],
       vaultV2.address
     );
@@ -344,7 +344,7 @@ describe("Vault V2 integration test!!!", async function () {
     // #endregion rebalance to deposit user token into the uniswap v3 pool.
     // #region burn token to get back token to user.
 
-    const burnPayload = await vaultV2Resolver.standardBurnParams(
+    const burnPayload = await arrakisV2Resolver.standardBurnParams(
       result.mintAmount,
       vaultV2.address
     );

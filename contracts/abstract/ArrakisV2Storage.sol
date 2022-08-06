@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
+import {
+    IUniswapV3Factory
+} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IManagerProxyV2} from "../interfaces/IManagerProxyV2.sol";
 import {OwnableUninitialized} from "./OwnableUninitialized.sol";
@@ -11,12 +13,14 @@ import {
 import {
     ReentrancyGuardUpgradeable
 } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {
+    EnumerableSet
+} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {Pool} from "../libraries/Pool.sol";
-import {Range, InitializePayload} from "../structs/SVaultV2.sol";
+import {Range, InitializePayload} from "../structs/SArrakisV2.sol";
 
 // solhint-disable-next-line max-states-count
-abstract contract VaultV2Storage is
+abstract contract ArrakisV2Storage is
     OwnableUninitialized,
     ERC20Upgradeable,
     ReentrancyGuardUpgradeable
@@ -70,9 +74,7 @@ abstract contract VaultV2Storage is
     EnumerableSet.AddressSet internal _pools;
 
     modifier onlyManager() {
-        require(
-           address(manager) == msg.sender
-            , "no manager");
+        require(address(manager) == msg.sender, "no manager");
         _;
     }
 
@@ -213,9 +215,7 @@ abstract contract VaultV2Storage is
 
     // #region internal functions
 
-    function _addOperators(
-        address[] calldata operators_
-    ) internal {
+    function _addOperators(address[] calldata operators_) internal {
         for (uint256 i = 0; i < operators_.length; i++) {
             require(operators_[i] != address(0), "address Zero");
             require(!_operators.contains(operators_[i]), "operator");
@@ -239,24 +239,17 @@ abstract contract VaultV2Storage is
         address token0Addr_,
         address token1Addr_
     ) internal {
-
         for (uint256 i = 0; i < ranges_.length; i++) {
             (bool exist, ) = rangeExist(ranges_[i]);
             require(!exist, "range");
             // check that the pool exist on Uniswap V3.
             address pool = factory.getPool(
-                    token0Addr_,
-                    token1Addr_,
-                    ranges_[i].feeTier
-                );
-            require(
-                pool != address(0),
-                "uniswap pool does not exist"
+                token0Addr_,
+                token1Addr_,
+                ranges_[i].feeTier
             );
-            require(
-                _pools.contains(pool),
-                "pool"
-            );
+            require(pool != address(0), "uniswap pool does not exist");
+            require(_pools.contains(pool), "pool");
             require(
                 Pool.validateTickSpacing(
                     factory,

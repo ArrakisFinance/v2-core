@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import {IVaultV2Factory} from "./interfaces/IVaultV2Factory.sol";
-import {IVaultV2} from "./interfaces/IVaultV2.sol";
+import {IArrakisV2Factory} from "./interfaces/IArrakisV2Factory.sol";
+import {IArrakisV2} from "./interfaces/IArrakisV2.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract StratRegistry is Ownable {
@@ -26,12 +26,12 @@ contract StratRegistry is Ownable {
     // #endregion events.
 
     // solhint-disable ordering
-    IVaultV2Factory private immutable _factory;
+    IArrakisV2Factory private immutable _factory;
 
     mapping(string => bool) public stratExist;
     mapping(address => string) public vaultByStrat;
 
-    constructor(IVaultV2Factory factory_) Ownable() {
+    constructor(IArrakisV2Factory factory_) Ownable() {
         _factory = factory_;
     }
 
@@ -39,7 +39,7 @@ contract StratRegistry is Ownable {
 
     modifier onlyVaultV2(address vaultV2_) {
         address[] memory vaults = _factory.getVaultsByDeployer(
-            address(IVaultV2(vaultV2_).manager())
+            address(IArrakisV2(vaultV2_).manager())
         );
 
         bool contain = false;
@@ -56,7 +56,7 @@ contract StratRegistry is Ownable {
 
     modifier onlyVaultManager(address vaultV2_) {
         require(
-            address(IVaultV2(vaultV2_).manager()) == msg.sender,
+            address(IArrakisV2(vaultV2_).manager()) == msg.sender,
             "not vault manager"
         );
         _;

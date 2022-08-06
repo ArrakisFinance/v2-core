@@ -1,16 +1,16 @@
 import { expect } from "chai";
 import hre = require("hardhat");
-import { MockFVaultV2 } from "../../typechain";
+import { MockFArrakisV2 } from "../../typechain";
 import { Addresses, getAddresses } from "../../src/addresses";
 import { Signer, Contract } from "ethers";
 
 const { ethers, deployments } = hre;
 
-describe("Vault V2 smart contract internal functions unit test", function () {
+describe("Arrakis V2 smart contract internal functions unit test", function () {
   this.timeout(0);
 
   let user: Signer;
-  let mockFVaultV2: MockFVaultV2;
+  let mockFArrakisV2: MockFArrakisV2;
   let addresses: Addresses;
   let poolContract: Contract;
 
@@ -26,7 +26,9 @@ describe("Vault V2 smart contract internal functions unit test", function () {
 
     await deployments.fixture();
 
-    mockFVaultV2 = (await ethers.getContract("MockFVaultV2")) as MockFVaultV2;
+    mockFArrakisV2 = (await ethers.getContract(
+      "MockFArrakisV2"
+    )) as MockFArrakisV2;
 
     poolContract = await ethers.getContractAt(
       [
@@ -44,7 +46,7 @@ describe("Vault V2 smart contract internal functions unit test", function () {
     const managerFeeBPS = 1_000;
     const arrakisFeeBPS = 250;
 
-    const result = await mockFVaultV2.subtractAdminFees(
+    const result = await mockFArrakisV2.subtractAdminFees(
       rawFee0,
       rawFee1,
       managerFeeBPS,
@@ -69,7 +71,7 @@ describe("Vault V2 smart contract internal functions unit test", function () {
     const amount0Max = ethers.utils.parseUnits("1", 3);
     const amount1Max = ethers.constants.Zero;
 
-    const result = await mockFVaultV2.computeMintAmounts(
+    const result = await mockFArrakisV2.computeMintAmounts(
       current0,
       current1,
       totalSupply,
@@ -93,7 +95,7 @@ describe("Vault V2 smart contract internal functions unit test", function () {
     const amount1Max = ethers.utils.parseUnits("1", 3);
     const amount0Max = ethers.constants.Zero;
 
-    const result = await mockFVaultV2.computeMintAmounts(
+    const result = await mockFArrakisV2.computeMintAmounts(
       current0,
       current1,
       totalSupply,
@@ -117,7 +119,7 @@ describe("Vault V2 smart contract internal functions unit test", function () {
     const amount1Max = ethers.utils.parseUnits("1", 3);
     const amount0Max = ethers.utils.parseUnits("3", 3);
 
-    const result = await mockFVaultV2.computeMintAmounts(
+    const result = await mockFArrakisV2.computeMintAmounts(
       current0,
       current1,
       totalSupply,
@@ -150,7 +152,7 @@ describe("Vault V2 smart contract internal functions unit test", function () {
 
     // #endregion Expected
 
-    const tick = await mockFVaultV2.getTwap(pool, twapDuration);
+    const tick = await mockFArrakisV2.getTwap(pool, twapDuration);
 
     expect(expectedTick).to.be.eq(tick);
   });
@@ -161,7 +163,7 @@ describe("Vault V2 smart contract internal functions unit test", function () {
     const maxDeviation = 0;
 
     await expect(
-      mockFVaultV2.checkDeviation(pool, twapDuration, maxDeviation)
+      mockFArrakisV2.checkDeviation(pool, twapDuration, maxDeviation)
     ).to.be.revertedWith("maxTwapDeviation");
   });
 
@@ -170,7 +172,8 @@ describe("Vault V2 smart contract internal functions unit test", function () {
     const twapDuration = 200; // 200 seconds
     const maxDeviation = 1;
 
-    await expect(mockFVaultV2.checkDeviation(pool, twapDuration, maxDeviation))
-      .to.not.be.reverted;
+    await expect(
+      mockFArrakisV2.checkDeviation(pool, twapDuration, maxDeviation)
+    ).to.not.be.reverted;
   });
 });

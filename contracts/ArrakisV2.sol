@@ -7,13 +7,22 @@ import {
 import {
     IUniswapV3SwapCallback
 } from "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
-import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
-import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {
+    IUniswapV3Factory
+} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
+import {
+    IUniswapV3Pool
+} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {
+    IERC20,
+    SafeERC20
+} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {
+    EnumerableSet
+} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {FullMath} from "./vendor/uniswap/LiquidityAmounts.sol";
-import {VaultV2Storage} from "./abstract/VaultV2Storage.sol";
+import {ArrakisV2Storage} from "./abstract/ArrakisV2Storage.sol";
 import {
     Rebalance,
     Withdraw,
@@ -21,16 +30,17 @@ import {
     BurnLiquidity,
     UnderlyingOutput,
     Range
-} from "./structs/SVaultV2.sol";
+} from "./structs/SArrakisV2.sol";
 import {Twap} from "./libraries/Twap.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
 import {UniswapV3Amounts} from "./libraries/UniswapV3Amounts.sol";
-import {_liquidityZeroError, _poolError} from "./errors/EVaultV2.sol";
+import {_liquidityZeroError, _poolError} from "./errors/EArrakisV2.sol";
 
-contract VaultV2 is
+/// @dev DO NOT ADD STATE VARIABLES - APPEND THEM TO ArrakisV2Storage
+contract ArrakisV2 is
     IUniswapV3MintCallback,
     IUniswapV3SwapCallback,
-    VaultV2Storage
+    ArrakisV2Storage
 {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -49,11 +59,7 @@ contract VaultV2 is
         uint256 amount1Out
     );
 
-    event LPBurned(
-        address user,
-        uint256 burnAmount0,
-        uint256 burnAmount1
-    );
+    event LPBurned(address user, uint256 burnAmount0, uint256 burnAmount1);
 
     event FeesEarned(uint256 fee0, uint256 fee1);
     event FeesEarnedRebalance(uint256 fee0, uint256 fee1);
@@ -61,10 +67,9 @@ contract VaultV2 is
     event WithdrawManagerBalance(uint256 amount0, uint256 amount1);
     event WithdrawArrakisBalance(uint256 amount0, uint256 amount1);
 
-    // solhint-disable-next-line no-empty-blocks
-    constructor(IUniswapV3Factory factory_, address arrakisTreasury_) 
-        VaultV2Storage(factory_, arrakisTreasury_) 
-    {}
+    constructor(IUniswapV3Factory factory_, address arrakisTreasury_)
+        ArrakisV2Storage(factory_, arrakisTreasury_)
+    {} // solhint-disable-line no-empty-blocks
 
     /// @notice Uniswap V3 callback fn, called back on pool.mint
     function uniswapV3MintCallback(
@@ -92,6 +97,7 @@ contract VaultV2 is
             token1.safeTransferFrom(_owner, msg.sender, uint256(amount1Delta_));
     }
 
+    // solhint-disable-next-line function-max-lines
     function mint(uint256 mintAmount_, address receiver_)
         external
         nonReentrant
@@ -145,7 +151,7 @@ contract VaultV2 is
     ) external nonReentrant returns (uint256 amount0, uint256 amount1) {
         uint256 totalSupply = totalSupply();
         require(totalSupply > 0, "total supply");
-        
+
         UnderlyingOutput memory underlying;
         (
             underlying.amount0,
@@ -267,13 +273,46 @@ contract VaultV2 is
         Range[] calldata ranges_,
         Rebalance calldata rebalanceParams_,
         Range[] calldata rangesToRemove_
-    )
-        external
-        onlyManager
-    {
+    ) external onlyManager {
         _addRanges(ranges_, address(token0), address(token1));
         _rebalance(rebalanceParams_);
         _removeRanges(rangesToRemove_);
+    }
+
+    function withdrawManagerBalance() external {
+        uint256 amount0 = managerBalance0;
+        uint256 amount1 = managerBalance1;
+
+        managerBalance0 = 0;
+        managerBalance1 = 0;
+
+        if (amount0 > 0) {
+            token0.safeTransfer(address(manager), amount0);
+        }
+
+        if (amount1 > 0) {
+            token1.safeTransfer(address(manager), amount1);
+        }
+
+        emit WithdrawManagerBalance(amount0, amount1);
+    }
+
+    function withdrawArrakisBalance() external {
+        uint256 amount0 = arrakisBalance0;
+        uint256 amount1 = arrakisBalance1;
+
+        arrakisBalance0 = 0;
+        arrakisBalance1 = 0;
+
+        if (amount0 > 0) {
+            token0.safeTransfer(arrakisTreasury, amount0);
+        }
+
+        if (amount1 > 0) {
+            token1.safeTransfer(arrakisTreasury, amount1);
+        }
+
+        emit WithdrawArrakisBalance(amount0, amount1);
     }
 
     // solhint-disable-next-line function-max-lines, code-complexity
@@ -323,7 +362,10 @@ contract VaultV2 is
 
         if (rebalanceParams_.swap.amountIn > 0) {
             {
-                require(!_pools.contains(rebalanceParams_.swap.pool), "no pool");
+                require(
+                    !_pools.contains(rebalanceParams_.swap.pool),
+                    "no pool"
+                );
 
                 uint256 balance0Before = token0.balanceOf(address(this));
                 uint256 balance1Before = token1.balanceOf(address(this));
@@ -331,8 +373,14 @@ contract VaultV2 is
                 token0.safeApprove(address(rebalanceParams_.swap.router), 0);
                 token1.safeApprove(address(rebalanceParams_.swap.router), 0);
 
-                token0.safeApprove(address(rebalanceParams_.swap.router), balance0Before);
-                token1.safeApprove(address(rebalanceParams_.swap.router), balance1Before);
+                token0.safeApprove(
+                    address(rebalanceParams_.swap.router),
+                    balance0Before
+                );
+                token1.safeApprove(
+                    address(rebalanceParams_.swap.router),
+                    balance1Before
+                );
 
                 (bool success, ) = rebalanceParams_.swap.router.call(
                     rebalanceParams_.swap.payload
@@ -353,14 +401,15 @@ contract VaultV2 is
                             rebalanceParams_.swap.expectedMinReturn,
                             10**token0Decimals,
                             rebalanceParams_.swap.amountIn
-                        ) > FullMath.mulDiv(
-                            Twap.getPrice0(
-                                IUniswapV3Pool(rebalanceParams_.swap.pool),
-                                twapDuration
+                        ) >
+                            FullMath.mulDiv(
+                                Twap.getPrice0(
+                                    IUniswapV3Pool(rebalanceParams_.swap.pool),
+                                    twapDuration
+                                ),
+                                maxSlippage,
+                                10000
                             ),
-                            maxSlippage,
-                            10000
-                        ),
                         "slippage"
                     );
                     require(
@@ -372,21 +421,21 @@ contract VaultV2 is
                                     rebalanceParams_.swap.amountIn),
                         "swap failed"
                     );
-                }
-                else {
+                } else {
                     require(
                         FullMath.mulDiv(
                             rebalanceParams_.swap.expectedMinReturn,
                             10**token1Decimals,
                             rebalanceParams_.swap.amountIn
-                        ) > FullMath.mulDiv(
-                            Twap.getPrice1(
-                                IUniswapV3Pool(rebalanceParams_.swap.pool),
-                                twapDuration
+                        ) >
+                            FullMath.mulDiv(
+                                Twap.getPrice1(
+                                    IUniswapV3Pool(rebalanceParams_.swap.pool),
+                                    twapDuration
+                                ),
+                                maxSlippage,
+                                10000
                             ),
-                            maxSlippage,
-                            10000
-                        ),
                         "slippage"
                     );
                     require(
@@ -425,42 +474,6 @@ contract VaultV2 is
                 ""
             );
         }
-    }
-
-    function withdrawManagerBalance() external {
-        uint256 amount0 = managerBalance0;
-        uint256 amount1 = managerBalance1;
-
-        managerBalance0 = 0;
-        managerBalance1 = 0;
-
-        if (amount0 > 0) {
-            token0.safeTransfer(address(manager), amount0);
-        }
-
-        if (amount1 > 0) {
-            token1.safeTransfer(address(manager), amount1);
-        }
-
-        emit WithdrawManagerBalance(amount0, amount1);
-    }
-
-    function withdrawArrakisBalance() external {
-        uint256 amount0 = arrakisBalance0;
-        uint256 amount1 = arrakisBalance1;
-
-        arrakisBalance0 = 0;
-        arrakisBalance1 = 0;
-
-        if (amount0 > 0) {
-            token0.safeTransfer(arrakisTreasury, amount0);
-        }
-
-        if (amount1 > 0) {
-            token1.safeTransfer(arrakisTreasury, amount1);
-        }
-
-        emit WithdrawArrakisBalance(amount0, amount1);
     }
 
     function _withdraw(

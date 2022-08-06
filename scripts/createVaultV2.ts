@@ -3,7 +3,7 @@ import { getAddresses } from "../src/addresses";
 import {
   IUniswapV3Factory,
   IUniswapV3Pool,
-  VaultV2Resolver,
+  ArrakisV2Resolver,
 } from "../typechain";
 import { getNearestTick } from "../src/utils";
 
@@ -31,7 +31,7 @@ async function main() {
   const vaultV2Factory = await ethers.getContract("VaultV2Factory", user);
   const vaultV2Resolver = (await ethers.getContract(
     "VaultV2Resolver"
-  )) as VaultV2Resolver;
+  )) as ArrakisV2Resolver;
 
   const uniswapV3Factory = (await ethers.getContractAt(
     "IUniswapV3Factory",

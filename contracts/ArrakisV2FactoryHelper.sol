@@ -2,12 +2,12 @@
 pragma solidity 0.8.13;
 
 import {IEIP173Proxy} from "./vendor/proxy/interfaces/IEIP173Proxy.sol";
-import {IVaultV2Factory} from "./interfaces/IVaultV2Factory.sol";
+import {IArrakisV2Factory} from "./interfaces/IArrakisV2Factory.sol";
 
-contract VaultV2FactoryHelper {
-    IVaultV2Factory public immutable vaultV2Factory;
+contract ArrakisV2FactoryHelper {
+    IArrakisV2Factory public immutable vaultV2Factory;
 
-    constructor(IVaultV2Factory vaultV2Factory_) {
+    constructor(IArrakisV2Factory vaultV2Factory_) {
         vaultV2Factory = vaultV2Factory_;
     }
 

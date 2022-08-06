@@ -1,23 +1,32 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
-import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {
+    IUniswapV3Factory
+} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
+import {
+    IUniswapV3Pool
+} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IVaultV2Helper} from "./interfaces/IVaultV2Helper.sol";
-import {IVaultV2} from "./interfaces/IVaultV2.sol";
+import {IArrakisV2Helper} from "./interfaces/IArrakisV2Helper.sol";
+import {IArrakisV2} from "./interfaces/IArrakisV2.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
-import {UnderlyingPayload, UnderlyingOutput, Range, RangeData} from "./structs/SVaultV2.sol";
-import {Amount} from "./structs/SVaultV2Helper.sol";
+import {
+    UnderlyingPayload,
+    UnderlyingOutput,
+    Range,
+    RangeData
+} from "./structs/SArrakisV2.sol";
+import {Amount} from "./structs/SArrakisV2Helper.sol";
 
-contract VaultV2Helper is IVaultV2Helper {
+contract ArrakisV2Helper is IArrakisV2Helper {
     IUniswapV3Factory public immutable factory;
 
     constructor(IUniswapV3Factory factory_) {
         factory = factory_;
     }
 
-    function totalUnderlyingWithFeesAndLeftOver(IVaultV2 vault_)
+    function totalUnderlyingWithFeesAndLeftOver(IArrakisV2 vault_)
         external
         view
         returns (UnderlyingOutput memory underlying)
@@ -45,7 +54,7 @@ contract VaultV2Helper is IVaultV2Helper {
         );
     }
 
-    function totalUnderlyingWithFees(IVaultV2 vault_)
+    function totalUnderlyingWithFees(IArrakisV2 vault_)
         external
         view
         returns (
@@ -67,7 +76,7 @@ contract VaultV2Helper is IVaultV2Helper {
             .totalUnderlyingWithFees(underlyingPayload);
     }
 
-    function totalUnderlying(IVaultV2 vault_)
+    function totalUnderlying(IArrakisV2 vault_)
         external
         view
         returns (uint256 amount0, uint256 amount1)

@@ -2,7 +2,9 @@
 pragma solidity 0.8.13;
 
 import {Twap} from "../../libraries/Twap.sol";
-import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {
+    IUniswapV3Pool
+} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
 contract TwapMock {
     function getTwap(IUniswapV3Pool pool_, uint24 twapDuration_)

@@ -1,5 +1,5 @@
 import { ethers } from "hardhat";
-import { VaultV2, VaultV2Resolver } from "../typechain";
+import { ArrakisV2, ArrakisV2Resolver } from "../typechain";
 
 // This script use standard burn method. Not optimized.
 const vaultV2 = "0xe6F6f62a2e2802980dA493FfD14b4aaFE71972D0"; // vault v2 address
@@ -7,15 +7,15 @@ const amountToBurn = "227333571037108851"; // amount of Arrakis Vault token you 
 
 async function main() {
   const [user] = await ethers.getSigners();
-  const vaultV2Resolver = (await ethers.getContract(
-    "VaultV2Resolver"
-  )) as VaultV2Resolver;
+  const arrakisV2Resolver = (await ethers.getContract(
+    "ArrakisV2Resolver"
+  )) as ArrakisV2Resolver;
 
   const vault = (await ethers.getContractAt(
-    "VaultV2",
+    "ArrakisV2",
     vaultV2,
     user
-  )) as VaultV2;
+  )) as ArrakisV2;
 
   const token0Contract = new ethers.Contract(
     await vault.token0(),
@@ -48,7 +48,7 @@ async function main() {
   console.log(`Before Burn balance 0: ${balance0} ${token0Name}`);
   console.log(`Before Burn balance 1: ${balance1} ${token1Name}`);
 
-  const result = await vaultV2Resolver.standardBurnParams(
+  const result = await arrakisV2Resolver.standardBurnParams(
     amountToBurn,
     vaultV2
   );

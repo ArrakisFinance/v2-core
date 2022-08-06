@@ -2,7 +2,7 @@
 pragma solidity 0.8.13;
 
 import {FullMath} from "../vendor/uniswap/LiquidityAmounts.sol";
-import {FeesEarnedPayload} from "../structs/SVaultV2.sol";
+import {FeesEarnedPayload} from "../structs/SArrakisV2.sol";
 
 library UniswapV3Amounts {
     // solhint-disable-next-line function-max-lines

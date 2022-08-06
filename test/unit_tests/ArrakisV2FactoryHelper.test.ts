@@ -3,7 +3,7 @@ import hre = require("hardhat");
 import {
   IEIP173Proxy,
   MockEIP173Implementation,
-  VaultV2FactoryHelper,
+  ArrakisV2FactoryHelper,
 } from "../../typechain";
 const { ethers, deployments } = hre;
 
@@ -12,7 +12,7 @@ describe("Factory helper functions unit test", function () {
 
   let mock: MockEIP173Implementation;
   let proxy: IEIP173Proxy;
-  let factoryHelper: VaultV2FactoryHelper;
+  let factoryHelper: ArrakisV2FactoryHelper;
 
   beforeEach("Setting up for Factory view function test", async function () {
     if (hre.network.name !== "hardhat") {
@@ -31,8 +31,8 @@ describe("Factory helper functions unit test", function () {
     )) as IEIP173Proxy;
 
     factoryHelper = (await ethers.getContract(
-      "VaultV2FactoryHelper"
-    )) as VaultV2FactoryHelper;
+      "ArrakisV2FactoryHelper"
+    )) as ArrakisV2FactoryHelper;
   });
 
   it("#0: Pool immutable check for managed proxy should be false", async () => {

@@ -1,17 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import {IVaultV2} from "./IVaultV2.sol";
-import {UnderlyingPayload, UnderlyingOutput, Range} from "../structs/SVaultV2.sol";
-import {Amount} from "../structs/SVaultV2Helper.sol";
+import {IArrakisV2} from "./IArrakisV2.sol";
+import {
+    UnderlyingPayload,
+    UnderlyingOutput,
+    Range
+} from "../structs/SArrakisV2.sol";
+import {Amount} from "../structs/SArrakisV2Helper.sol";
 
-interface IVaultV2Helper {
-    function totalUnderlyingWithFeesAndLeftOver(IVaultV2 vault_)
+interface IArrakisV2Helper {
+    function totalUnderlyingWithFeesAndLeftOver(IArrakisV2 vault_)
         external
         view
         returns (UnderlyingOutput memory underlying);
 
-    function totalUnderlyingWithFees(IVaultV2 vault_)
+    function totalUnderlyingWithFees(IArrakisV2 vault_)
         external
         view
         returns (
@@ -21,7 +25,7 @@ interface IVaultV2Helper {
             uint256 fee1
         );
 
-    function totalUnderlying(IVaultV2 vault_)
+    function totalUnderlying(IArrakisV2 vault_)
         external
         view
         returns (uint256 amount0, uint256 amount1);

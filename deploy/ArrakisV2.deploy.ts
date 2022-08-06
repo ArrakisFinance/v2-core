@@ -12,7 +12,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     hre.network.name === "optimism"
   ) {
     console.log(
-      `Deploying VaultV2Resolver to ${hre.network.name}. Hit ctrl + c to abort`
+      `Deploying ArrakisV2 to ${hre.network.name}. Hit ctrl + c to abort`
     );
     await sleep(10000);
   }
@@ -20,18 +20,15 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const addresses = getAddresses(hre.network.name);
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
-  await deploy("VaultV2Resolver", {
+  await deploy("ArrakisV2", {
     from: deployer,
-    args: [
-      addresses.UniswapV3Factory,
-      (await ethers.getContract("VaultV2Helper")).address,
-      addresses.SwapRouter,
-    ],
+    args: [addresses.UniswapV3Factory, deployer],
     libraries: {
+      Pool: (await ethers.getContract("Pool")).address,
       Position: (await ethers.getContract("Position")).address,
+      Twap: (await ethers.getContract("Twap")).address,
       Underlying: (await ethers.getContract("Underlying")).address,
       UniswapV3Amounts: (await ethers.getContract("UniswapV3Amounts")).address,
-      Twap: (await ethers.getContract("Twap")).address,
     },
     log: hre.network.name != "hardhat" ? true : false,
   });
@@ -47,12 +44,11 @@ func.skip = async (hre: HardhatRuntimeEnvironment) => {
     hre.network.name === "optimism";
   return shouldSkip ? true : false;
 };
-func.tags = ["VaultV2Resolver"];
+func.tags = ["ArrakisV2"];
 func.dependencies = [
-  "VaultV2Helper",
+  "Pool",
   "Position",
   "Twap",
   "Underlying",
-  "Twap",
   "UniswapV3Amounts",
 ];

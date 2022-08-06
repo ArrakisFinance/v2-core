@@ -1,16 +1,16 @@
 import { expect } from "chai";
 import hre = require("hardhat");
-import { MockFVaultV2Factory, IUniswapV3Pool } from "../../typechain";
+import { MockFArrakisV2Factory, IUniswapV3Pool } from "../../typechain";
 import { Addresses, getAddresses } from "../../src/addresses";
 import { Signer } from "ethers";
 
 const { ethers, deployments } = hre;
 
-describe("Vault V2 Factory smart contract internal functions unit test", function () {
+describe("Arrakis V2 Factory smart contract internal functions unit test", function () {
   this.timeout(0);
 
   let user: Signer;
-  let mockFVaultV2Factory: MockFVaultV2Factory;
+  let mockFArrakisV2Factory: MockFArrakisV2Factory;
   let addresses: Addresses;
   let poolContract: IUniswapV3Pool;
 
@@ -26,9 +26,9 @@ describe("Vault V2 Factory smart contract internal functions unit test", functio
 
     await deployments.fixture();
 
-    mockFVaultV2Factory = (await ethers.getContract(
-      "MockFVaultV2Factory"
-    )) as MockFVaultV2Factory;
+    mockFArrakisV2Factory = (await ethers.getContract(
+      "MockFArrakisV2Factory"
+    )) as MockFArrakisV2Factory;
 
     poolContract = (await ethers.getContractAt(
       "IUniswapV3Pool",
@@ -41,7 +41,7 @@ describe("Vault V2 Factory smart contract internal functions unit test", functio
     const tokenA = await poolContract.token1();
     const tokenB = await poolContract.token0();
 
-    const result = await mockFVaultV2Factory.getTokenOrder(tokenA, tokenB);
+    const result = await mockFArrakisV2Factory.getTokenOrder(tokenA, tokenB);
 
     expect(result.token0).to.be.eq(tokenB);
     expect(result.token1).to.be.eq(tokenA);
@@ -53,7 +53,7 @@ describe("Vault V2 Factory smart contract internal functions unit test", functio
     const c = "c";
     const d = "d";
 
-    const appendString = await mockFVaultV2Factory.append(a, b, c, d);
+    const appendString = await mockFArrakisV2Factory.append(a, b, c, d);
 
     expect(a + b + c + d).to.be.eq(appendString);
   });

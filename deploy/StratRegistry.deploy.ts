@@ -20,7 +20,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployer } = await getNamedAccounts();
   await deploy("StratRegistry", {
     from: deployer,
-    args: [(await ethers.getContract("VaultV2Factory")).address],
+    args: [(await ethers.getContract("ArrakisV2Factory")).address],
     log: hre.network.name != "hardhat" ? true : false,
   });
 };
@@ -36,4 +36,4 @@ func.skip = async (hre: HardhatRuntimeEnvironment) => {
   return shouldSkip ? true : false;
 };
 func.tags = ["StratRegistry"];
-func.dependencies = ["VaultV2Factory"];
+func.dependencies = ["ArrakisV2Factory"];

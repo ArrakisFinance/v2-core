@@ -6,9 +6,9 @@ import {
   IUniswapV3Factory,
   IUniswapV3Pool,
   StratRegistry,
-  VaultV2,
-  VaultV2Factory,
-  VaultV2Resolver,
+  ArrakisV2,
+  ArrakisV2Factory,
+  ArrakisV2Resolver,
 } from "../../typechain";
 
 const { ethers, deployments } = hre;
@@ -20,15 +20,15 @@ describe("Strategy registry unit test", function () {
   let userAddr: string;
   let addresses: Addresses;
   let stratRegistry: StratRegistry;
-  let vaultV2Factory: VaultV2Factory;
-  let vaultV2Resolver: VaultV2Resolver;
+  let arrakisV2Factory: ArrakisV2Factory;
+  let arrakisV2Resolver: ArrakisV2Resolver;
   let uniswapV3Factory: IUniswapV3Factory;
   let uniswapV3Pool: IUniswapV3Pool;
   let lowerTick: number;
   let upperTick: number;
   //   let wEth: Contract;
   //   let usdc: Contract;
-  let vaultV2: VaultV2;
+  let vaultV2: ArrakisV2;
 
   beforeEach("Setup for Vault V2 functions unit test", async function () {
     if (hre.network.name !== "hardhat") {
@@ -46,13 +46,13 @@ describe("Strategy registry unit test", function () {
       "StratRegistry"
     )) as StratRegistry;
 
-    vaultV2Factory = (await ethers.getContract(
-      "VaultV2Factory"
-    )) as VaultV2Factory;
+    arrakisV2Factory = (await ethers.getContract(
+      "ArrakisV2Factory"
+    )) as ArrakisV2Factory;
 
-    vaultV2Resolver = (await ethers.getContract(
-      "VaultV2Resolver"
-    )) as VaultV2Resolver;
+    arrakisV2Resolver = (await ethers.getContract(
+      "ArrakisV2Resolver"
+    )) as ArrakisV2Resolver;
 
     uniswapV3Factory = (await ethers.getContractAt(
       "IUniswapV3Factory",
@@ -92,21 +92,21 @@ describe("Strategy registry unit test", function () {
     //   user
     // );
 
-    const res = await vaultV2Resolver.getAmountsForLiquidity(
+    const res = await arrakisV2Resolver.getAmountsForLiquidity(
       slot0.tick,
       lowerTick,
       upperTick,
       ethers.utils.parseUnits("1", 18)
     );
 
-    await vaultV2Factory.initialize(
+    await arrakisV2Factory.initialize(
       (
-        await ethers.getContract("VaultV2")
+        await ethers.getContract("ArrakisV2")
       ).address,
       userAddr
     );
 
-    const tx = await vaultV2Factory.deployVault({
+    const tx = await arrakisV2Factory.deployVault({
       feeTiers: [500],
       token0: addresses.USDC,
       token1: addresses.WETH,
@@ -126,10 +126,10 @@ describe("Strategy registry unit test", function () {
     const result = event?.args;
 
     vaultV2 = (await ethers.getContractAt(
-      "VaultV2",
+      "ArrakisV2",
       result?.vault,
       user
-    )) as VaultV2;
+    )) as ArrakisV2;
   });
 
   it("#0: Add new strategy", async () => {

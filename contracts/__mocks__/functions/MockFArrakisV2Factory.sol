@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import {_getTokenOrder, _append} from "../../functions/FVaultV2Factory.sol";
+import {_getTokenOrder, _append} from "../../functions/FArrakisV2Factory.sol";
 
-contract MockFVaultV2Factory {
+contract MockFArrakisV2Factory {
     function getTokenOrder(address tokenA_, address tokenB_)
         external
         pure

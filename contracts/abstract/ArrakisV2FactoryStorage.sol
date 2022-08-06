@@ -1,15 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import {IVaultV2Factory} from "../interfaces/IVaultV2Factory.sol";
+import {IArrakisV2Factory} from "../interfaces/IArrakisV2Factory.sol";
 import {IEIP173Proxy} from "../vendor/proxy/interfaces/IEIP173Proxy.sol";
 import {OwnableUninitialized} from "./OwnableUninitialized.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {
+    Initializable
+} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {
+    EnumerableSet
+} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // solhint-disable-next-line max-states-count
-abstract contract VaultV2FactoryStorage is
-    IVaultV2Factory,
+abstract contract ArrakisV2FactoryStorage is
+    IArrakisV2Factory,
     OwnableUninitialized, /* XXXX DONT MODIFY ORDERING XXXX */
     Initializable
     // APPEND ADDITIONAL BASE WITH STATE VARS BELOW:
