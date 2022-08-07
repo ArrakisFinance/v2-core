@@ -70,7 +70,6 @@ abstract contract ArrakisV2Storage is
 
     // #endregion Twap
 
-    EnumerableSet.AddressSet internal _operators;
     EnumerableSet.AddressSet internal _pools;
 
     modifier onlyManager() {
@@ -94,7 +93,6 @@ abstract contract ArrakisV2Storage is
         require(params_.feeTiers.length > 0, "no fee tier");
         require(params_.token0 != address(0), "token0");
         require(params_.token1 != address(0), "token1");
-        require(params_.operators.length > 0, "no operators");
 
         require(params_.init0 > 0, "init0");
         require(params_.init1 > 0, "init1");
@@ -125,8 +123,6 @@ abstract contract ArrakisV2Storage is
 
         _owner = params_.owner;
 
-        _addOperators(params_.operators);
-
         init0 = params_.init0;
         init1 = params_.init1;
 
@@ -137,19 +133,6 @@ abstract contract ArrakisV2Storage is
     }
 
     // #region setter functions
-
-    function addOperators(address[] calldata operators_) external onlyOwner {
-        _addOperators(operators_);
-    }
-
-    function removeOperators(address[] calldata operators_) external onlyOwner {
-        for (uint256 i = 0; i < operators_.length; i++) {
-            require(operators_[i] != address(0), "address Zero");
-            require(_operators.contains(operators_[i]), "not an operator");
-
-            _operators.remove(operators_[i]);
-        }
-    }
 
     function addPools(address[] calldata pools_) external onlyOwner {
         _addPools(pools_);
@@ -214,15 +197,6 @@ abstract contract ArrakisV2Storage is
     // #endregion view/pure functions
 
     // #region internal functions
-
-    function _addOperators(address[] calldata operators_) internal {
-        for (uint256 i = 0; i < operators_.length; i++) {
-            require(operators_[i] != address(0), "address Zero");
-            require(!_operators.contains(operators_[i]), "operator");
-
-            _operators.add(operators_[i]);
-        }
-    }
 
     function _addPools(address[] calldata pools_) internal {
         for (uint256 i = 0; i < pools_.length; i++) {

@@ -49,7 +49,6 @@ struct InitializePayload {
     address token0;
     address token1;
     address owner;
-    address[] operators;
     uint256 init0;
     uint256 init1;
     address manager;

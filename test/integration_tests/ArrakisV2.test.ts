@@ -146,7 +146,6 @@ describe("Arrakis V2 integration test!!!", async function () {
       token0: addresses.USDC,
       token1: addresses.WETH,
       owner: userAddr,
-      operators: [userAddr],
       init0: res.amount0,
       init1: res.amount1,
       manager: managerProxyMock.address,
