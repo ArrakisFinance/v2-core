@@ -45,28 +45,6 @@ contract ArrakisV2 is
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    event Minted(
-        address receiver,
-        uint256 mintAmount,
-        uint256 amount0In,
-        uint256 amount1In
-    );
-
-    event Burned(
-        address receiver,
-        uint256 burnAmount,
-        uint256 amount0Out,
-        uint256 amount1Out
-    );
-
-    event LPBurned(address user, uint256 burnAmount0, uint256 burnAmount1);
-
-    event FeesEarned(uint256 fee0, uint256 fee1);
-    event FeesEarnedRebalance(uint256 fee0, uint256 fee1);
-
-    event WithdrawManagerBalance(uint256 amount0, uint256 amount1);
-    event WithdrawArrakisBalance(uint256 amount0, uint256 amount1);
-
     constructor(IUniswapV3Factory factory_, address arrakisTreasury_)
         ArrakisV2Storage(factory_, arrakisTreasury_)
     {} // solhint-disable-line no-empty-blocks
@@ -92,9 +70,9 @@ contract ArrakisV2 is
         require(_pools.contains(msg.sender), "callback caller");
 
         if (amount0Delta_ > 0)
-            token0.safeTransferFrom(_owner, msg.sender, uint256(amount0Delta_));
+            token0.safeTransfer(msg.sender, uint256(amount0Delta_));
         else if (amount1Delta_ > 0)
-            token1.safeTransferFrom(_owner, msg.sender, uint256(amount1Delta_));
+            token1.safeTransfer(msg.sender, uint256(amount1Delta_));
     }
 
     // solhint-disable-next-line function-max-lines
@@ -108,6 +86,7 @@ contract ArrakisV2 is
             "restricted"
         );
         require(mintAmount_ > 0, "mint amount");
+        address me = address(this);
         uint256 totalSupply = totalSupply();
         (
             uint256 current0,
@@ -121,7 +100,7 @@ contract ArrakisV2 is
                         factory: factory,
                         token0: address(token0),
                         token1: address(token1),
-                        self: address(this)
+                        self: me
                     })
                 )
                 : (init0, init1, 0, 0);
@@ -133,19 +112,19 @@ contract ArrakisV2 is
 
         // transfer amounts owed to contract
         if (amount0 > 0) {
-            token0.safeTransferFrom(msg.sender, address(this), amount0);
+            token0.safeTransferFrom(msg.sender, me, amount0);
         }
         if (amount1 > 0) {
-            token1.safeTransferFrom(msg.sender, address(this), amount1);
+            token1.safeTransferFrom(msg.sender, me, amount1);
         }
 
-        emit FeesEarned(fee0, fee1);
-        emit Minted(receiver_, mintAmount_, amount0, amount1);
+        emit LogFeesEarn(me, fee0, fee1);
+        emit LogMint(me, receiver_, mintAmount_, amount0, amount1);
     }
 
     // solhint-disable-next-line function-max-lines, code-complexity
     function burn(
-        BurnLiquidity[] calldata burns,
+        BurnLiquidity[] calldata burns_,
         uint256 burnAmount_,
         address receiver_
     ) external nonReentrant returns (uint256 amount0, uint256 amount1) {
@@ -209,33 +188,39 @@ contract ArrakisV2 is
                 token1.safeTransfer(receiver_, amount1);
             }
 
-            emit Burned(receiver_, burnAmount_, amount0, amount1);
+            emit LogBurn(
+                address(this),
+                receiver_,
+                burnAmount_,
+                amount0,
+                amount1
+            );
             return (amount0, amount1);
         }
 
         // not at the begining of the function
-        require(burns.length > 0, "burns");
+        require(burns_.length > 0, "burns");
 
         _burn(msg.sender, burnAmount_);
 
         Withdraw memory total;
         {
-            for (uint256 i = 0; i < burns.length; i++) {
-                if (burns[i].liquidity == 0) _liquidityZeroError(burns[i]);
+            for (uint256 i = 0; i < burns_.length; i++) {
+                if (burns_[i].liquidity == 0) _liquidityZeroError(burns_[i]);
 
                 address pool = factory.getPool(
                     address(token0),
                     address(token1),
-                    burns[i].range.feeTier
+                    burns_[i].range.feeTier
                 );
 
-                if (!_pools.contains(pool)) _poolError(burns[i].range.feeTier);
+                if (!_pools.contains(pool)) _poolError(burns_[i].range.feeTier);
 
                 Withdraw memory withdraw = _withdraw(
                     IUniswapV3Pool(pool),
-                    burns[i].range.lowerTick,
-                    burns[i].range.upperTick,
-                    burns[i].liquidity
+                    burns_[i].range.lowerTick,
+                    burns_[i].range.upperTick,
+                    burns_[i].liquidity
                 );
 
                 total.fee0 += withdraw.fee0;
@@ -263,10 +248,10 @@ contract ArrakisV2 is
         }
 
         // For monitoring how much user burn LP token for getting their token back.
-        emit LPBurned(msg.sender, total.burn0, total.burn1);
+        emit LPBurned(address(this), msg.sender, total.burn0, total.burn1);
 
-        emit FeesEarned(total.fee0, total.fee1);
-        emit Burned(receiver_, burnAmount_, amount0, amount1);
+        emit LogFeesEarn(address(this), total.fee0, total.fee1);
+        emit LogBurn(address(this), receiver_, burnAmount_, amount0, amount1);
     }
 
     function rebalance(
@@ -294,7 +279,7 @@ contract ArrakisV2 is
             token1.safeTransfer(address(manager), amount1);
         }
 
-        emit WithdrawManagerBalance(amount0, amount1);
+        emit LogWithdrawManagerBalance(address(this), amount0, amount1);
     }
 
     function withdrawArrakisBalance() external {
@@ -312,7 +297,7 @@ contract ArrakisV2 is
             token1.safeTransfer(arrakisTreasury, amount1);
         }
 
-        emit WithdrawArrakisBalance(amount0, amount1);
+        emit LogWithdrawArrakisBalance(address(this), amount0, amount1);
     }
 
     // solhint-disable-next-line function-max-lines, code-complexity
@@ -355,7 +340,7 @@ contract ArrakisV2 is
                 arrakisFeeBPS
             );
 
-            emit FeesEarnedRebalance(totalFee0, totalFee1);
+            emit LogFeesEarnRebalance(address(this), totalFee0, totalFee1);
         }
 
         // Swap
@@ -393,13 +378,11 @@ contract ArrakisV2 is
                 uint256 balance0After = token0.balanceOf(address(this));
                 uint256 balance1After = token1.balanceOf(address(this));
 
-                uint8 token0Decimals = ERC20(address(token0)).decimals();
-                uint8 token1Decimals = ERC20(address(token1)).decimals();
                 if (rebalanceParams_.swap.zeroForOne) {
                     require(
                         FullMath.mulDiv(
                             rebalanceParams_.swap.expectedMinReturn,
-                            10**token0Decimals,
+                            10**ERC20(address(token0)).decimals(),
                             rebalanceParams_.swap.amountIn
                         ) >
                             FullMath.mulDiv(
@@ -425,7 +408,7 @@ contract ArrakisV2 is
                     require(
                         FullMath.mulDiv(
                             rebalanceParams_.swap.expectedMinReturn,
-                            10**token1Decimals,
+                            10**ERC20(address(token1)).decimals(),
                             rebalanceParams_.swap.amountIn
                         ) >
                             FullMath.mulDiv(
@@ -474,6 +457,9 @@ contract ArrakisV2 is
                 ""
             );
         }
+
+        // TODO add an event, exceed contract size limit when uncommented.
+        // emit LogRebalance(address(this), rebalanceParams_);
     }
 
     function _withdraw(

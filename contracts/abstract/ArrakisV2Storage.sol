@@ -17,7 +17,7 @@ import {
     EnumerableSet
 } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {Pool} from "../libraries/Pool.sol";
-import {Range, InitializePayload} from "../structs/SArrakisV2.sol";
+import {Range, Rebalance, InitializePayload} from "../structs/SArrakisV2.sol";
 
 // solhint-disable-next-line max-states-count
 abstract contract ArrakisV2Storage is
@@ -72,6 +72,85 @@ abstract contract ArrakisV2Storage is
 
     EnumerableSet.AddressSet internal _pools;
 
+    // #region events
+
+    event LogMint(
+        address indexed vault,
+        address receiver,
+        uint256 mintAmount,
+        uint256 amount0In,
+        uint256 amount1In
+    );
+
+    event LogBurn(
+        address indexed vault,
+        address receiver,
+        uint256 burnAmount,
+        uint256 amount0Out,
+        uint256 amount1Out
+    );
+
+    event LPBurned(
+        address indexed vault,
+        address user,
+        uint256 burnAmount0,
+        uint256 burnAmount1
+    );
+
+    event LogRebalance(address indexed vault, Rebalance rebalanceParams);
+
+    event LogFeesEarn(address indexed vault, uint256 fee0, uint256 fee1);
+    event LogFeesEarnRebalance(
+        address indexed vault,
+        uint256 fee0,
+        uint256 fee1
+    );
+
+    event LogWithdrawManagerBalance(
+        address indexed vault,
+        uint256 amount0,
+        uint256 amount1
+    );
+    event LogWithdrawArrakisBalance(
+        address indexed vault,
+        uint256 amount0,
+        uint256 amount1
+    );
+
+    // #region Setting events
+
+    event LogSetInits(address indexed vault, uint256 init0, uint256 init1);
+    event LogAddPools(address indexed vault, address[] pools);
+    event LogRemovePools(address indexed vault, address[] pools);
+    event LogSetManager(
+        address indexed vault,
+        address oldManager,
+        address newManager
+    );
+    event LogRestrictedMintToggle(
+        address indexed vault,
+        uint16 restrictedMintToggle
+    );
+    event LogSetMaxTwapDeviation(
+        address indexed vault,
+        int24 oldTwapDeviation,
+        int24 maxTwapDeviation
+    );
+    event LogSetTwapDuration(
+        address indexed vault,
+        uint24 oldTwapDuration,
+        uint24 newTwapDuration
+    );
+    event LogSetMaxSlippage(
+        address indexed vault,
+        uint24 oldMaxSlippage,
+        uint24 newMaxSlippage
+    );
+
+    // #endregion Setting events
+
+    // #endregion events
+
     modifier onlyManager() {
         require(address(manager) == msg.sender, "no manager");
         _;
@@ -104,6 +183,8 @@ abstract contract ArrakisV2Storage is
         require(params_.maxTwapDeviation > 0, "maxTwapDeviation");
         require(params_.twapDuration > 0, "maxTwapDeviation");
 
+        address me = address(this);
+
         __ERC20_init(name_, symbol_);
         __ReentrancyGuard_init();
 
@@ -123,19 +204,37 @@ abstract contract ArrakisV2Storage is
 
         _owner = params_.owner;
 
-        init0 = params_.init0;
-        init1 = params_.init1;
-
         manager = IManagerProxyV2(params_.manager);
-        maxTwapDeviation = params_.maxTwapDeviation;
-        twapDuration = params_.twapDuration;
-        maxSlippage = params_.maxSlippage;
+
+        emit LogAddPools(me, _pools.values());
+        emit LogSetInits(me, init0 = params_.init0, init1 = params_.init1);
+        emit LogSetManager(me, address(0), params_.manager);
+        emit LogSetMaxTwapDeviation(
+            me,
+            maxTwapDeviation,
+            maxTwapDeviation = params_.maxTwapDeviation
+        );
+        emit LogSetTwapDuration(
+            me,
+            twapDuration,
+            twapDuration = params_.twapDuration
+        );
+        emit LogSetMaxSlippage(
+            me,
+            maxSlippage,
+            maxSlippage = params_.maxSlippage
+        );
     }
 
     // #region setter functions
+    function setInits(uint256 init0_, uint256 init1_) external onlyOwner {
+        require(totalSupply() == 0, "total supply");
+        emit LogSetInits(address(this), init0 = init0_, init1 = init1_);
+    }
 
     function addPools(address[] calldata pools_) external onlyOwner {
         _addPools(pools_);
+        emit LogAddPools(address(this), pools_);
     }
 
     function removePools(address[] calldata pools_) external onlyOwner {
@@ -145,10 +244,15 @@ abstract contract ArrakisV2Storage is
 
             _pools.remove(pools_[i]);
         }
+        emit LogRemovePools(address(this), pools_);
     }
 
     function setManager(IManagerProxyV2 manager_) external onlyOwner {
-        manager = manager_;
+        emit LogSetManager(
+            address(this),
+            address(manager),
+            address(manager = manager_)
+        );
     }
 
     function toggleRestrictMint() external onlyManager {
@@ -157,14 +261,32 @@ abstract contract ArrakisV2Storage is
         } else {
             restrictedMintToggle = RESTRICTED_MINT_ENABLED;
         }
+
+        emit LogRestrictedMintToggle(address(this), restrictedMintToggle);
     }
 
     function setMaxTwapDeviation(int24 maxTwapDeviation_) external onlyOwner {
-        maxTwapDeviation = maxTwapDeviation_;
+        emit LogSetMaxTwapDeviation(
+            address(this),
+            maxTwapDeviation,
+            maxTwapDeviation = maxTwapDeviation_
+        );
     }
 
     function setTwapDuration(uint24 twapDuration_) external onlyOwner {
-        twapDuration = twapDuration_;
+        emit LogSetTwapDuration(
+            address(this),
+            twapDuration,
+            twapDuration = twapDuration_
+        );
+    }
+
+    function setMaxSlippage(uint24 maxSlippage_) external onlyOwner {
+        emit LogSetMaxSlippage(
+            address(this),
+            maxSlippage,
+            maxSlippage = maxSlippage_
+        );
     }
 
     // #endregion setter functions
