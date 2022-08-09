@@ -4,6 +4,9 @@ pragma solidity 0.8.13;
 import {
     IUniswapV3Factory
 } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
+import {
+    IUniswapV3PoolImmutables
+} from "@uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolImmutables.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IManagerProxyV2} from "../interfaces/IManagerProxyV2.sol";
 import {OwnableUninitialized} from "./OwnableUninitialized.sol";
@@ -120,7 +123,7 @@ abstract contract ArrakisV2Storage is
     // #region Setting events
 
     event LogSetInits(address indexed vault, uint256 init0, uint256 init1);
-    event LogAddPools(address indexed vault, address[] pools);
+    event LogAddPools(address indexed vault, uint24[] feeTiers);
     event LogRemovePools(address indexed vault, address[] pools);
     event LogSetManager(
         address indexed vault,
@@ -206,7 +209,7 @@ abstract contract ArrakisV2Storage is
 
         manager = IManagerProxyV2(params_.manager);
 
-        emit LogAddPools(me, _pools.values());
+        emit LogAddPools(me, params_.feeTiers);
         emit LogSetInits(me, init0 = params_.init0, init1 = params_.init1);
         emit LogSetManager(me, address(0), params_.manager);
         emit LogSetMaxTwapDeviation(
@@ -232,9 +235,9 @@ abstract contract ArrakisV2Storage is
         emit LogSetInits(address(this), init0 = init0_, init1 = init1_);
     }
 
-    function addPools(address[] calldata pools_) external onlyOwner {
-        _addPools(pools_);
-        emit LogAddPools(address(this), pools_);
+    function addPools(uint24[] calldata feeTiers_) external onlyOwner {
+        _addPools(feeTiers_, address(token0), address(token1));
+        emit LogAddPools(address(this), feeTiers_);
     }
 
     function removePools(address[] calldata pools_) external onlyOwner {
@@ -320,13 +323,23 @@ abstract contract ArrakisV2Storage is
 
     // #region internal functions
 
-    function _addPools(address[] calldata pools_) internal {
-        for (uint256 i = 0; i < pools_.length; i++) {
-            // explicit
-            require(pools_[i] != address(0), "address Zero");
-            require(!_pools.contains(pools_[i]), "pool");
+    function _addPools(
+        uint24[] calldata feeTiers_,
+        address token0Addr_,
+        address token1Addr_
+    ) internal {
+        for (uint256 i = 0; i < feeTiers_.length; i++) {
+            address pool = factory.getPool(
+                token0Addr_,
+                token1Addr_,
+                feeTiers_[i]
+            );
 
-            _pools.add(pools_[i]);
+            require(pool != address(0), "address Zero");
+            require(!_pools.contains(pool), "pool");
+
+            // explicit.
+            _pools.add(pool);
         }
     }
 
