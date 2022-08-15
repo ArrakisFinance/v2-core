@@ -5,7 +5,7 @@ async function main() {
   const addresses = getAddresses(hre.network.name);
 
   await hre.run("verify:verify", {
-    address: (await hre.ethers.getContract("VaultV2Helper")).address,
+    address: (await hre.ethers.getContract("ArrakisV2Helper")).address,
     constructorArguments: [addresses.UniswapV3Factory],
     // other args
     libraries: {
