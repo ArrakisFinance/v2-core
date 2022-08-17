@@ -36,7 +36,6 @@ export default func;
 func.skip = async (hre: HardhatRuntimeEnvironment) => {
   const shouldSkip =
     hre.network.name === "mainnet" ||
-    hre.network.name === "polygon" ||
     hre.network.name === "goerli" ||
     hre.network.name === "optimism";
   return shouldSkip ? true : false;
