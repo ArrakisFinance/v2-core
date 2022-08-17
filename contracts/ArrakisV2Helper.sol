@@ -106,6 +106,8 @@ contract ArrakisV2Helper is IArrakisV2Helper {
         view
         returns (Amount[] memory amount0s, Amount[] memory amount1s)
     {
+        amount0s = new Amount[](ranges_.length);
+        amount1s = new Amount[](ranges_.length);
         for (uint256 i = 0; i < ranges_.length; i++) {
             (uint256 amount0, uint256 amount1) = _getAmountsFromLiquidity(
                 token0_,
