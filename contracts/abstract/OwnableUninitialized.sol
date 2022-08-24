@@ -1,73 +1,70 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity 0.8.13;
 
 // solhint-disable ordering
 
 /**
  * @dev Contract module which provides a basic access control mechanism, where
- * there is an account (an manager) that can be granted exclusive access to
+ * there is an account (an owner) that can be granted exclusive access to
  * specific functions.
  *
- * By default, the manager account will be the one that deploys the contract. This
+ * By default, the owner account will be the one that deploys the contract. This
  * can later be changed with {transferOwnership}.
  *
  * This module is used through inheritance. It will make available the modifier
- * `onlyManager`, which can be applied to your functions to restrict their use to
- * the manager.
+ * `onlyOwner`, which can be applied to your functions to restrict their use to
+ * the owner.
  */
-/// @dev DO NOT ADD STATE VARIABLES - APPEND THEM TO ArrakisVaultV2Storage
-/// @dev DO NOT ADD BASE CONTRACTS WITH STATE VARS - APPEND THEM TO ArrakisVaultV2Storage
+
 abstract contract OwnableUninitialized {
-    address internal _manager;
+    address internal _owner;
 
     event OwnershipTransferred(
-        address indexed previousManager,
-        address indexed newManager
+        address indexed previousOwner,
+        address indexed newOwner
     );
 
-    /// @dev Initializes the contract setting the deployer as the initial manager.
-    /// CONSTRUCTOR EMPTY - USE INITIALIZIABLE INSTEAD
+    /// @dev CONSTRUCTOR EMPTY - USE INITIALIZIABLE INSTEAD to set the initial owner
     // solhint-disable-next-line no-empty-blocks
     constructor() {}
 
     /**
-     * @dev Returns the address of the current manager.
+     * @dev Returns the address of the current owner.
      */
-    function manager() public view virtual returns (address) {
-        return _manager;
+    function owner() public view virtual returns (address) {
+        return _owner;
     }
 
     /**
-     * @dev Throws if called by any account other than the manager.
+     * @dev Throws if called by any account other than the owner.
      */
-    modifier onlyManager() {
-        require(manager() == msg.sender, "Ownable: caller is not the manager");
+    modifier onlyOwner() {
+        require(owner() == msg.sender, "Ownable: caller is not the owner");
         _;
     }
 
     /**
-     * @dev Leaves the contract without manager. It will not be possible to call
-     * `onlyManager` functions anymore. Can only be called by the current manager.
+     * @dev Leaves the contract without owner. It will not be possible to call
+     * `onlyOwner` functions anymore. Can only be called by the current owner.
      *
-     * NOTE: Renouncing ownership will leave the contract without an manager,
-     * thereby removing any functionality that is only available to the manager.
+     * NOTE: Renouncing ownership will leave the contract without an owner,
+     * thereby removing any functionality that is only available to the owner.
      */
-    function renounceOwnership() public virtual onlyManager {
-        emit OwnershipTransferred(_manager, address(0));
-        _manager = address(0);
+    function renounceOwnership() public virtual onlyOwner {
+        emit OwnershipTransferred(_owner, address(0));
+        _owner = address(0);
     }
 
     /**
      * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     * Can only be called by the current manager.
+     * Can only be called by the current owner.
      */
-    function transferOwnership(address newOwner) public virtual onlyManager {
+    function transferOwnership(address newOwner) public virtual onlyOwner {
         require(
             newOwner != address(0),
-            "Ownable: new manager is the zero address"
+            "Ownable: new owner is the zero address"
         );
-        emit OwnershipTransferred(_manager, newOwner);
-        _manager = newOwner;
+        emit OwnershipTransferred(_owner, newOwner);
+        _owner = newOwner;
     }
 }

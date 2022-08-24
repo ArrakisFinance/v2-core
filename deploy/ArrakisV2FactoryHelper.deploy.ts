@@ -1,38 +1,39 @@
-import { deployments, getNamedAccounts } from "hardhat";
+import { deployments, getNamedAccounts, ethers } from "hardhat";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
+import { sleep } from "../src/utils";
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   if (
     hre.network.name === "mainnet" ||
     hre.network.name === "polygon" ||
+    hre.network.name === "goerli" ||
     hre.network.name === "optimism"
   ) {
     console.log(
-      `!! Deploying ArrakisVaultV1 to ${hre.network.name}. Hit ctrl + c to abort`
+      `Deploying ArrakisV2FactoryHelper to ${hre.network.name}. Hit ctrl + c to abort`
     );
-    await new Promise((r) => setTimeout(r, 20000));
+    await sleep(10000);
   }
 
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
-
-  await deploy("ArrakisVaultV2", {
+  await deploy("ArrakisV2FactoryHelper", {
     from: deployer,
-    args: [],
-    log: hre.network.name !== "hardhat" ? true : false,
+    args: [(await ethers.getContract("ArrakisV2Factory")).address],
+    log: hre.network.name != "hardhat" ? true : false,
   });
 };
+
+export default func;
 
 func.skip = async (hre: HardhatRuntimeEnvironment) => {
   const shouldSkip =
     hre.network.name === "mainnet" ||
     hre.network.name === "polygon" ||
-    hre.network.name === "optimism" ||
-    hre.network.name === "goerli";
+    hre.network.name === "goerli" ||
+    hre.network.name === "optimism";
   return shouldSkip ? true : false;
 };
-
-func.tags = ["ArrakisVaultV1"];
-
-export default func;
+func.tags = ["ArrakisV2FactoryHelper"];
+func.dependencies = ["ArrakisV2Factory"];

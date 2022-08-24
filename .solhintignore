@@ -1,2 +1,9 @@
 node_modules/
 contracts/vendor
+contracts/functions
+contracts/__mocks__
+contracts/errors
+contracts/VaultV2.sol
+contracts/VaultV2Resolver.sol
+contracts/abstract/VaultV2Storage.sol
+contracts/libraries/Underlying.sol

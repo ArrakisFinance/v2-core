@@ -24,8 +24,11 @@ library LiquidityAmounts {
     ) internal pure returns (uint128 liquidity) {
         if (sqrtRatioAX96 > sqrtRatioBX96)
             (sqrtRatioAX96, sqrtRatioBX96) = (sqrtRatioBX96, sqrtRatioAX96);
-        uint256 intermediate =
-            FullMath.mulDiv(sqrtRatioAX96, sqrtRatioBX96, FixedPoint96.Q96);
+        uint256 intermediate = FullMath.mulDiv(
+            sqrtRatioAX96,
+            sqrtRatioBX96,
+            FixedPoint96.Q96
+        );
         return
             toUint128(
                 FullMath.mulDiv(
@@ -78,10 +81,16 @@ library LiquidityAmounts {
                 amount0
             );
         } else if (sqrtRatioX96 < sqrtRatioBX96) {
-            uint128 liquidity0 =
-                getLiquidityForAmount0(sqrtRatioX96, sqrtRatioBX96, amount0);
-            uint128 liquidity1 =
-                getLiquidityForAmount1(sqrtRatioAX96, sqrtRatioX96, amount1);
+            uint128 liquidity0 = getLiquidityForAmount0(
+                sqrtRatioX96,
+                sqrtRatioBX96,
+                amount0
+            );
+            uint128 liquidity1 = getLiquidityForAmount1(
+                sqrtRatioAX96,
+                sqrtRatioX96,
+                amount1
+            );
 
             liquidity = liquidity0 < liquidity1 ? liquidity0 : liquidity1;
         } else {
