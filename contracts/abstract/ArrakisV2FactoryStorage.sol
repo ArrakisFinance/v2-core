@@ -3,7 +3,9 @@ pragma solidity 0.8.13;
 
 import {IArrakisV2Factory} from "../interfaces/IArrakisV2Factory.sol";
 import {IEIP173Proxy} from "../vendor/proxy/interfaces/IEIP173Proxy.sol";
-import {OwnableUninitialized} from "./OwnableUninitialized.sol";
+import {
+    OwnableUpgradeable
+} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {
     Initializable
 } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -14,8 +16,7 @@ import {
 // solhint-disable-next-line max-states-count
 abstract contract ArrakisV2FactoryStorage is
     IArrakisV2Factory,
-    OwnableUninitialized, /* XXXX DONT MODIFY ORDERING XXXX */
-    Initializable
+    OwnableUpgradeable /* XXXX DONT MODIFY ORDERING XXXX */
     // APPEND ADDITIONAL BASE WITH STATE VARS BELOW:
     // XXXX DONT MODIFY ORDERING XXXX
 {
@@ -51,7 +52,7 @@ abstract contract ArrakisV2FactoryStorage is
         initializer
     {
         vaultImplementation = implementation_;
-        _owner = _owner_;
+        _transferOwnership(_owner_);
 
         emit InitFactory(vaultImplementation);
     }
