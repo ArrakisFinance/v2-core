@@ -260,9 +260,9 @@ contract ArrakisV2 is
         Rebalance calldata rebalanceParams_,
         Range[] calldata rangesToRemove_
     ) external onlyManager {
+        _removeRanges(rangesToRemove_);
         _addRanges(ranges_, address(token0), address(token1));
         _rebalance(rebalanceParams_);
-        _removeRanges(rangesToRemove_);
     }
 
     function withdrawManagerBalance() external {
