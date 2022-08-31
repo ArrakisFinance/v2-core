@@ -110,27 +110,30 @@ async function main() {
 
   // #endregion get tick from price.
 
-  const tx = await vaultV2Factory.deployVault({
-    feeTiers: [feeTier],
-    token0,
-    token1,
-    owner,
-    operators: [operator],
-    ranges: [
-      {
-        lowerTick: lowerTick,
-        upperTick: upperTick,
-        feeTier: feeTier,
-      },
-    ],
-    init0: res.amount0,
-    init1: res.amount1,
-    managerTreasury,
-    managerFeeBPS,
-    maxTwapDeviation,
-    twapDuration,
-    maxSlippage,
-  });
+  const tx = await vaultV2Factory.deployVault(
+    {
+      feeTiers: [feeTier],
+      token0,
+      token1,
+      owner,
+      operators: [operator],
+      ranges: [
+        {
+          lowerTick: lowerTick,
+          upperTick: upperTick,
+          feeTier: feeTier,
+        },
+      ],
+      init0: res.amount0,
+      init1: res.amount1,
+      managerTreasury,
+      managerFeeBPS,
+      maxTwapDeviation,
+      twapDuration,
+      maxSlippage,
+    },
+    true
+  );
 
   const rc = await tx.wait();
   const event = rc?.events?.find(

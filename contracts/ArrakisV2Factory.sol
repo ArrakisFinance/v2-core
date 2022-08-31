@@ -5,7 +5,14 @@ import {
     IERC20Metadata
 } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IArrakisV2} from "./interfaces/IArrakisV2.sol";
-import {EIP173Proxy} from "./vendor/proxy/EIP173Proxy.sol";
+import {IArrakisV2Beacon} from "./interfaces/IArrakisV2Beacon.sol";
+import {
+    TransparentUpgradeableProxy
+} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {
+    BeaconProxy,
+    ERC1967Upgrade
+} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import {ArrakisV2FactoryStorage} from "./abstract/ArrakisV2FactoryStorage.sol";
 import {InitializePayload} from "./structs/SArrakisV2.sol";
 import {
@@ -16,23 +23,20 @@ import {_getTokenOrder, _append} from "./functions/FArrakisV2Factory.sol";
 contract ArrakisV2Factory is ArrakisV2FactoryStorage {
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    function deployVault(InitializePayload calldata params_)
+    constructor(address deployer_, IArrakisV2Beacon arrakisV2Beacon_)
+        ArrakisV2FactoryStorage(deployer_, arrakisV2Beacon_)
+    {} // solhint-disable-line no-empty-blocks
+
+    function deployVault(InitializePayload calldata params_, bool isBeacon_)
         external
         returns (address vault)
     {
-        string memory name;
-        (vault, name) = _preDeploy(params_.token0, params_.token1);
+        vault = _preDeploy(params_, isBeacon_);
 
-        IArrakisV2(vault).initialize(
-            name,
-            string(abi.encodePacked("RAKIS-V2-", _uint2str(index + 1))),
-            params_
-        );
-
-        _deployers.add(params_.manager);
-        _vaults[params_.manager].add(vault);
+        _deployers.add(msg.sender);
+        _vaults[msg.sender].add(vault);
         index += 1;
-        emit VaultCreated(params_.manager, vault);
+        emit VaultCreated(msg.sender, vault);
     }
 
     // #region public external view functions.
@@ -59,8 +63,9 @@ contract ArrakisV2Factory is ArrakisV2FactoryStorage {
     function getDeployers() public view returns (address[] memory) {
         uint256 length = numDeployers();
         address[] memory deployers = new address[](length);
-        for (uint256 i = 0; i < length; i++) {
-            deployers[i] = _getDeployer(i);
+        deployers[0] = deployer;
+        for (uint256 i = 1; i < length; i++) {
+            deployers[i] = _getDeployer(i - 1);
         }
 
         return deployers;
@@ -89,7 +94,7 @@ contract ArrakisV2Factory is ArrakisV2FactoryStorage {
     /// @notice numDeployers counts the total number of Vault deployer addresses
     /// @return total number of Vault deployer addresses
     function numDeployers() public view returns (uint256) {
-        return _deployers.length();
+        return _deployers.length() + 1;
     }
 
     /// @notice getVaults fetches all the Vault addresses deployed by `deployer`
@@ -113,18 +118,36 @@ contract ArrakisV2Factory is ArrakisV2FactoryStorage {
 
     // #region internal functions
 
-    function _preDeploy(address tokenA_, address tokenB_)
+    function _preDeploy(InitializePayload calldata params_, bool isBeacon_)
         internal
-        returns (address vault, string memory name)
+        returns (address vault)
     {
-        (address token0, address token1) = _getTokenOrder(tokenA_, tokenB_);
-        vault = address(
-            new EIP173Proxy(vaultImplementation, address(this), "")
+        (address token0, address token1) = _getTokenOrder(
+            params_.token0,
+            params_.token1
         );
-        name = "Arrakis Vault V2";
+
+        string memory name = "Arrakis Vault V2";
         try this.getTokenName(token0, token1) returns (string memory result) {
             name = result;
         } catch {} // solhint-disable-line no-empty-blocks
+
+        bytes memory data = abi.encodeWithSelector(
+            IArrakisV2.initialize.selector,
+            name,
+            string(abi.encodePacked("RAKIS-V2-", _uint2str(index + 1))),
+            params_
+        );
+
+        vault = isBeacon_
+            ? address(new BeaconProxy(address(arrakisV2Beacon), data))
+            : address(
+                new TransparentUpgradeableProxy(
+                    arrakisV2Beacon.implementation(),
+                    address(this),
+                    data
+                )
+            );
     }
 
     // #endregion internal functions
