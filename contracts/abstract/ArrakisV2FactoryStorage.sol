@@ -2,14 +2,10 @@
 pragma solidity 0.8.13;
 
 import {IArrakisV2Factory} from "../interfaces/IArrakisV2Factory.sol";
-<<<<<<< HEAD
 import {IArrakisV2Beacon} from "../interfaces/IArrakisV2Beacon.sol";
 import {
     ITransparentUpgradeableProxy
 } from "../interfaces/ITransparentUpgradeableProxy.sol";
-=======
-import {IEIP173Proxy} from "../vendor/proxy/interfaces/IEIP173Proxy.sol";
->>>>>>> 759ca99 (cleanup remove UninitializeOwnable)
 import {
     OwnableUpgradeable
 } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -54,20 +50,9 @@ abstract contract ArrakisV2FactoryStorage is
 
     // #endregion constructor.
 
-<<<<<<< HEAD
     function initialize(address _owner_) external initializer {
         _transferOwnership(_owner_);
         emit InitFactory(_owner_);
-=======
-    function initialize(address implementation_, address _owner_)
-        external
-        initializer
-    {
-        vaultImplementation = implementation_;
-        _transferOwnership(_owner_);
-
-        emit InitFactory(vaultImplementation);
->>>>>>> 759ca99 (cleanup remove UninitializeOwnable)
     }
 
     // #region admin set functions
