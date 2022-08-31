@@ -21,7 +21,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {
     EnumerableSet
 } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {FullMath} from "./vendor/uniswap/LiquidityAmounts.sol";
+import {FullMath} from "@arrakisfi/v3-lib-0.8/contracts/LiquidityAmounts.sol";
 import {ArrakisV2Storage} from "./abstract/ArrakisV2Storage.sol";
 import {
     Rebalance,

@@ -5,8 +5,8 @@ import {
     IUniswapV3Pool
 } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {TickMath} from "../vendor/uniswap/TickMath.sol";
-import {FullMath} from "../vendor/uniswap/FullMath.sol";
+import {TickMath} from "@arrakisfi/v3-lib-0.8/contracts/TickMath.sol";
+import {FullMath} from "@arrakisfi/v3-lib-0.8/contracts/FullMath.sol";
 import "@uniswap/v3-core/contracts/libraries/FixedPoint96.sol";
 
 library Twap {

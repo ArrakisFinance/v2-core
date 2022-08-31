@@ -10,15 +10,19 @@ import {IArrakisV2} from "./interfaces/IArrakisV2.sol";
 import {
     IUniswapV3Pool
 } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {ISwapRouter} from "./vendor/uniswap/interfaces/ISwapRouter.sol";
+import {
+    ISwapRouter
+} from "@arrakisfi/v3-lib-0.8/contracts/interfaces/ISwapRouter.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
 import {UniswapV3Amounts} from "./libraries/UniswapV3Amounts.sol";
 import {Twap} from "./libraries/Twap.sol";
 import {Position as PositionHelper} from "./libraries/Position.sol";
-import {FullMath} from "./vendor/uniswap/FullMath.sol";
-import {TickMath} from "./vendor/uniswap/TickMath.sol";
-import {LiquidityAmounts} from "./vendor/uniswap/LiquidityAmounts.sol";
+import {FullMath} from "@arrakisfi/v3-lib-0.8/contracts/FullMath.sol";
+import {TickMath} from "@arrakisfi/v3-lib-0.8/contracts/TickMath.sol";
+import {
+    LiquidityAmounts
+} from "@arrakisfi/v3-lib-0.8/contracts/LiquidityAmounts.sol";
 import {
     BurnLiquidity,
     PositionLiquidity,
