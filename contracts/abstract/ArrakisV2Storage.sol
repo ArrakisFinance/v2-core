@@ -381,6 +381,11 @@ abstract contract ArrakisV2Storage is
             require(exist, "not range");
 
             delete ranges[index];
+
+            for (uint256 j = index; j < ranges.length - 1; j++) {
+                ranges[j] = ranges[j + 1];
+                ranges.pop();
+            }
         }
     }
 
