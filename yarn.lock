@@ -2,6 +2,11 @@
 # yarn lockfile v1
 
 
+"@arrakisfi/v3-lib-0.8@0.1.1":
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@arrakisfi/v3-lib-0.8/-/v3-lib-0.8-0.1.1.tgz#68e4fe63e99618d9dd2b38b19761699a37f51d0f"
+  integrity sha512-lMycK6kd7r8sh91xxJhrVnvFpJI61ExxbY76fyqZsudRrg9JdYH2RloEHuhVyTqwAG3RovTAc0jh/UjcNh/a5w==
+
 "@babel/code-frame@^7.0.0":
   version "7.12.13"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.12.13.tgz#dcfc826beef65e75c50e21d3837d7d95798dd658"

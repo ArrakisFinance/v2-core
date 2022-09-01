@@ -11,19 +11,15 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     hre.network.name === "optimism"
   ) {
     console.log(
-      `Deploying MockEIP173Implementation to ${hre.network.name}. Hit ctrl + c to abort`
+      `Deploying TempProxyAdmin to ${hre.network.name}. Hit ctrl + c to abort`
     );
     await sleep(10000);
   }
 
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
-  await deploy("MockEIP173Implementation", {
+  await deploy("TempProxyAdmin", {
     from: deployer,
-    proxy: {
-      owner: deployer,
-      proxyContract: "EIP173Proxy",
-    },
     log: hre.network.name != "hardhat" ? true : false,
   });
 };
@@ -38,4 +34,4 @@ func.skip = async (hre: HardhatRuntimeEnvironment) => {
     hre.network.name === "optimism";
   return shouldSkip ? true : false;
 };
-func.tags = ["MockEIP173Implementation"];
+func.tags = ["TempProxyAdmin"];

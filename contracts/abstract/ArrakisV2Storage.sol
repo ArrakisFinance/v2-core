@@ -9,7 +9,9 @@ import {
 } from "@uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolImmutables.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IManagerProxyV2} from "../interfaces/IManagerProxyV2.sol";
-import {OwnableUninitialized} from "./OwnableUninitialized.sol";
+import {
+    OwnableUpgradeable
+} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {
     ERC20Upgradeable
 } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
@@ -24,7 +26,7 @@ import {Range, Rebalance, InitializePayload} from "../structs/SArrakisV2.sol";
 
 // solhint-disable-next-line max-states-count
 abstract contract ArrakisV2Storage is
-    OwnableUninitialized,
+    OwnableUpgradeable,
     ERC20Upgradeable,
     ReentrancyGuardUpgradeable
 {
@@ -174,7 +176,7 @@ abstract contract ArrakisV2Storage is
     ) external initializer {
         require(params_.feeTiers.length > 0, "no fee tier");
         require(params_.token0 != address(0), "token0");
-        require(params_.token1 != address(0), "token1");
+        require(params_.token0 < params_.token1, "wrong token order");
 
         require(params_.init0 > 0, "init0");
         require(params_.init1 > 0, "init1");
@@ -205,7 +207,7 @@ abstract contract ArrakisV2Storage is
         token0 = IERC20(params_.token0);
         token1 = IERC20(params_.token1);
 
-        _owner = params_.owner;
+        _transferOwnership(params_.owner);
 
         manager = IManagerProxyV2(params_.manager);
 

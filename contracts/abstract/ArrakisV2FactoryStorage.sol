@@ -2,8 +2,13 @@
 pragma solidity 0.8.13;
 
 import {IArrakisV2Factory} from "../interfaces/IArrakisV2Factory.sol";
-import {IEIP173Proxy} from "../vendor/proxy/interfaces/IEIP173Proxy.sol";
-import {OwnableUninitialized} from "./OwnableUninitialized.sol";
+import {IArrakisV2Beacon} from "../interfaces/IArrakisV2Beacon.sol";
+import {
+    ITransparentUpgradeableProxy
+} from "../interfaces/ITransparentUpgradeableProxy.sol";
+import {
+    OwnableUpgradeable
+} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {
     Initializable
 } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -14,8 +19,7 @@ import {
 // solhint-disable-next-line max-states-count
 abstract contract ArrakisV2FactoryStorage is
     IArrakisV2Factory,
-    OwnableUninitialized, /* XXXX DONT MODIFY ORDERING XXXX */
-    Initializable
+    OwnableUpgradeable /* XXXX DONT MODIFY ORDERING XXXX */
     // APPEND ADDITIONAL BASE WITH STATE VARS BELOW:
     // XXXX DONT MODIFY ORDERING XXXX
 {
@@ -26,8 +30,8 @@ abstract contract ArrakisV2FactoryStorage is
     // solhint-disable-next-line const-name-snakecase
     string public constant version = "1.0.0";
 
-    address public vaultImplementation;
-    address public deployer;
+    IArrakisV2Beacon public immutable arrakisV2Beacon;
+    address public immutable deployer;
     uint256 public index;
 
     EnumerableSet.AddressSet internal _deployers;
@@ -39,39 +43,25 @@ abstract contract ArrakisV2FactoryStorage is
 
     // #region constructor.
 
-    constructor() {
-        deployer = msg.sender;
-        _deployers.add(msg.sender);
+    constructor(address deployer_, IArrakisV2Beacon arrakisV2Beacon_) {
+        deployer = deployer_;
+        arrakisV2Beacon = arrakisV2Beacon_;
     }
 
     // #endregion constructor.
 
-    function initialize(address implementation_, address _owner_)
-        external
-        initializer
-    {
-        vaultImplementation = implementation_;
-        _owner = _owner_;
-
-        emit InitFactory(vaultImplementation);
+    function initialize(address _owner_) external initializer {
+        _transferOwnership(_owner_);
+        emit InitFactory(_owner_);
     }
 
     // #region admin set functions
 
-    function setVaultImplementation(address nextImplementation_)
-        external
-        onlyOwner
-    {
-        vaultImplementation = nextImplementation_;
-        emit UpdateVaultImplementation(
-            vaultImplementation,
-            nextImplementation_
-        );
-    }
-
     function upgradeVaults(address[] memory vaults_) external onlyOwner {
         for (uint256 i = 0; i < vaults_.length; i++) {
-            IEIP173Proxy(vaults_[i]).upgradeTo(vaultImplementation);
+            ITransparentUpgradeableProxy(vaults_[i]).upgradeTo(
+                arrakisV2Beacon.implementation()
+            );
         }
     }
 
@@ -81,8 +71,8 @@ abstract contract ArrakisV2FactoryStorage is
     ) external onlyOwner {
         require(vaults_.length == datas_.length, "mismatching array length");
         for (uint256 i = 0; i < vaults_.length; i++) {
-            IEIP173Proxy(vaults_[i]).upgradeToAndCall(
-                vaultImplementation,
+            ITransparentUpgradeableProxy(vaults_[i]).upgradeToAndCall(
+                arrakisV2Beacon.implementation(),
                 datas_[i]
             );
         }
@@ -90,9 +80,37 @@ abstract contract ArrakisV2FactoryStorage is
 
     function makeVaultsImmutable(address[] memory vaults_) external onlyOwner {
         for (uint256 i = 0; i < vaults_.length; i++) {
-            IEIP173Proxy(vaults_[i]).transferProxyAdmin(address(0));
+            ITransparentUpgradeableProxy(vaults_[i]).changeAdmin(address(1));
         }
     }
 
     // #endregion admin set functions
+
+    // #region admin view call.
+
+    function getProxyAdmin(address proxy) public view returns (address) {
+        // We need to manually run the static call since the getter cannot be flagged as view
+        // bytes4(keccak256("admin()")) == 0xf851a440
+        (bool success, bytes memory returndata) = proxy.staticcall(
+            hex"f851a440"
+        );
+        require(success);
+        return abi.decode(returndata, (address));
+    }
+
+    function getProxyImplementation(address proxy)
+        public
+        view
+        returns (address)
+    {
+        // We need to manually run the static call since the getter cannot be flagged as view
+        // bytes4(keccak256("implementation()")) == 0x5c60da1b
+        (bool success, bytes memory returndata) = proxy.staticcall(
+            hex"5c60da1b"
+        );
+        require(success);
+        return abi.decode(returndata, (address));
+    }
+
+    // #endregion admin view call.
 }

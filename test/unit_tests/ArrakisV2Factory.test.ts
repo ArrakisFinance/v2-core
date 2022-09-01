@@ -16,7 +16,9 @@ describe("Factory function unit test", function () {
 
   let user: Signer;
   let user2: Signer;
+  let owner: Signer;
   let userAddr: string;
+  let ownerAddr: string;
   let arrakisV2Factory: ArrakisV2Factory;
   let uniswapV3Pool: IUniswapV3Pool;
   let arrakisV2Resolver: ArrakisV2Resolver;
@@ -31,19 +33,13 @@ describe("Factory function unit test", function () {
     addresses = getAddresses(hre.network.name);
     await deployments.fixture();
 
-    [user, user2] = await ethers.getSigners();
+    [user, user2, owner] = await ethers.getSigners();
     userAddr = await user.getAddress();
+    ownerAddr = await owner.getAddress();
 
     arrakisV2Factory = (await ethers.getContract(
       "ArrakisV2Factory"
     )) as ArrakisV2Factory;
-
-    await arrakisV2Factory.initialize(
-      (
-        await ethers.getContract("ArrakisV2")
-      ).address,
-      userAddr
-    );
 
     const uniswapV3Factory = (await ethers.getContractAt(
       "IUniswapV3Factory",
@@ -77,18 +73,21 @@ describe("Factory function unit test", function () {
       ethers.utils.parseUnits("1", 18)
     );
 
-    const tx = await arrakisV2Factory.deployVault({
-      feeTiers: [500],
-      token0: addresses.USDC,
-      token1: addresses.WETH,
-      owner: userAddr,
-      init0: res.amount0,
-      init1: res.amount1,
-      manager: userAddr,
-      maxTwapDeviation: 100,
-      twapDuration: 2000,
-      maxSlippage: 100,
-    });
+    const tx = await arrakisV2Factory.deployVault(
+      {
+        feeTiers: [500],
+        token0: addresses.USDC,
+        token1: addresses.WETH,
+        owner: userAddr,
+        init0: res.amount0,
+        init1: res.amount1,
+        manager: userAddr,
+        maxTwapDeviation: 100,
+        twapDuration: 2000,
+        maxSlippage: 100,
+      },
+      true
+    );
 
     const rc = await tx.wait();
     const event = rc?.events?.find((event) => event.event === "VaultCreated");
@@ -129,18 +128,21 @@ describe("Factory function unit test", function () {
       ethers.utils.parseUnits("1", 18)
     );
 
-    await arrakisV2Factory.deployVault({
-      feeTiers: [500],
-      token0: addresses.USDC,
-      token1: addresses.WETH,
-      owner: userAddr,
-      init0: res.amount0,
-      init1: res.amount1,
-      manager: userAddr,
-      maxTwapDeviation: 100,
-      twapDuration: 2000,
-      maxSlippage: 100,
-    });
+    await arrakisV2Factory.connect(user2).deployVault(
+      {
+        feeTiers: [500],
+        token0: addresses.USDC,
+        token1: addresses.WETH,
+        owner: userAddr,
+        init0: res.amount0,
+        init1: res.amount1,
+        manager: userAddr,
+        maxTwapDeviation: 100,
+        twapDuration: 2000,
+        maxSlippage: 100,
+      },
+      true
+    );
 
     expect((await arrakisV2Factory.getDeployerVaults()).length).to.be.eq(1);
   });
@@ -150,7 +152,6 @@ describe("Factory function unit test", function () {
   });
 
   it("#5: unit test get deployers", async () => {
-    const user2Addr = await user2.getAddress();
     const slot0 = await uniswapV3Pool.slot0();
     const tickSpacing = await uniswapV3Pool.tickSpacing();
 
@@ -165,18 +166,21 @@ describe("Factory function unit test", function () {
       ethers.utils.parseUnits("1", 18)
     );
 
-    await arrakisV2Factory.deployVault({
-      feeTiers: [500],
-      token0: addresses.USDC,
-      token1: addresses.WETH,
-      owner: user2Addr,
-      init0: res.amount0,
-      init1: res.amount1,
-      manager: user2Addr,
-      maxTwapDeviation: 100,
-      twapDuration: 2000,
-      maxSlippage: 100,
-    });
+    await arrakisV2Factory.connect(user).deployVault(
+      {
+        feeTiers: [500],
+        token0: addresses.USDC,
+        token1: addresses.WETH,
+        owner: userAddr,
+        init0: res.amount0,
+        init1: res.amount1,
+        manager: userAddr,
+        maxTwapDeviation: 100,
+        twapDuration: 2000,
+        maxSlippage: 100,
+      },
+      true
+    );
 
     expect((await arrakisV2Factory.getDeployers()).length).to.be.eq(2);
   });
@@ -200,18 +204,21 @@ describe("Factory function unit test", function () {
       ethers.utils.parseUnits("1", 18)
     );
 
-    await arrakisV2Factory.deployVault({
-      feeTiers: [500],
-      token0: addresses.USDC,
-      token1: addresses.WETH,
-      owner: userAddr,
-      init0: res.amount0,
-      init1: res.amount1,
-      manager: userAddr,
-      maxTwapDeviation: 100,
-      twapDuration: 2000,
-      maxSlippage: 100,
-    });
+    await arrakisV2Factory.connect(user).deployVault(
+      {
+        feeTiers: [500],
+        token0: addresses.USDC,
+        token1: addresses.WETH,
+        owner: userAddr,
+        init0: res.amount0,
+        init1: res.amount1,
+        manager: userAddr,
+        maxTwapDeviation: 100,
+        twapDuration: 2000,
+        maxSlippage: 100,
+      },
+      true
+    );
 
     expect(await arrakisV2Factory.numVaults()).to.be.eq(1);
   });
@@ -235,20 +242,23 @@ describe("Factory function unit test", function () {
       ethers.utils.parseUnits("1", 18)
     );
 
-    await arrakisV2Factory.deployVault({
-      feeTiers: [500],
-      token0: addresses.USDC,
-      token1: addresses.WETH,
-      owner: userAddr,
-      init0: res.amount0,
-      init1: res.amount1,
-      manager: userAddr,
-      maxTwapDeviation: 100,
-      twapDuration: 2000,
-      maxSlippage: 100,
-    });
+    await arrakisV2Factory.connect(owner).deployVault(
+      {
+        feeTiers: [500],
+        token0: addresses.USDC,
+        token1: addresses.WETH,
+        owner: userAddr,
+        init0: res.amount0,
+        init1: res.amount1,
+        manager: userAddr,
+        maxTwapDeviation: 100,
+        twapDuration: 2000,
+        maxSlippage: 100,
+      },
+      false
+    );
 
-    expect(await arrakisV2Factory.numVaultsByDeployer(userAddr)).to.be.eq(1);
+    expect(await arrakisV2Factory.numVaultsByDeployer(ownerAddr)).to.be.eq(1);
   });
 
   it("#10: unit test get num of deployers", async () => {
@@ -276,45 +286,24 @@ describe("Factory function unit test", function () {
       ethers.utils.parseUnits("1", 18)
     );
 
-    await arrakisV2Factory.deployVault({
-      feeTiers: [500],
-      token0: addresses.USDC,
-      token1: addresses.WETH,
-      owner: userAddr,
-      init0: res.amount0,
-      init1: res.amount1,
-      manager: userAddr,
-      maxTwapDeviation: 100,
-      twapDuration: 2000,
-      maxSlippage: 100,
-    });
+    await arrakisV2Factory.connect(user).deployVault(
+      {
+        feeTiers: [500],
+        token0: addresses.USDC,
+        token1: addresses.WETH,
+        owner: userAddr,
+        init0: res.amount0,
+        init1: res.amount1,
+        manager: userAddr,
+        maxTwapDeviation: 100,
+        twapDuration: 2000,
+        maxSlippage: 100,
+      },
+      false
+    );
 
     expect(
       (await arrakisV2Factory.getVaultsByDeployer(userAddr)).length
     ).to.be.eq(1);
   });
-
-  // #region owner setting functions.
-
-  it("#13: unit test set vault implementation", async () => {
-    expect(await arrakisV2Factory.vaultImplementation()).to.not.eq(
-      ethers.constants.AddressZero
-    );
-
-    await arrakisV2Factory.setVaultImplementation(ethers.constants.AddressZero);
-
-    expect(await arrakisV2Factory.vaultImplementation()).to.eq(
-      ethers.constants.AddressZero
-    );
-  });
-
-  it("#14: unit test set pool implementation", async () => {
-    await expect(
-      arrakisV2Factory
-        .connect(user2)
-        .setVaultImplementation(ethers.constants.AddressZero)
-    ).to.be.revertedWith("Ownable: caller is not the owner");
-  });
-
-  // #endregion owner setting functions.
 });

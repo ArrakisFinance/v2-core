@@ -1,7 +1,7 @@
-import { deployments, ethers, getNamedAccounts } from "hardhat";
+import { deployments, getNamedAccounts } from "hardhat";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
-import { sleep } from "../src/utils";
+import { sleep } from "../../src/utils";
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   if (
@@ -11,28 +11,21 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     hre.network.name === "optimism"
   ) {
     console.log(
-      `Deploying ArrakisV2Factory to ${hre.network.name}. Hit ctrl + c to abort`
+      `Deploying MockTransparentImplementation to ${hre.network.name}. Hit ctrl + c to abort`
     );
     await sleep(10000);
   }
 
   const { deploy } = deployments;
-  const { deployer, arrakisMultiSig, owner } = await getNamedAccounts();
-
-  await deploy("ArrakisV2Factory", {
+  const { deployer } = await getNamedAccounts();
+  await deploy("MockTransparentImplementation", {
     from: deployer,
     proxy: {
       proxyContract: "OpenZeppelinTransparentProxy",
-      owner: arrakisMultiSig,
-      execute: {
-        methodName: "initialize",
-        args: [owner],
+      viaAdminContract: {
+        name: "TempProxyAdmin",
       },
     },
-    args: [
-      arrakisMultiSig,
-      (await ethers.getContract("ArrakisV2Beacon")).address,
-    ],
     log: hre.network.name != "hardhat" ? true : false,
   });
 };
@@ -47,5 +40,5 @@ func.skip = async (hre: HardhatRuntimeEnvironment) => {
     hre.network.name === "optimism";
   return shouldSkip ? true : false;
 };
-func.tags = ["ArrakisV2Factory"];
-func.dependencies = ["ArrakisV2Beacon"];
+func.tags = ["MockTransparentImplementation"];
+func.dependencies = ["TempProxyAdmin"];

@@ -26,7 +26,12 @@ const config: HardhatUserConfig = {
       default: 0,
     },
     arrakisMultiSig: {
+      default: 1,
       polygon: "0xDEb4C33D5C3E7e32F55a9D6336FE06010E40E3AB",
+    },
+    owner: {
+      default: 2,
+      polygon: "need to define a multisig",
     },
   },
 

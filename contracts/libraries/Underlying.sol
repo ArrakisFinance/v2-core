@@ -5,8 +5,10 @@ import {
     IUniswapV3Pool
 } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {LiquidityAmounts} from "../vendor/uniswap/LiquidityAmounts.sol";
-import {TickMath} from "../vendor/uniswap/TickMath.sol";
+import {
+    LiquidityAmounts
+} from "@arrakisfi/v3-lib-0.8/contracts/LiquidityAmounts.sol";
+import {TickMath} from "@arrakisfi/v3-lib-0.8/contracts/TickMath.sol";
 import {
     UnderlyingPayload,
     RangeData,

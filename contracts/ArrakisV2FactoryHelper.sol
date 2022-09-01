@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import {IEIP173Proxy} from "./vendor/proxy/interfaces/IEIP173Proxy.sol";
+import {
+    ITransparentUpgradeableProxy
+} from "./interfaces/ITransparentUpgradeableProxy.sol";
 import {IArrakisV2Factory} from "./interfaces/IArrakisV2Factory.sol";
 
 contract ArrakisV2FactoryHelper {
@@ -9,14 +11,6 @@ contract ArrakisV2FactoryHelper {
 
     constructor(IArrakisV2Factory vaultV2Factory_) {
         vaultV2Factory = vaultV2Factory_;
-    }
-
-    /// @notice isVaultImmutable checks if a certain Vault is "immutable" i.e. that the
-    /// proxyAdmin is the zero address and thus the underlying implementation cannot be upgraded
-    /// @param vault_ address of the Vault
-    /// @return bool signaling if vault is immutable (true) or not (false)
-    function isVaultImmutable(address vault_) external view returns (bool) {
-        return address(0) == getProxyAdmin(vault_);
     }
 
     /// @notice getGelatoVaults gets all the Harvesters deployed by Gelato's
@@ -33,7 +27,7 @@ contract ArrakisV2FactoryHelper {
     /// @param vault_ address of the Vault
     /// @return address that controls the Vault implementation (has power to upgrade it)
     function getProxyAdmin(address vault_) public view returns (address) {
-        return IEIP173Proxy(vault_).proxyAdmin();
+        return vaultV2Factory.getProxyAdmin(vault_);
     }
 
     /// @notice getVaults fetches all the Vault addresses deployed by `deployer`

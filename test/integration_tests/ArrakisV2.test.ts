@@ -134,25 +134,21 @@ describe("Arrakis V2 integration test!!!", async function () {
       ethers.utils.parseUnits("1", 18)
     );
 
-    await arrakisV2Factory.initialize(
-      (
-        await ethers.getContract("ArrakisV2")
-      ).address,
-      userAddr
+    const tx = await arrakisV2Factory.deployVault(
+      {
+        feeTiers: [500],
+        token0: addresses.USDC,
+        token1: addresses.WETH,
+        owner: userAddr,
+        init0: res.amount0,
+        init1: res.amount1,
+        manager: managerProxyMock.address,
+        maxTwapDeviation: 100,
+        twapDuration: 2000,
+        maxSlippage: 100,
+      },
+      true
     );
-
-    const tx = await arrakisV2Factory.deployVault({
-      feeTiers: [500],
-      token0: addresses.USDC,
-      token1: addresses.WETH,
-      owner: userAddr,
-      init0: res.amount0,
-      init1: res.amount1,
-      manager: managerProxyMock.address,
-      maxTwapDeviation: 100,
-      twapDuration: 2000,
-      maxSlippage: 100,
-    });
 
     const rc = await tx.wait();
     const event = rc?.events?.find((event) => event.event === "VaultCreated");
