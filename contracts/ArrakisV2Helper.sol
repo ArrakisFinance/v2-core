@@ -19,6 +19,8 @@ import {
 } from "./structs/SArrakisV2.sol";
 import {Amount} from "./structs/SArrakisV2Helper.sol";
 
+import "hardhat/console.sol";
+
 contract ArrakisV2Helper is IArrakisV2Helper {
     IUniswapV3Factory public immutable factory;
 
@@ -88,6 +90,17 @@ contract ArrakisV2Helper is IArrakisV2Helper {
             token1: address(vault_.token1()),
             self: address(vault_)
         });
+
+        for(uint256 i=0; i< underlyingPayload.ranges.length; i++) {
+            console.log("Range number : ", i);
+            console.logInt(underlyingPayload.ranges[i].lowerTick);
+            console.logInt(underlyingPayload.ranges[i].upperTick);
+            console.logUint(underlyingPayload.ranges[i].feeTier);
+        }
+
+        console.log("factory : ", address(vault_.factory()));
+        console.log("token 0 : ", address(vault_.token0()));
+        console.log("token 1 : ", address(vault_.token1()));
 
         (amount0, amount1, , ) = UnderlyingHelper.totalUnderlyingWithFees(
             underlyingPayload
