@@ -39,4 +39,9 @@ interface IArrakisV2Helper {
         external
         view
         returns (Amount[] memory amount0s, Amount[] memory amount1s);
+
+    function ranges(IArrakisV2 vault_)
+        external
+        view
+        returns (Range[] memory rgs);
 }

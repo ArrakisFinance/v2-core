@@ -2,16 +2,18 @@ import hre from "hardhat";
 import { getAddresses } from "../../src/addresses";
 
 async function main() {
-  const { deployer } = await hre.getNamedAccounts();
+  const { arrakisTreasury } = await hre.getNamedAccounts();
   const addresses = getAddresses(hre.network.name);
 
   await hre.run("verify:verify", {
     address: (await hre.ethers.getContract("ArrakisV2")).address,
-    constructorArguments: [addresses.UniswapV3Factory, deployer],
+    constructorArguments: [addresses.UniswapV3Factory, arrakisTreasury],
     // other args
     libraries: {
       Twap: (await hre.ethers.getContract("Twap")).address,
       Underlying: (await hre.ethers.getContract("Underlying")).address,
+      Pool: (await hre.ethers.getContract("Pool")).address,
+      Position: (await hre.ethers.getContract("Position")).address,
       UniswapV3Amounts: (
         await hre.ethers.getContract("UniswapV3Amounts")
       ).address,

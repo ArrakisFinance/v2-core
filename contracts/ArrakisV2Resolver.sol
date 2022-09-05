@@ -62,7 +62,7 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
         address token0Addr;
         address token1Addr;
         {
-            Range[] memory ranges = vaultV2_.rangesArray();
+            Range[] memory ranges = helper.ranges(vaultV2_);
 
             token0Addr = address(vaultV2_.token0());
             token1Addr = address(vaultV2_.token1());
@@ -155,7 +155,7 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
         address token0Addr;
         address token1Addr;
         {
-            Range[] memory ranges = rebalanceWithSwap_.vaultV2.rangesArray();
+            Range[] memory ranges = helper.ranges(rebalanceWithSwap_.vaultV2);
 
             token0Addr = address(rebalanceWithSwap_.vaultV2.token0());
             token1Addr = address(rebalanceWithSwap_.vaultV2.token1());
@@ -302,7 +302,7 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
         uint256 totalSupply = vaultV2_.totalSupply();
         require(totalSupply > 0, "total supply");
 
-        Range[] memory ranges = vaultV2_.rangesArray();
+        Range[] memory ranges = helper.ranges(vaultV2_);
 
         {
             UnderlyingOutput memory underlying;

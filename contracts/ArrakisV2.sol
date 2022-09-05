@@ -21,6 +21,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {
     EnumerableSet
 } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {FullMath} from "@arrakisfi/v3-lib-0.8/contracts/LiquidityAmounts.sol";
 import {ArrakisV2Storage} from "./abstract/ArrakisV2Storage.sol";
 import {
@@ -55,10 +56,7 @@ contract ArrakisV2 is
         uint256 amount1Owed_,
         bytes calldata /*_data*/
     ) external override {
-        require(_pools.contains(msg.sender), "callback caller");
-
-        if (amount0Owed_ > 0) token0.safeTransfer(msg.sender, amount0Owed_);
-        if (amount1Owed_ > 0) token1.safeTransfer(msg.sender, amount1Owed_);
+        _uniswapV3CallBack(amount0Owed_, amount1Owed_);
     }
 
     /// @notice Uniswap v3 callback fn, called back on pool.swap
@@ -67,12 +65,10 @@ contract ArrakisV2 is
         int256 amount1Delta_,
         bytes calldata /*data*/
     ) external override {
-        require(_pools.contains(msg.sender), "callback caller");
-
-        if (amount0Delta_ > 0)
-            token0.safeTransfer(msg.sender, uint256(amount0Delta_));
-        else if (amount1Delta_ > 0)
-            token1.safeTransfer(msg.sender, uint256(amount1Delta_));
+        _uniswapV3CallBack(
+            SafeCast.toUint256(amount0Delta_),
+            SafeCast.toUint256(amount1Delta_)
+        );
     }
 
     // solhint-disable-next-line function-max-lines
@@ -81,12 +77,12 @@ contract ArrakisV2 is
         nonReentrant
         returns (uint256 amount0, uint256 amount1)
     {
+        require(mintAmount_ > 0, "mint amount");
         require(
-            restrictedMintToggle != RESTRICTED_MINT_ENABLED ||
+            restrictedMintToggle != _RESTRICTED_MINT_ENABLED ||
                 msg.sender == address(manager),
             "restricted"
         );
-        require(mintAmount_ > 0, "mint amount");
         address me = address(this);
         uint256 totalSupply = totalSupply();
         (
@@ -106,6 +102,7 @@ contract ArrakisV2 is
                 )
                 : (init0, init1, 0, 0);
         uint256 denominator = totalSupply > 0 ? totalSupply : 1 ether;
+        /// @dev current0 and current1 include fees and left over.
         amount0 = FullMath.mulDivRoundingUp(mintAmount_, current0, denominator);
         amount1 = FullMath.mulDivRoundingUp(mintAmount_, current1, denominator);
 
@@ -147,8 +144,12 @@ contract ArrakisV2 is
                 self: address(this)
             })
         );
-        underlying.leftOver0 = token0.balanceOf(address(this));
-        underlying.leftOver1 = token1.balanceOf(address(this));
+        underlying.leftOver0 =
+            token0.balanceOf(address(this)) -
+            (managerBalance0 + arrakisBalance0);
+        underlying.leftOver1 =
+            token1.balanceOf(address(this)) -
+            (managerBalance1 + arrakisBalance1);
 
         {
             {
@@ -159,8 +160,8 @@ contract ArrakisV2 is
                         manager.managerFeeBPS(),
                         arrakisFeeBPS
                     );
-                underlying.amount0 -= underlying.fee0 - fee0;
-                underlying.amount1 -= underlying.fee1 - fee1;
+                underlying.amount0 += fee0 - underlying.fee0;
+                underlying.amount1 += fee1 - underlying.fee1;
             }
 
             // the proportion of user balance.
@@ -240,11 +241,23 @@ contract ArrakisV2 is
             );
         }
 
-        if (amount0 > 0) {
+        if (
+            amount0 > 0 &&
+            (token0.balanceOf(address(this)) -
+                (managerBalance0 + arrakisBalance0)) -
+                amount0 >=
+            0
+        ) {
             token0.safeTransfer(receiver_, amount0);
         }
 
-        if (amount1 > 0) {
+        if (
+            amount1 > 0 &&
+            (token1.balanceOf(address(this)) -
+                (managerBalance1 + arrakisBalance1)) -
+                amount1 >=
+            0
+        ) {
             token1.safeTransfer(receiver_, amount1);
         }
 

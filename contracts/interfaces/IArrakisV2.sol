@@ -38,13 +38,19 @@ interface IArrakisV2 {
 
     function init1() external view returns (uint256);
 
-    function rangesLength() external view returns (uint256);
-
-    function rangesArray() external view returns (Range[] memory);
+    function ranges(uint256 index) external view returns (Range memory);
 
     function arrakisFeeBPS() external view returns (uint16);
 
     function manager() external view returns (IManagerProxyV2);
 
     function twapDuration() external view returns (uint24);
+
+    function managerBalance0() external view returns (uint256);
+
+    function managerBalance1() external view returns (uint256);
+
+    function arrakisBalance0() external view returns (uint256);
+
+    function arrakisBalance1() external view returns (uint256);
 }

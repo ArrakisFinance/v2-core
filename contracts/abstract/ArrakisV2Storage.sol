@@ -5,9 +5,9 @@ import {
     IUniswapV3Factory
 } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {
-    IUniswapV3PoolImmutables
-} from "@uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolImmutables.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+    IERC20,
+    SafeERC20
+} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IManagerProxyV2} from "../interfaces/IManagerProxyV2.sol";
 import {
     OwnableUpgradeable
@@ -22,6 +22,7 @@ import {
     EnumerableSet
 } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {Pool} from "../libraries/Pool.sol";
+import {Position} from "../libraries/Position.sol";
 import {Range, Rebalance, InitializePayload} from "../structs/SArrakisV2.sol";
 
 // solhint-disable-next-line max-states-count
@@ -30,6 +31,7 @@ abstract contract ArrakisV2Storage is
     ERC20Upgradeable,
     ReentrancyGuardUpgradeable
 {
+    using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
     // solhint-disable-next-line const-name-snakecase
@@ -37,7 +39,7 @@ abstract contract ArrakisV2Storage is
     // solhint-disable-next-line const-name-snakecase
     uint16 public constant arrakisFeeBPS = 250;
     // above 10000 to safely avoid collisions for repurposed state var
-    uint16 public constant RESTRICTED_MINT_ENABLED = 11111;
+    uint16 internal constant _RESTRICTED_MINT_ENABLED = 11111;
 
     IUniswapV3Factory public immutable factory;
     address public immutable arrakisTreasury;
@@ -156,10 +158,14 @@ abstract contract ArrakisV2Storage is
 
     // #endregion events
 
+    // #region modifiers
+
     modifier onlyManager() {
         require(address(manager) == msg.sender, "no manager");
         _;
     }
+
+    // #endregion modifiers
 
     constructor(IUniswapV3Factory factory_, address arrakisTreasury_) {
         require(address(factory_) != address(0), "factory");
@@ -193,16 +199,7 @@ abstract contract ArrakisV2Storage is
         __ERC20_init(name_, symbol_);
         __ReentrancyGuard_init();
 
-        for (uint256 i = 0; i < params_.feeTiers.length; i++) {
-            address pool = factory.getPool(
-                params_.token0,
-                params_.token1,
-                params_.feeTiers[i]
-            );
-            require(pool != address(0), "pool does not exist");
-            require(!_pools.contains(pool), "pool");
-            _pools.add(pool);
-        }
+        _addPools(params_.feeTiers, params_.token0, params_.token1);
 
         token0 = IERC20(params_.token0);
         token1 = IERC20(params_.token1);
@@ -261,13 +258,13 @@ abstract contract ArrakisV2Storage is
     }
 
     function toggleRestrictMint() external onlyManager {
-        if (restrictedMintToggle == RESTRICTED_MINT_ENABLED) {
-            restrictedMintToggle = 0;
-        } else {
-            restrictedMintToggle = RESTRICTED_MINT_ENABLED;
-        }
-
-        emit LogRestrictedMintToggle(address(this), restrictedMintToggle);
+        emit LogRestrictedMintToggle(
+            address(this),
+            restrictedMintToggle = restrictedMintToggle ==
+                _RESTRICTED_MINT_ENABLED
+                ? 0
+                : _RESTRICTED_MINT_ENABLED
+        );
     }
 
     function setMaxTwapDeviation(int24 maxTwapDeviation_) external onlyOwner {
@@ -298,32 +295,24 @@ abstract contract ArrakisV2Storage is
 
     // #region view/pure functions
 
-    function rangesLength() external view returns (uint256) {
-        return ranges.length;
-    }
-
-    function rangesArray() external view returns (Range[] memory) {
-        return ranges;
-    }
-
     function rangeExist(Range calldata range_)
         public
         view
         returns (bool ok, uint256 index)
     {
-        for (uint256 i = 0; i < ranges.length; i++) {
-            ok =
-                range_.lowerTick == ranges[i].lowerTick &&
-                range_.upperTick == ranges[i].upperTick &&
-                range_.feeTier == ranges[i].feeTier;
-            index = i;
-            if (ok) break;
-        }
+        return Position.rangeExist(ranges, range_);
     }
 
     // #endregion view/pure functions
 
     // #region internal functions
+
+    function _uniswapV3CallBack(uint256 amount0_, uint256 amount1_) internal {
+        require(_pools.contains(msg.sender), "callback caller");
+
+        if (amount0_ > 0) token0.safeTransfer(msg.sender, amount0_);
+        if (amount1_ > 0) token1.safeTransfer(msg.sender, amount1_);
+    }
 
     function _addPools(
         uint24[] calldata feeTiers_,
@@ -381,6 +370,11 @@ abstract contract ArrakisV2Storage is
             require(exist, "not range");
 
             delete ranges[index];
+
+            for (uint256 j = index; j < ranges.length - 1; j++) {
+                ranges[j] = ranges[j + 1];
+            }
+            ranges.pop();
         }
     }
 
