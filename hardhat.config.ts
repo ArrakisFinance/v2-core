@@ -31,7 +31,11 @@ const config: HardhatUserConfig = {
     },
     owner: {
       default: 2,
-      polygon: "need to define a multisig",
+      polygon: "0xF869f0eBDDAa33d7aa394c2c612E6e5a6A64fDA4",
+    },
+    arrakisTreasury: {
+      default: 3,
+      polygon: "0xF869f0eBDDAa33d7aa394c2c612E6e5a6A64fDA4",
     },
   },
 

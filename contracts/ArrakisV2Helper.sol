@@ -19,8 +19,6 @@ import {
 } from "./structs/SArrakisV2.sol";
 import {Amount} from "./structs/SArrakisV2Helper.sol";
 
-import "hardhat/console.sol";
-
 contract ArrakisV2Helper is IArrakisV2Helper {
     IUniswapV3Factory public immutable factory;
 
@@ -34,7 +32,7 @@ contract ArrakisV2Helper is IArrakisV2Helper {
         returns (UnderlyingOutput memory underlying)
     {
         UnderlyingPayload memory underlyingPayload = UnderlyingPayload({
-            ranges: vault_.rangesArray(),
+            ranges: ranges(vault_),
             factory: vault_.factory(),
             token0: address(vault_.token0()),
             token1: address(vault_.token1()),
@@ -48,12 +46,14 @@ contract ArrakisV2Helper is IArrakisV2Helper {
             underlying.fee1
         ) = UnderlyingHelper.totalUnderlyingWithFees(underlyingPayload);
 
-        underlying.leftOver0 = IERC20(underlyingPayload.token0).balanceOf(
-            underlyingPayload.self
-        );
-        underlying.leftOver1 = IERC20(underlyingPayload.token1).balanceOf(
-            underlyingPayload.self
-        );
+        underlying.leftOver0 =
+            IERC20(underlyingPayload.token0).balanceOf(underlyingPayload.self) -
+            IArrakisV2(underlyingPayload.self).managerBalance0() -
+            IArrakisV2(underlyingPayload.self).arrakisBalance0();
+        underlying.leftOver1 =
+            IERC20(underlyingPayload.token1).balanceOf(underlyingPayload.self) -
+            IArrakisV2(underlyingPayload.self).managerBalance1() -
+            IArrakisV2(underlyingPayload.self).arrakisBalance1();
     }
 
     function totalUnderlyingWithFees(IArrakisV2 vault_)
@@ -67,7 +67,7 @@ contract ArrakisV2Helper is IArrakisV2Helper {
         )
     {
         UnderlyingPayload memory underlyingPayload = UnderlyingPayload({
-            ranges: vault_.rangesArray(),
+            ranges: ranges(vault_),
             factory: vault_.factory(),
             token0: address(vault_.token0()),
             token1: address(vault_.token1()),
@@ -84,23 +84,12 @@ contract ArrakisV2Helper is IArrakisV2Helper {
         returns (uint256 amount0, uint256 amount1)
     {
         UnderlyingPayload memory underlyingPayload = UnderlyingPayload({
-            ranges: vault_.rangesArray(),
+            ranges: ranges(vault_),
             factory: vault_.factory(),
             token0: address(vault_.token0()),
             token1: address(vault_.token1()),
             self: address(vault_)
         });
-
-        for(uint256 i=0; i< underlyingPayload.ranges.length; i++) {
-            console.log("Range number : ", i);
-            console.logInt(underlyingPayload.ranges[i].lowerTick);
-            console.logInt(underlyingPayload.ranges[i].upperTick);
-            console.logUint(underlyingPayload.ranges[i].feeTier);
-        }
-
-        console.log("factory : ", address(vault_.factory()));
-        console.log("token 0 : ", address(vault_.token0()));
-        console.log("token 1 : ", address(vault_.token1()));
 
         (amount0, amount1, , ) = UnderlyingHelper.totalUnderlyingWithFees(
             underlyingPayload
@@ -135,6 +124,27 @@ contract ArrakisV2Helper is IArrakisV2Helper {
     }
 
     // #endregion Rebalance helper functions
+
+    function ranges(IArrakisV2 vault_)
+        public
+        view
+        returns (Range[] memory rgs)
+    {
+        uint256 index;
+        while (true) {
+            try vault_.ranges(index) returns (Range memory) {
+                index++;
+            } catch {
+                break;
+            }
+        }
+
+        rgs = new Range[](index);
+
+        for (uint256 i = 0; i < index; i++) {
+            rgs[i] = vault_.ranges(i);
+        }
+    }
 
     // #region internal functions
 

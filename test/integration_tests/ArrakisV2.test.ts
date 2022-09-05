@@ -343,13 +343,16 @@ describe("Arrakis V2 integration test!!!", async function () {
       result.mintAmount,
       vaultV2.address
     );
-
     await vaultV2.burn(burnPayload, result.mintAmount, userAddr);
 
     balance = await vaultV2.balanceOf(userAddr);
 
-    expect(await usdc.balanceOf(vaultV2.address)).to.be.eq(0);
-    expect(await wEth.balanceOf(vaultV2.address)).to.be.eq(0);
+    expect(await usdc.balanceOf(vaultV2.address)).to.be.eq(
+      (await vaultV2.managerBalance0()).add(await vaultV2.arrakisBalance0())
+    );
+    expect(await wEth.balanceOf(vaultV2.address)).to.be.eq(
+      (await vaultV2.managerBalance1()).add(await vaultV2.arrakisBalance1())
+    );
 
     expect(balance).to.be.eq(0);
 

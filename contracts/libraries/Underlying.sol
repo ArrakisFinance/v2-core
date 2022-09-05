@@ -4,6 +4,7 @@ pragma solidity 0.8.13;
 import {
     IUniswapV3Pool
 } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {IArrakisV2} from "../interfaces/IArrakisV2.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {
     LiquidityAmounts
@@ -57,12 +58,20 @@ library Underlying {
             }
         }
 
-        amount0 += IERC20(underlyingPayload_.token0).balanceOf(
-            underlyingPayload_.self
-        );
-        amount1 += IERC20(underlyingPayload_.token1).balanceOf(
-            underlyingPayload_.self
-        );
+        IArrakisV2 arrakisV2 = IArrakisV2(underlyingPayload_.self);
+
+        amount0 +=
+            IERC20(underlyingPayload_.token0).balanceOf(
+                underlyingPayload_.self
+            ) -
+            arrakisV2.managerBalance0() -
+            arrakisV2.arrakisBalance0();
+        amount1 +=
+            IERC20(underlyingPayload_.token1).balanceOf(
+                underlyingPayload_.self
+            ) -
+            arrakisV2.managerBalance1() -
+            arrakisV2.arrakisBalance1();
     }
 
     function underlying(RangeData memory underlying_, uint160 sqrtPriceX96_)
