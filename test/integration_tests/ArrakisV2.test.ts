@@ -336,6 +336,45 @@ describe("Arrakis V2 integration test!!!", async function () {
       []
     );
 
+    // #region do a swap to generate fees.
+
+    const swapRouter = "0xE592427A0AEce92De3Edee1F18E0157C05861564";
+
+    const swapR: ISwapRouter = (await ethers.getContractAt(
+      "ISwapRouter",
+      swapRouter,
+      user
+    )) as ISwapRouter;
+
+    await wMatic.deposit({ value: ethers.utils.parseUnits("1000", 18) });
+    await wMatic.approve(swapR.address, ethers.utils.parseUnits("1000", 18));
+
+    await swapR.exactInputSingle({
+      tokenIn: addresses.WMATIC,
+      tokenOut: addresses.WETH,
+      fee: 500,
+      recipient: userAddr,
+      deadline: ethers.constants.MaxUint256,
+      amountIn: ethers.utils.parseUnits("1000", 18),
+      amountOutMinimum: ethers.constants.Zero,
+      sqrtPriceLimitX96: 0,
+    });
+
+    await wEth.approve(swapR.address, ethers.utils.parseEther("0.001"));
+
+    await swapR.exactInputSingle({
+      tokenIn: wEth.address,
+      tokenOut: usdc.address,
+      fee: 500,
+      recipient: userAddr,
+      deadline: ethers.constants.MaxUint256,
+      amountIn: ethers.utils.parseEther("0.001"),
+      amountOutMinimum: ethers.constants.Zero,
+      sqrtPriceLimitX96: 0,
+    });
+
+    // #endregion do a swap to generate fess.
+
     // #endregion rebalance to deposit user token into the uniswap v3 pool.
     // #region burn token to get back token to user.
 

@@ -160,8 +160,9 @@ contract ArrakisV2 is
                         manager.managerFeeBPS(),
                         arrakisFeeBPS
                     );
-                underlying.amount0 += fee0 - underlying.fee0;
-                underlying.amount1 += fee1 - underlying.fee1;
+
+                underlying.amount0 -= underlying.fee0 - fee0;
+                underlying.amount1 -= underlying.fee1 - fee1;
             }
 
             // the proportion of user balance.
