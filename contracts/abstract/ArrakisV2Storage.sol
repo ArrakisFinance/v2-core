@@ -350,6 +350,7 @@ abstract contract ArrakisV2Storage is
             );
             require(pool != address(0), "uniswap pool does not exist");
             require(_pools.contains(pool), "pool");
+            // TODO: can reuse the pool got previously.
             require(
                 Pool.validateTickSpacing(
                     factory,
