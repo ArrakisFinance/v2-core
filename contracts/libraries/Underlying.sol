@@ -42,14 +42,12 @@ library Underlying {
                         underlyingPayload_.ranges[i].feeTier
                     )
                 );
-                (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
                 (uint256 a0, uint256 a1, uint256 f0, uint256 f1) = underlying(
                     RangeData({
                         self: underlyingPayload_.self,
                         range: underlyingPayload_.ranges[i],
                         pool: pool
-                    }),
-                    sqrtPriceX96
+                    })
                 );
                 amount0 += a0 + f0;
                 amount1 += a1 + f1;
@@ -74,7 +72,7 @@ library Underlying {
             arrakisV2.arrakisBalance1();
     }
 
-    function underlying(RangeData memory underlying_, uint160 sqrtPriceX96_)
+    function underlying(RangeData memory underlying_)
         public
         view
         returns (
@@ -84,7 +82,7 @@ library Underlying {
             uint256 fee1
         )
     {
-        (, int24 tick, , , , , ) = underlying_.pool.slot0();
+        (uint160 sqrtPriceX96, int24 tick, , , , , ) = underlying_.pool.slot0();
         bytes32 positionId = Position.getPositionId(
             underlying_.self,
             underlying_.range.lowerTick,
@@ -92,7 +90,7 @@ library Underlying {
         );
         PositionUnderlying memory positionUnderlying = PositionUnderlying({
             positionId: positionId,
-            sqrtPriceX96: sqrtPriceX96_,
+            sqrtPriceX96: sqrtPriceX96,
             tick: tick,
             lowerTick: underlying_.range.lowerTick,
             upperTick: underlying_.range.upperTick,
