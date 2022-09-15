@@ -21,16 +21,20 @@
 
 ##### deployVault
 
-**parameters** : - params\_ : struct containing settings of the vault that will be deployed.
-
+**parameters** : 
+- params\_ : struct containing settings of the vault that will be deployed.
 - isBeacon\_ : if true the deployed vault will be through a beacon proxy. If false we will use a transparent proxy.
-  **effects** : - sort tokens.
+
+**effects** :
+- sort tokens.
 - get name of the vault that will be deployed.
 - if isBeacon\_ is true deploy it through a beacon proxy, if false through a transparent proxy.
 - add the vault on the list of vault deployed by the deployer.
 - add the deployer on the deployer list if it's a new deployer.
 - increment index.
-  **events** : - VaultCreated : log new created vault address.
+
+**events** :
+- VaultCreated : log new created vault address.
 
 ### _Public Functions_
 

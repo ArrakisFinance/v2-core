@@ -84,10 +84,6 @@ library Underlying {
             uint256 fee1
         )
     {
-        uint256 a0;
-        uint256 a1;
-        uint256 f0;
-        uint256 f1;
         (, int24 tick, , , , , ) = underlying_.pool.slot0();
         bytes32 positionId = Position.getPositionId(
             underlying_.self,
@@ -102,11 +98,9 @@ library Underlying {
             upperTick: underlying_.range.upperTick,
             pool: underlying_.pool
         });
-        (a0, a1, f0, f1) = getUnderlyingBalances(positionUnderlying);
-        amount0 += a0;
-        amount1 += a1;
-        fee0 += f0;
-        fee1 += f1;
+        (amount0, amount1, fee0, fee1) = getUnderlyingBalances(
+            positionUnderlying
+        );
     }
 
     // solhint-disable-next-line function-max-lines
