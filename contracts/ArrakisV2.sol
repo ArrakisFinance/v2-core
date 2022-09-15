@@ -77,11 +77,11 @@ contract ArrakisV2 is
         nonReentrant
         returns (uint256 amount0, uint256 amount1)
     {
-        require(mintAmount_ > 0, "mint amount");
+        require(mintAmount_ > 0, "MA");
         require(
             restrictedMintToggle != _RESTRICTED_MINT_ENABLED ||
                 msg.sender == address(manager),
-            "restricted"
+            "R"
         );
         address me = address(this);
         uint256 totalSupply = totalSupply();
@@ -127,7 +127,7 @@ contract ArrakisV2 is
         address receiver_
     ) external nonReentrant returns (uint256 amount0, uint256 amount1) {
         uint256 totalSupply = totalSupply();
-        require(totalSupply > 0, "total supply");
+        require(totalSupply > 0, "TS");
 
         UnderlyingOutput memory underlying;
         (
@@ -202,7 +202,7 @@ contract ArrakisV2 is
         }
 
         // not at the begining of the function
-        require(burns_.length > 0, "burns");
+        require(burns_.length > 0, "B");
 
         _burn(msg.sender, burnAmount_);
 
@@ -362,10 +362,7 @@ contract ArrakisV2 is
 
         if (rebalanceParams_.swap.amountIn > 0) {
             {
-                require(
-                    !_pools.contains(rebalanceParams_.swap.pool),
-                    "no pool"
-                );
+                require(!_pools.contains(rebalanceParams_.swap.pool), "NP");
 
                 uint256 balance0Before = token0.balanceOf(address(this));
                 uint256 balance1Before = token1.balanceOf(address(this));
@@ -408,7 +405,7 @@ contract ArrakisV2 is
                                 maxSlippage,
                                 10000
                             ),
-                        "slippage"
+                        "S"
                     );
                     require(
                         (balance1After >=
@@ -417,7 +414,7 @@ contract ArrakisV2 is
                             (balance0After ==
                                 balance0Before -
                                     rebalanceParams_.swap.amountIn),
-                        "swap failed"
+                        "SF"
                     );
                 } else {
                     require(
@@ -434,7 +431,7 @@ contract ArrakisV2 is
                                 maxSlippage,
                                 10000
                             ),
-                        "slippage"
+                        "S"
                     );
                     require(
                         (balance0After >=
@@ -443,7 +440,7 @@ contract ArrakisV2 is
                             (balance1After ==
                                 balance1Before -
                                     rebalanceParams_.swap.amountIn),
-                        "swap failed"
+                        "SF"
                     );
                 }
             }
@@ -460,7 +457,7 @@ contract ArrakisV2 is
             );
 
             (bool exist, ) = rangeExist(rebalanceParams_.deposits[i].range);
-            require(exist, "not range");
+            require(exist, "NR");
 
             Twap.checkDeviation(pool, twapDuration, maxTwapDeviation);
 

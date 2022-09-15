@@ -35,7 +35,7 @@ const config: HardhatUserConfig = {
     },
     arrakisTreasury: {
       default: 3,
-      polygon: "0xF869f0eBDDAa33d7aa394c2c612E6e5a6A64fDA4",
+      polygon: "0xDEb4C33D5C3E7e32F55a9D6336FE06010E40E3AB",
     },
   },
 

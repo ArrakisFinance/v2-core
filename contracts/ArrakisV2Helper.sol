@@ -162,13 +162,10 @@ contract ArrakisV2Helper is IArrakisV2Helper {
             factory.getPool(token0_, token1_, range_.feeTier)
         );
 
-        (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
-
         uint256 fee0;
         uint256 fee1;
         (amount0, amount1, fee0, fee1) = UnderlyingHelper.underlying(
-            RangeData({self: vaultV2_, range: range_, pool: pool}),
-            sqrtPriceX96
+            RangeData({self: vaultV2_, range: range_, pool: pool})
         );
 
         amount0 += fee0;
