@@ -180,19 +180,13 @@ abstract contract ArrakisV2Storage is
         string calldata symbol_,
         InitializePayload calldata params_
     ) external initializer {
-        require(params_.feeTiers.length > 0, "no fee tier");
-        require(params_.token0 != address(0), "token0");
-        require(params_.token0 < params_.token1, "wrong token order");
+        require(params_.feeTiers.length > 0, "NFT");
+        require(params_.token0 != address(0), "T0");
+        require(params_.token0 < params_.token1, "WTO");
 
-        require(params_.init0 > 0, "init0");
-        require(params_.init1 > 0, "init1");
+        require(params_.init0 > 0 || params_.init1 > 0, "I");
 
-        require(params_.maxSlippage > 0, "max slippage 0");
-
-        require(params_.manager != address(0), "no Address Zero Manager");
-
-        require(params_.maxTwapDeviation > 0, "maxTwapDeviation");
-        require(params_.twapDuration > 0, "maxTwapDeviation");
+        require(params_.manager != address(0), "NAZM");
 
         address me = address(this);
 
@@ -310,8 +304,18 @@ abstract contract ArrakisV2Storage is
     function _uniswapV3CallBack(uint256 amount0_, uint256 amount1_) internal {
         require(_pools.contains(msg.sender), "callback caller");
 
-        if (amount0_ > 0) token0.safeTransfer(msg.sender, amount0_);
-        if (amount1_ > 0) token1.safeTransfer(msg.sender, amount1_);
+        if (
+            amount0_ > 0 &&
+            amount0_ <=
+            token0.balanceOf(address(this)) -
+                (managerBalance0 + arrakisBalance0)
+        ) token0.safeTransfer(msg.sender, amount0_);
+        if (
+            amount1_ > 0 &&
+            amount1_ <=
+            token1.balanceOf(address(this)) -
+                (managerBalance1 + arrakisBalance1)
+        ) token1.safeTransfer(msg.sender, amount1_);
     }
 
     function _addPools(
@@ -348,8 +352,8 @@ abstract contract ArrakisV2Storage is
                 token1Addr_,
                 ranges_[i].feeTier
             );
-            require(pool != address(0), "uniswap pool does not exist");
-            require(_pools.contains(pool), "pool");
+            require(pool != address(0), "NUP");
+            require(_pools.contains(pool), "P");
             // TODO: can reuse the pool got previously.
             require(
                 Pool.validateTickSpacing(
@@ -368,7 +372,7 @@ abstract contract ArrakisV2Storage is
     function _removeRanges(Range[] calldata ranges_) internal {
         for (uint256 i = 0; i < ranges_.length; i++) {
             (bool exist, uint256 index) = rangeExist(ranges_[i]);
-            require(exist, "not range");
+            require(exist, "NR");
 
             delete ranges[index];
 
