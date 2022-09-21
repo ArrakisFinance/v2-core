@@ -2,28 +2,28 @@
 
 ### **Constant/Immutable Properties**
 
-**version** : a string describing the version number of the current implementation. Each change on the ArrakisV2 Factory smart contract, like bug fixes should increment that number.
+**version** (string): a string describing the version number of the current implementation. Each change on the ArrakisV2 Factory smart contract, like bug fixes should increment that number.
 
-**arrakisV2Beacon** : contract who store the implementation of ArrakisV2 vault.
+**arrakisV2Beacon** (IArrakisV2Beacon/address): contract who stores the implementation of ArrakisV2 vault.
 
-**deployer** : Official deployer of Arrakis Dao.
+**deployer** (address): Official deployer of Arrakis Dao.
 
 ### **Public Properties**
 
-**index** : keep track of the number of vault deployed.
+**index** (uint256): keep track of the number of vault deployed.
 
 ### **Internal Properties**
 
-**\_deployers** : set of deployer that have deployed a vault.
-**\_vaults** : mapping of deployers and set of vaults deployed by them.
+**\_deployers** (AddressSet): set of deployer that have deployed a vault.
+**\_vaults** (mapping(address => AddressSet)): mapping of deployers and set of vaults deployed by them.
 
 ### _External Functions_
 
 ##### deployVault
 
 **parameters** : 
-- params\_ : struct containing settings of the vault that will be deployed.
-- isBeacon\_ : if true the deployed vault will be through a beacon proxy. If false we will use a transparent proxy.
+- params\_ (InitializePayload): struct containing settings of the vault that will be deployed.
+- isBeacon\_ (bool): if true the deployed vault will be through a beacon proxy. If false we will use a transparent proxy.
 
 **effects** :
 - sort tokens.
