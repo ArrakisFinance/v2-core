@@ -109,10 +109,6 @@ describe("Factory function unit test", function () {
     ).to.be.eq("Arrakis Vault V2 USDC/WETH");
   });
 
-  it("#2: unit test get deployer vault", async () => {
-    expect((await arrakisV2Factory.getDeployerVaults()).length).to.be.eq(0);
-  });
-
   it("#3: unit test get deployer vault", async () => {
     const slot0 = await uniswapV3Pool.slot0();
     const tickSpacing = await uniswapV3Pool.tickSpacing();
@@ -144,11 +140,14 @@ describe("Factory function unit test", function () {
       true
     );
 
-    expect((await arrakisV2Factory.getDeployerVaults()).length).to.be.eq(1);
+    expect(
+      (await arrakisV2Factory.getVaultsByDeployer(await user2.getAddress()))
+        .length
+    ).to.be.eq(1);
   });
 
   it("#4: unit test get deployers", async () => {
-    expect((await arrakisV2Factory.getDeployers()).length).to.be.eq(1);
+    expect((await arrakisV2Factory.getDeployers()).length).to.be.eq(0);
   });
 
   it("#5: unit test get deployers", async () => {
@@ -182,7 +181,7 @@ describe("Factory function unit test", function () {
       true
     );
 
-    expect((await arrakisV2Factory.getDeployers()).length).to.be.eq(2);
+    expect((await arrakisV2Factory.getDeployers()).length).to.be.eq(1);
   });
 
   it("#6: unit test get num Vaults", async () => {
@@ -262,7 +261,7 @@ describe("Factory function unit test", function () {
   });
 
   it("#10: unit test get num of deployers", async () => {
-    expect(await arrakisV2Factory.numDeployers()).to.be.eq(1);
+    expect(await arrakisV2Factory.numDeployers()).to.be.eq(0);
   });
 
   it("#11: unit test get vaults by deployers", async () => {

@@ -31,7 +31,6 @@ abstract contract ArrakisV2FactoryStorage is
     string public constant version = "1.0.0";
 
     IArrakisV2Beacon public immutable arrakisV2Beacon;
-    address public immutable deployer;
     uint256 public index;
 
     EnumerableSet.AddressSet internal _deployers;
@@ -43,8 +42,7 @@ abstract contract ArrakisV2FactoryStorage is
 
     // #region constructor.
 
-    constructor(address deployer_, IArrakisV2Beacon arrakisV2Beacon_) {
-        deployer = deployer_;
+    constructor(IArrakisV2Beacon arrakisV2Beacon_) {
         arrakisV2Beacon = arrakisV2Beacon_;
     }
 

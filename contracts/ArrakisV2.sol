@@ -8,34 +8,31 @@ import {
     IUniswapV3SwapCallback
 } from "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
 import {
-    IUniswapV3Factory
-} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
-import {
     IUniswapV3Pool
 } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {
+    IUniswapV3Factory,
+    ArrakisV2Storage,
     IERC20,
-    SafeERC20
-} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+    SafeERC20,
+    EnumerableSet,
+    Rebalance,
+    Range
+} from "./abstract/ArrakisV2Storage.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {
-    EnumerableSet
-} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {FullMath} from "@arrakisfi/v3-lib-0.8/contracts/LiquidityAmounts.sol";
-import {ArrakisV2Storage} from "./abstract/ArrakisV2Storage.sol";
 import {
-    Rebalance,
     Withdraw,
     UnderlyingPayload,
     BurnLiquidity,
-    UnderlyingOutput,
-    Range
+    UnderlyingOutput
 } from "./structs/SArrakisV2.sol";
 import {Twap} from "./libraries/Twap.sol";
+import {Position} from "./libraries/Position.sol";
+import {Pool} from "./libraries/Pool.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
 import {UniswapV3Amounts} from "./libraries/UniswapV3Amounts.sol";
-import {_liquidityZeroError, _poolError} from "./errors/EArrakisV2.sol";
 
 /// @dev DO NOT ADD STATE VARIABLES - APPEND THEM TO ArrakisV2Storage
 contract ArrakisV2 is
@@ -78,11 +75,7 @@ contract ArrakisV2 is
         returns (uint256 amount0, uint256 amount1)
     {
         require(mintAmount_ > 0, "MA");
-        require(
-            restrictedMintToggle != _RESTRICTED_MINT_ENABLED ||
-                msg.sender == address(manager),
-            "R"
-        );
+        require(!restrictedMintToggle || msg.sender == address(manager), "R");
         address me = address(this);
         uint256 totalSupply = totalSupply();
         (
@@ -116,8 +109,8 @@ contract ArrakisV2 is
             token1.safeTransferFrom(msg.sender, me, amount1);
         }
 
-        emit LogFeesEarn(me, fee0, fee1);
-        emit LogMint(me, receiver_, mintAmount_, amount0, amount1);
+        emit LogFeesEarn(fee0, fee1);
+        emit LogMint(receiver_, mintAmount_, amount0, amount1);
     }
 
     // solhint-disable-next-line function-max-lines, code-complexity
@@ -191,13 +184,7 @@ contract ArrakisV2 is
                 token1.safeTransfer(receiver_, amount1);
             }
 
-            emit LogBurn(
-                address(this),
-                receiver_,
-                burnAmount_,
-                amount0,
-                amount1
-            );
+            emit LogBurn(receiver_, burnAmount_, amount0, amount1);
             return (amount0, amount1);
         }
 
@@ -209,7 +196,7 @@ contract ArrakisV2 is
         Withdraw memory total;
         {
             for (uint256 i = 0; i < burns_.length; i++) {
-                if (burns_[i].liquidity == 0) _liquidityZeroError(burns_[i]);
+                require(burns_[i].liquidity != 0, "LZ");
 
                 address pool = factory.getPool(
                     address(token0),
@@ -217,7 +204,7 @@ contract ArrakisV2 is
                     burns_[i].range.feeTier
                 );
 
-                if (!_pools.contains(pool)) _poolError(burns_[i].range.feeTier);
+                require(_pools.contains(pool), "NP");
 
                 Withdraw memory withdraw = _withdraw(
                     IUniswapV3Pool(pool),
@@ -263,19 +250,56 @@ contract ArrakisV2 is
         }
 
         // For monitoring how much user burn LP token for getting their token back.
-        emit LPBurned(address(this), msg.sender, total.burn0, total.burn1);
+        emit LPBurned(msg.sender, total.burn0, total.burn1);
 
-        emit LogFeesEarn(address(this), total.fee0, total.fee1);
-        emit LogBurn(address(this), receiver_, burnAmount_, amount0, amount1);
+        emit LogFeesEarn(total.fee0, total.fee1);
+        emit LogBurn(receiver_, burnAmount_, amount0, amount1);
     }
 
+    // solhint-disable-next-line function-max-lines
     function rebalance(
         Range[] calldata ranges_,
         Rebalance calldata rebalanceParams_,
         Range[] calldata rangesToRemove_
     ) external onlyManager {
-        _removeRanges(rangesToRemove_);
-        _addRanges(ranges_, address(token0), address(token1));
+        for (uint256 i = 0; i < rangesToRemove_.length; i++) {
+            (bool exist, uint256 index) = Position.rangeExist(
+                ranges,
+                rangesToRemove_[i]
+            );
+            require(exist, "NR");
+
+            delete ranges[index];
+
+            for (uint256 j = index; j < ranges.length - 1; j++) {
+                ranges[j] = ranges[j + 1];
+            }
+            ranges.pop();
+        }
+        for (uint256 i = 0; i < ranges_.length; i++) {
+            (bool exist, ) = Position.rangeExist(ranges, ranges_[i]);
+            require(!exist, "R");
+            // check that the pool exist on Uniswap V3.
+            address pool = factory.getPool(
+                address(token0),
+                address(token1),
+                ranges_[i].feeTier
+            );
+            require(pool != address(0), "NUP");
+            require(_pools.contains(pool), "P");
+            // TODO: can reuse the pool got previously.
+            require(
+                Pool.validateTickSpacing(
+                    factory,
+                    address(token0),
+                    address(token1),
+                    ranges_[i]
+                ),
+                "range"
+            );
+
+            ranges.push(ranges_[i]);
+        }
         _rebalance(rebalanceParams_);
     }
 
@@ -294,7 +318,7 @@ contract ArrakisV2 is
             token1.safeTransfer(address(manager), amount1);
         }
 
-        emit LogWithdrawManagerBalance(address(this), amount0, amount1);
+        emit LogWithdrawManagerBalance(amount0, amount1);
     }
 
     function withdrawArrakisBalance() external {
@@ -312,7 +336,7 @@ contract ArrakisV2 is
             token1.safeTransfer(arrakisTreasury, amount1);
         }
 
-        emit LogWithdrawArrakisBalance(address(this), amount0, amount1);
+        emit LogWithdrawArrakisBalance(amount0, amount1);
     }
 
     // solhint-disable-next-line function-max-lines, code-complexity
@@ -330,8 +354,7 @@ contract ArrakisV2 is
                 rebalanceParams_.removes[i].range.feeTier
             );
             IUniswapV3Pool pool = IUniswapV3Pool(poolAddr);
-            if (!_pools.contains(poolAddr))
-                _poolError(rebalanceParams_.removes[i].range.feeTier);
+            require(_pools.contains(poolAddr), "NP");
 
             Twap.checkDeviation(pool, twapDuration, maxTwapDeviation);
 
@@ -355,7 +378,7 @@ contract ArrakisV2 is
                 arrakisFeeBPS
             );
 
-            emit LogFeesEarnRebalance(address(this), totalFee0, totalFee1);
+            emit LogFeesEarnRebalance(totalFee0, totalFee1);
         }
 
         // Swap
@@ -456,7 +479,10 @@ contract ArrakisV2 is
                 )
             );
 
-            (bool exist, ) = rangeExist(rebalanceParams_.deposits[i].range);
+            (bool exist, ) = Position.rangeExist(
+                ranges,
+                rebalanceParams_.deposits[i].range
+            );
             require(exist, "NR");
 
             Twap.checkDeviation(pool, twapDuration, maxTwapDeviation);
@@ -470,8 +496,7 @@ contract ArrakisV2 is
             );
         }
 
-        // TODO add an event, exceed contract size limit when uncommented.
-        // emit LogRebalance(address(this), rebalanceParams_);
+        emit LogRebalance(rebalanceParams_);
     }
 
     function _withdraw(

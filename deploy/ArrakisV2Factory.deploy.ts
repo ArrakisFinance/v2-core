@@ -29,10 +29,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
         args: [owner],
       },
     },
-    args: [
-      arrakisMultiSig,
-      (await ethers.getContract("ArrakisV2Beacon")).address,
-    ],
+    args: [(await ethers.getContract("ArrakisV2Beacon")).address],
     log: hre.network.name != "hardhat" ? true : false,
   });
 };

@@ -19,8 +19,6 @@ interface IArrakisV2Factory {
 
     function arrakisV2Beacon() external view returns (IArrakisV2Beacon);
 
-    function deployer() external view returns (address);
-
     function index() external view returns (uint256);
 
     function numVaultsByDeployer(address deployer_)

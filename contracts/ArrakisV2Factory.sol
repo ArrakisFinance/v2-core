@@ -23,8 +23,8 @@ import {_getTokenOrder, _append} from "./functions/FArrakisV2Factory.sol";
 contract ArrakisV2Factory is ArrakisV2FactoryStorage {
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    constructor(address deployer_, IArrakisV2Beacon arrakisV2Beacon_)
-        ArrakisV2FactoryStorage(deployer_, arrakisV2Beacon_)
+    constructor(IArrakisV2Beacon arrakisV2Beacon_)
+        ArrakisV2FactoryStorage(arrakisV2Beacon_)
     {} // solhint-disable-line no-empty-blocks
 
     function deployVault(InitializePayload calldata params_, bool isBeacon_)
@@ -33,7 +33,7 @@ contract ArrakisV2Factory is ArrakisV2FactoryStorage {
     {
         vault = _preDeploy(params_, isBeacon_);
 
-        _deployers.add(msg.sender);
+        if (!_deployers.contains(msg.sender)) _deployers.add(msg.sender);
         _vaults[msg.sender].add(vault);
         index += 1;
         emit VaultCreated(msg.sender, vault);
@@ -51,21 +51,13 @@ contract ArrakisV2Factory is ArrakisV2FactoryStorage {
         return _append("Arrakis Vault V2 ", symbol0, "/", symbol1);
     }
 
-    /// @notice getDeployerVaults gets all the Harvesters deployed by Arrakis deployer
-    /// default deployer address (since anyone can deploy and manage Harvesters)
-    /// @return list of deployer's managed Vault addresses
-    function getDeployerVaults() external view returns (address[] memory) {
-        return getVaultsByDeployer(deployer);
-    }
-
     /// @notice getDeployers fetches all addresses that have deployed a Vault
     /// @return deployers the list of deployer addresses
     function getDeployers() public view returns (address[] memory) {
         uint256 length = numDeployers();
         address[] memory deployers = new address[](length);
-        deployers[0] = deployer;
-        for (uint256 i = 1; i < length; i++) {
-            deployers[i] = _getDeployer(i - 1);
+        for (uint256 i = 0; i < length; i++) {
+            deployers[i] = _deployers.at(i);
         }
 
         return deployers;
@@ -94,7 +86,7 @@ contract ArrakisV2Factory is ArrakisV2FactoryStorage {
     /// @notice numDeployers counts the total number of Vault deployer addresses
     /// @return total number of Vault deployer addresses
     function numDeployers() public view returns (uint256) {
-        return _deployers.length() + 1;
+        return _deployers.length();
     }
 
     /// @notice getVaults fetches all the Vault addresses deployed by `deployer`
@@ -108,7 +100,7 @@ contract ArrakisV2Factory is ArrakisV2FactoryStorage {
         uint256 length = numVaultsByDeployer(deployer);
         address[] memory vaults = new address[](length);
         for (uint256 i = 0; i < length; i++) {
-            vaults[i] = _getVault(deployer, i);
+            vaults[i] = _vaults[deployer].at(i);
         }
 
         return vaults;
@@ -153,18 +145,6 @@ contract ArrakisV2Factory is ArrakisV2FactoryStorage {
     // #endregion internal functions
 
     // #region internal view functions
-
-    function _getDeployer(uint256 index) internal view returns (address) {
-        return _deployers.at(index);
-    }
-
-    function _getVault(address deployer, uint256 index)
-        internal
-        view
-        returns (address)
-    {
-        return _vaults[deployer].at(index);
-    }
 
     function _uint2str(uint256 _i)
         internal

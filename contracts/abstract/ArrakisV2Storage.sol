@@ -21,8 +21,6 @@ import {
 import {
     EnumerableSet
 } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {Pool} from "../libraries/Pool.sol";
-import {Position} from "../libraries/Position.sol";
 import {Range, Rebalance, InitializePayload} from "../structs/SArrakisV2.sol";
 
 // solhint-disable-next-line max-states-count
@@ -35,11 +33,7 @@ abstract contract ArrakisV2Storage is
     using EnumerableSet for EnumerableSet.AddressSet;
 
     // solhint-disable-next-line const-name-snakecase
-    string public constant version = "1.0.0";
-    // solhint-disable-next-line const-name-snakecase
     uint16 public constant arrakisFeeBPS = 250;
-    // above 10000 to safely avoid collisions for repurposed state var
-    uint16 internal constant _RESTRICTED_MINT_ENABLED = 11111;
 
     IUniswapV3Factory public immutable factory;
     address public immutable arrakisTreasury;
@@ -64,7 +58,7 @@ abstract contract ArrakisV2Storage is
     IManagerProxyV2 public manager;
     uint256 public managerBalance0;
     uint256 public managerBalance1;
-    uint16 public restrictedMintToggle;
+    bool public restrictedMintToggle;
 
     // #endregion manager data
 
@@ -82,7 +76,6 @@ abstract contract ArrakisV2Storage is
     // #region events
 
     event LogMint(
-        address indexed vault,
         address receiver,
         uint256 mintAmount,
         uint256 amount0In,
@@ -90,69 +83,32 @@ abstract contract ArrakisV2Storage is
     );
 
     event LogBurn(
-        address indexed vault,
         address receiver,
         uint256 burnAmount,
         uint256 amount0Out,
         uint256 amount1Out
     );
 
-    event LPBurned(
-        address indexed vault,
-        address user,
-        uint256 burnAmount0,
-        uint256 burnAmount1
-    );
+    event LPBurned(address user, uint256 burnAmount0, uint256 burnAmount1);
 
-    event LogRebalance(address indexed vault, Rebalance rebalanceParams);
+    event LogRebalance(Rebalance rebalanceParams);
 
-    event LogFeesEarn(address indexed vault, uint256 fee0, uint256 fee1);
-    event LogFeesEarnRebalance(
-        address indexed vault,
-        uint256 fee0,
-        uint256 fee1
-    );
+    event LogFeesEarn(uint256 fee0, uint256 fee1);
+    event LogFeesEarnRebalance(uint256 fee0, uint256 fee1);
 
-    event LogWithdrawManagerBalance(
-        address indexed vault,
-        uint256 amount0,
-        uint256 amount1
-    );
-    event LogWithdrawArrakisBalance(
-        address indexed vault,
-        uint256 amount0,
-        uint256 amount1
-    );
+    event LogWithdrawManagerBalance(uint256 amount0, uint256 amount1);
+    event LogWithdrawArrakisBalance(uint256 amount0, uint256 amount1);
 
     // #region Setting events
 
-    event LogSetInits(address indexed vault, uint256 init0, uint256 init1);
-    event LogAddPools(address indexed vault, uint24[] feeTiers);
-    event LogRemovePools(address indexed vault, address[] pools);
-    event LogSetManager(
-        address indexed vault,
-        address oldManager,
-        address newManager
-    );
-    event LogRestrictedMintToggle(
-        address indexed vault,
-        uint16 restrictedMintToggle
-    );
-    event LogSetMaxTwapDeviation(
-        address indexed vault,
-        int24 oldTwapDeviation,
-        int24 maxTwapDeviation
-    );
-    event LogSetTwapDuration(
-        address indexed vault,
-        uint24 oldTwapDuration,
-        uint24 newTwapDuration
-    );
-    event LogSetMaxSlippage(
-        address indexed vault,
-        uint24 oldMaxSlippage,
-        uint24 newMaxSlippage
-    );
+    event LogSetInits(uint256 init0, uint256 init1);
+    event LogAddPools(uint24[] feeTiers);
+    event LogRemovePools(address[] pools);
+    event LogSetManager(address newManager);
+    event LogRestrictedMintToggle(bool restrictedMintToggle);
+    event LogSetMaxTwapDeviation(int24 maxTwapDeviation);
+    event LogSetTwapDuration(uint24 newTwapDuration);
+    event LogSetMaxSlippage(uint24 newMaxSlippage);
 
     // #endregion Setting events
 
@@ -161,15 +117,15 @@ abstract contract ArrakisV2Storage is
     // #region modifiers
 
     modifier onlyManager() {
-        require(address(manager) == msg.sender, "no manager");
+        require(address(manager) == msg.sender, "NM");
         _;
     }
 
     // #endregion modifiers
 
     constructor(IUniswapV3Factory factory_, address arrakisTreasury_) {
-        require(address(factory_) != address(0), "factory");
-        require(arrakisTreasury_ != address(0), "arrakis treasury");
+        require(address(factory_) != address(0), "ZF");
+        require(arrakisTreasury_ != address(0), "ZAT");
         factory = factory_;
         arrakisTreasury = arrakisTreasury_;
     }
@@ -188,8 +144,6 @@ abstract contract ArrakisV2Storage is
 
         require(params_.manager != address(0), "NAZM");
 
-        address me = address(this);
-
         __ERC20_init(name_, symbol_);
         __ReentrancyGuard_init();
 
@@ -202,107 +156,65 @@ abstract contract ArrakisV2Storage is
 
         manager = IManagerProxyV2(params_.manager);
 
-        emit LogAddPools(me, params_.feeTiers);
-        emit LogSetInits(me, init0 = params_.init0, init1 = params_.init1);
-        emit LogSetManager(me, address(0), params_.manager);
+        emit LogAddPools(params_.feeTiers);
+        emit LogSetInits(init0 = params_.init0, init1 = params_.init1);
+        emit LogSetManager(params_.manager);
         emit LogSetMaxTwapDeviation(
-            me,
-            maxTwapDeviation,
             maxTwapDeviation = params_.maxTwapDeviation
         );
-        emit LogSetTwapDuration(
-            me,
-            twapDuration,
-            twapDuration = params_.twapDuration
-        );
-        emit LogSetMaxSlippage(
-            me,
-            maxSlippage,
-            maxSlippage = params_.maxSlippage
-        );
+        emit LogSetTwapDuration(twapDuration = params_.twapDuration);
+        emit LogSetMaxSlippage(maxSlippage = params_.maxSlippage);
     }
 
     // #region setter functions
     function setInits(uint256 init0_, uint256 init1_) external onlyOwner {
-        require(totalSupply() == 0, "total supply");
-        emit LogSetInits(address(this), init0 = init0_, init1 = init1_);
+        require(totalSupply() == 0, "TS");
+        emit LogSetInits(init0 = init0_, init1 = init1_);
     }
 
     function addPools(uint24[] calldata feeTiers_) external onlyOwner {
         _addPools(feeTiers_, address(token0), address(token1));
-        emit LogAddPools(address(this), feeTiers_);
+        emit LogAddPools(feeTiers_);
     }
 
     function removePools(address[] calldata pools_) external onlyOwner {
         for (uint256 i = 0; i < pools_.length; i++) {
-            require(pools_[i] != address(0), "address Zero");
-            require(_pools.contains(pools_[i]), "not pool");
+            require(pools_[i] != address(0), "Z");
+            require(_pools.contains(pools_[i]), "NP");
 
             _pools.remove(pools_[i]);
         }
-        emit LogRemovePools(address(this), pools_);
+        emit LogRemovePools(pools_);
     }
 
     function setManager(IManagerProxyV2 manager_) external onlyOwner {
-        emit LogSetManager(
-            address(this),
-            address(manager),
-            address(manager = manager_)
-        );
+        emit LogSetManager(address(manager = manager_));
     }
 
     function toggleRestrictMint() external onlyManager {
         emit LogRestrictedMintToggle(
-            address(this),
-            restrictedMintToggle = restrictedMintToggle ==
-                _RESTRICTED_MINT_ENABLED
-                ? 0
-                : _RESTRICTED_MINT_ENABLED
+            restrictedMintToggle = !restrictedMintToggle
         );
     }
 
     function setMaxTwapDeviation(int24 maxTwapDeviation_) external onlyOwner {
-        emit LogSetMaxTwapDeviation(
-            address(this),
-            maxTwapDeviation,
-            maxTwapDeviation = maxTwapDeviation_
-        );
+        emit LogSetMaxTwapDeviation(maxTwapDeviation = maxTwapDeviation_);
     }
 
     function setTwapDuration(uint24 twapDuration_) external onlyOwner {
-        emit LogSetTwapDuration(
-            address(this),
-            twapDuration,
-            twapDuration = twapDuration_
-        );
+        emit LogSetTwapDuration(twapDuration = twapDuration_);
     }
 
     function setMaxSlippage(uint24 maxSlippage_) external onlyOwner {
-        emit LogSetMaxSlippage(
-            address(this),
-            maxSlippage,
-            maxSlippage = maxSlippage_
-        );
+        emit LogSetMaxSlippage(maxSlippage = maxSlippage_);
     }
 
     // #endregion setter functions
 
-    // #region view/pure functions
-
-    function rangeExist(Range calldata range_)
-        public
-        view
-        returns (bool ok, uint256 index)
-    {
-        return Position.rangeExist(ranges, range_);
-    }
-
-    // #endregion view/pure functions
-
     // #region internal functions
 
     function _uniswapV3CallBack(uint256 amount0_, uint256 amount1_) internal {
-        require(_pools.contains(msg.sender), "callback caller");
+        require(_pools.contains(msg.sender), "CC");
 
         if (
             amount0_ > 0 &&
@@ -330,56 +242,11 @@ abstract contract ArrakisV2Storage is
                 feeTiers_[i]
             );
 
-            require(pool != address(0), "address Zero");
-            require(!_pools.contains(pool), "pool");
+            require(pool != address(0), "ZA");
+            require(!_pools.contains(pool), "P");
 
             // explicit.
             _pools.add(pool);
-        }
-    }
-
-    function _addRanges(
-        Range[] calldata ranges_,
-        address token0Addr_,
-        address token1Addr_
-    ) internal {
-        for (uint256 i = 0; i < ranges_.length; i++) {
-            (bool exist, ) = rangeExist(ranges_[i]);
-            require(!exist, "range");
-            // check that the pool exist on Uniswap V3.
-            address pool = factory.getPool(
-                token0Addr_,
-                token1Addr_,
-                ranges_[i].feeTier
-            );
-            require(pool != address(0), "NUP");
-            require(_pools.contains(pool), "P");
-            // TODO: can reuse the pool got previously.
-            require(
-                Pool.validateTickSpacing(
-                    factory,
-                    token0Addr_,
-                    token1Addr_,
-                    ranges_[i]
-                ),
-                "range"
-            );
-
-            ranges.push(ranges_[i]);
-        }
-    }
-
-    function _removeRanges(Range[] calldata ranges_) internal {
-        for (uint256 i = 0; i < ranges_.length; i++) {
-            (bool exist, uint256 index) = rangeExist(ranges_[i]);
-            require(exist, "NR");
-
-            delete ranges[index];
-
-            for (uint256 j = index; j < ranges.length - 1; j++) {
-                ranges[j] = ranges[j + 1];
-            }
-            ranges.pop();
         }
     }
 
