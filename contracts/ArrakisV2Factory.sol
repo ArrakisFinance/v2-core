@@ -32,10 +32,7 @@ contract ArrakisV2Factory is ArrakisV2FactoryStorage {
         returns (address vault)
     {
         vault = _preDeploy(params_, isBeacon_);
-
-        if (!_deployers.contains(msg.sender)) _deployers.add(msg.sender);
-        _vaults[msg.sender].add(vault);
-        index += 1;
+        _vaults.add(vault);
         emit VaultCreated(msg.sender, vault);
     }
 
@@ -51,59 +48,20 @@ contract ArrakisV2Factory is ArrakisV2FactoryStorage {
         return _append("Arrakis Vault V2 ", symbol0, "/", symbol1);
     }
 
-    /// @notice getDeployers fetches all addresses that have deployed a Vault
-    /// @return deployers the list of deployer addresses
-    function getDeployers() public view returns (address[] memory) {
-        uint256 length = numDeployers();
-        address[] memory deployers = new address[](length);
-        for (uint256 i = 0; i < length; i++) {
-            deployers[i] = _deployers.at(i);
-        }
-
-        return deployers;
-    }
-
     /// @notice numVaults counts the total number of Harvesters in existence
     /// @return result total number of Harvesters deployed
     function numVaults() public view returns (uint256 result) {
-        address[] memory deployers = getDeployers();
-        for (uint256 i = 0; i < deployers.length; i++) {
-            result += numVaultsByDeployer(deployers[i]);
-        }
+        return _vaults.length();
     }
 
-    /// @notice numVaults counts the total number of Harvesters deployed by `deployer`
-    /// @param deployer deployer address
-    /// @return total number of Harvesters deployed by `deployer`
-    function numVaultsByDeployer(address deployer)
-        public
-        view
-        returns (uint256)
-    {
-        return _vaults[deployer].length();
-    }
-
-    /// @notice numDeployers counts the total number of Vault deployer addresses
-    /// @return total number of Vault deployer addresses
-    function numDeployers() public view returns (uint256) {
-        return _deployers.length();
-    }
-
-    /// @notice getVaults fetches all the Vault addresses deployed by `deployer`
-    /// @param deployer address that has potentially deployed Harvesters (can return empty array)
-    /// @return vaults the list of Vault addresses deployed by `deployer`
-    function getVaultsByDeployer(address deployer)
-        public
-        view
-        returns (address[] memory)
-    {
-        uint256 length = numVaultsByDeployer(deployer);
-        address[] memory vaults = new address[](length);
+    function vaults() public view returns (address[] memory) {
+        uint256 length = numVaults();
+        address[] memory vs = new address[](length);
         for (uint256 i = 0; i < length; i++) {
-            vaults[i] = _vaults[deployer].at(i);
+            vs[i] = _vaults.at(i);
         }
 
-        return vaults;
+        return vs;
     }
 
     // #endregion public external view functions.
@@ -127,7 +85,7 @@ contract ArrakisV2Factory is ArrakisV2FactoryStorage {
         bytes memory data = abi.encodeWithSelector(
             IArrakisV2.initialize.selector,
             name,
-            string(abi.encodePacked("RAKIS-V2-", _uint2str(index + 1))),
+            string(abi.encodePacked("RAKIS-", _uint2str(numVaults() + 1))),
             params_
         );
 
