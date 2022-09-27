@@ -55,10 +55,10 @@ abstract contract ArrakisV2Storage is
 
     // #region manager data
 
-    IManagerProxyV2 public manager;
     uint256 public managerBalance0;
     uint256 public managerBalance1;
-    bool public restrictedMintToggle;
+    IManagerProxyV2 public manager;
+    address public restrictedMint;
 
     // #endregion manager data
 
@@ -105,7 +105,7 @@ abstract contract ArrakisV2Storage is
     event LogAddPools(uint24[] feeTiers);
     event LogRemovePools(address[] pools);
     event LogSetManager(address newManager);
-    event LogRestrictedMintToggle(bool restrictedMintToggle);
+    event LogRestrictedMint(address minter);
     event LogSetMaxTwapDeviation(int24 maxTwapDeviation);
     event LogSetTwapDuration(uint24 newTwapDuration);
     event LogSetMaxSlippage(uint24 newMaxSlippage);
@@ -191,10 +191,9 @@ abstract contract ArrakisV2Storage is
         emit LogSetManager(address(manager = manager_));
     }
 
-    function toggleRestrictMint() external onlyManager {
-        emit LogRestrictedMintToggle(
-            restrictedMintToggle = !restrictedMintToggle
-        );
+    function setRestrictedMint(address minter) external onlyManager {
+        restrictedMint = minter;
+        emit LogRestrictedMint(minter);
     }
 
     function setMaxTwapDeviation(int24 maxTwapDeviation_) external onlyOwner {
