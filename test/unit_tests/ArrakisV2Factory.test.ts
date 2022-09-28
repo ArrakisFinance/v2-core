@@ -16,9 +16,7 @@ describe("Factory function unit test", function () {
 
   let user: Signer;
   let user2: Signer;
-  let owner: Signer;
   let userAddr: string;
-  let ownerAddr: string;
   let arrakisV2Factory: ArrakisV2Factory;
   let uniswapV3Pool: IUniswapV3Pool;
   let arrakisV2Resolver: ArrakisV2Resolver;
@@ -33,9 +31,8 @@ describe("Factory function unit test", function () {
     addresses = getAddresses(hre.network.name);
     await deployments.fixture();
 
-    [user, user2, owner] = await ethers.getSigners();
+    [user, user2] = await ethers.getSigners();
     userAddr = await user.getAddress();
-    ownerAddr = await owner.getAddress();
 
     arrakisV2Factory = (await ethers.getContract(
       "ArrakisV2Factory"
@@ -101,6 +98,7 @@ describe("Factory function unit test", function () {
     )) as ArrakisV2;
 
     expect(await vaultV2.name()).to.be.eq("Arrakis Vault V2 USDC/WETH");
+    expect(await vaultV2.symbol()).to.be.eq("RAKIS-1");
   });
 
   it("#1: unit test get token name", async () => {
@@ -109,11 +107,11 @@ describe("Factory function unit test", function () {
     ).to.be.eq("Arrakis Vault V2 USDC/WETH");
   });
 
-  it("#2: unit test get deployer vault", async () => {
-    expect((await arrakisV2Factory.getDeployerVaults()).length).to.be.eq(0);
+  it("#2: unit test get num vaults", async () => {
+    expect(await arrakisV2Factory.numVaults()).to.be.eq(0);
   });
 
-  it("#3: unit test get deployer vault", async () => {
+  it("#3: unit test get num vaults", async () => {
     const slot0 = await uniswapV3Pool.slot0();
     const tickSpacing = await uniswapV3Pool.tickSpacing();
 
@@ -144,90 +142,14 @@ describe("Factory function unit test", function () {
       true
     );
 
-    expect((await arrakisV2Factory.getDeployerVaults()).length).to.be.eq(1);
-  });
-
-  it("#4: unit test get deployers", async () => {
-    expect((await arrakisV2Factory.getDeployers()).length).to.be.eq(1);
-  });
-
-  it("#5: unit test get deployers", async () => {
-    const slot0 = await uniswapV3Pool.slot0();
-    const tickSpacing = await uniswapV3Pool.tickSpacing();
-
-    const lowerTick = slot0.tick - (slot0.tick % tickSpacing) - tickSpacing;
-    const upperTick = slot0.tick - (slot0.tick % tickSpacing) + 2 * tickSpacing;
-
-    // For initialization.
-    const res = await arrakisV2Resolver.getAmountsForLiquidity(
-      slot0.tick,
-      lowerTick,
-      upperTick,
-      ethers.utils.parseUnits("1", 18)
-    );
-
-    await arrakisV2Factory.connect(user).deployVault(
-      {
-        feeTiers: [500],
-        token0: addresses.USDC,
-        token1: addresses.WETH,
-        owner: userAddr,
-        init0: res.amount0,
-        init1: res.amount1,
-        manager: userAddr,
-        maxTwapDeviation: 100,
-        twapDuration: 2000,
-        maxSlippage: 100,
-      },
-      true
-    );
-
-    expect((await arrakisV2Factory.getDeployers()).length).to.be.eq(2);
-  });
-
-  it("#6: unit test get num Vaults", async () => {
-    expect(await arrakisV2Factory.numVaults()).to.be.eq(0);
-  });
-
-  it("#7: unit test get num Vaults", async () => {
-    const slot0 = await uniswapV3Pool.slot0();
-    const tickSpacing = await uniswapV3Pool.tickSpacing();
-
-    const lowerTick = slot0.tick - (slot0.tick % tickSpacing) - tickSpacing;
-    const upperTick = slot0.tick - (slot0.tick % tickSpacing) + 2 * tickSpacing;
-
-    // For initialization.
-    const res = await arrakisV2Resolver.getAmountsForLiquidity(
-      slot0.tick,
-      lowerTick,
-      upperTick,
-      ethers.utils.parseUnits("1", 18)
-    );
-
-    await arrakisV2Factory.connect(user).deployVault(
-      {
-        feeTiers: [500],
-        token0: addresses.USDC,
-        token1: addresses.WETH,
-        owner: userAddr,
-        init0: res.amount0,
-        init1: res.amount1,
-        manager: userAddr,
-        maxTwapDeviation: 100,
-        twapDuration: 2000,
-        maxSlippage: 100,
-      },
-      true
-    );
-
     expect(await arrakisV2Factory.numVaults()).to.be.eq(1);
   });
 
-  it("#8: unit test get num Vaults by Deployer", async () => {
-    expect(await arrakisV2Factory.numVaultsByDeployer(userAddr)).to.be.eq(0);
+  it("#4: unit test get vaults", async () => {
+    expect((await arrakisV2Factory.vaults()).length).to.be.eq(0);
   });
 
-  it("#9: unit test get num Vaults by Deployer", async () => {
+  it("#5: unit test get vaults", async () => {
     const slot0 = await uniswapV3Pool.slot0();
     const tickSpacing = await uniswapV3Pool.tickSpacing();
 
@@ -242,7 +164,7 @@ describe("Factory function unit test", function () {
       ethers.utils.parseUnits("1", 18)
     );
 
-    await arrakisV2Factory.connect(owner).deployVault(
+    await arrakisV2Factory.connect(user2).deployVault(
       {
         feeTiers: [500],
         token0: addresses.USDC,
@@ -255,55 +177,9 @@ describe("Factory function unit test", function () {
         twapDuration: 2000,
         maxSlippage: 100,
       },
-      false
+      true
     );
 
-    expect(await arrakisV2Factory.numVaultsByDeployer(ownerAddr)).to.be.eq(1);
-  });
-
-  it("#10: unit test get num of deployers", async () => {
-    expect(await arrakisV2Factory.numDeployers()).to.be.eq(1);
-  });
-
-  it("#11: unit test get vaults by deployers", async () => {
-    expect(
-      (await arrakisV2Factory.getVaultsByDeployer(userAddr)).length
-    ).to.be.eq(0);
-  });
-
-  it("#12: unit test get vaults by deployers", async () => {
-    const slot0 = await uniswapV3Pool.slot0();
-    const tickSpacing = await uniswapV3Pool.tickSpacing();
-
-    const lowerTick = slot0.tick - (slot0.tick % tickSpacing) - tickSpacing;
-    const upperTick = slot0.tick - (slot0.tick % tickSpacing) + 2 * tickSpacing;
-
-    // For initialization.
-    const res = await arrakisV2Resolver.getAmountsForLiquidity(
-      slot0.tick,
-      lowerTick,
-      upperTick,
-      ethers.utils.parseUnits("1", 18)
-    );
-
-    await arrakisV2Factory.connect(user).deployVault(
-      {
-        feeTiers: [500],
-        token0: addresses.USDC,
-        token1: addresses.WETH,
-        owner: userAddr,
-        init0: res.amount0,
-        init1: res.amount1,
-        manager: userAddr,
-        maxTwapDeviation: 100,
-        twapDuration: 2000,
-        maxSlippage: 100,
-      },
-      false
-    );
-
-    expect(
-      (await arrakisV2Factory.getVaultsByDeployer(userAddr)).length
-    ).to.be.eq(1);
+    expect((await arrakisV2Factory.vaults()).length).to.be.eq(1);
   });
 });

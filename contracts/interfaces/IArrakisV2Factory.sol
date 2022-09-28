@@ -19,19 +19,9 @@ interface IArrakisV2Factory {
 
     function arrakisV2Beacon() external view returns (IArrakisV2Beacon);
 
-    function deployer() external view returns (address);
+    function numVaults() external view returns (uint256);
 
-    function index() external view returns (uint256);
-
-    function numVaultsByDeployer(address deployer_)
-        external
-        view
-        returns (uint256);
-
-    function getVaultsByDeployer(address deployer_)
-        external
-        view
-        returns (address[] memory);
+    function vaults() external view returns (address[] memory);
 
     function getProxyAdmin(address proxy) external view returns (address);
 
