@@ -265,20 +265,6 @@ contract ArrakisV2 is
         Rebalance calldata rebalanceParams_,
         Range[] calldata rangesToRemove_
     ) external onlyManager {
-        for (uint256 i = 0; i < rangesToRemove_.length; i++) {
-            (bool exist, uint256 index) = Position.rangeExist(
-                ranges,
-                rangesToRemove_[i]
-            );
-            require(exist, "NR");
-
-            delete ranges[index];
-
-            for (uint256 j = index; j < ranges.length - 1; j++) {
-                ranges[j] = ranges[j + 1];
-            }
-            ranges.pop();
-        }
         for (uint256 i = 0; i < ranges_.length; i++) {
             (bool exist, ) = Position.rangeExist(ranges, ranges_[i]);
             require(!exist, "R");
@@ -291,19 +277,33 @@ contract ArrakisV2 is
             require(pool != address(0), "NUP");
             require(_pools.contains(pool), "P");
             // TODO: can reuse the pool got previously.
-            require(
-                Pool.validateTickSpacing(
-                    factory,
-                    address(token0),
-                    address(token1),
-                    ranges_[i]
-                ),
-                "range"
-            );
+            require(Pool.validateTickSpacing(pool, ranges_[i]), "range");
 
             ranges.push(ranges_[i]);
         }
         _rebalance(rebalanceParams_);
+        for (uint256 i = 0; i < rangesToRemove_.length; i++) {
+            (bool exist, uint256 index) = Position.rangeExist(
+                ranges,
+                rangesToRemove_[i]
+            );
+            require(exist, "NR");
+
+            Position.requireNotActiveRange(
+                factory,
+                address(this),
+                address(token0),
+                address(token1),
+                rangesToRemove_[i]
+            );
+
+            delete ranges[index];
+
+            for (uint256 j = index; j < ranges.length - 1; j++) {
+                ranges[j] = ranges[j + 1];
+            }
+            ranges.pop();
+        }
     }
 
     function withdrawManagerBalance() external {
