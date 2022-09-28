@@ -75,7 +75,10 @@ contract ArrakisV2 is
         returns (uint256 amount0, uint256 amount1)
     {
         require(mintAmount_ > 0, "MA");
-        require(!restrictedMintToggle || msg.sender == address(manager), "R");
+        require(
+            restrictedMint == address(0) || msg.sender == restrictedMint,
+            "R"
+        );
         address me = address(this);
         uint256 totalSupply = totalSupply();
         (
