@@ -191,9 +191,8 @@ abstract contract ArrakisV2Storage is
         emit LogSetManager(address(manager = manager_));
     }
 
-    function setRestrictedMint(address minter) external onlyManager {
-        restrictedMint = minter;
-        emit LogRestrictedMint(minter);
+    function setRestrictedMint(address minter_) external onlyManager {
+        emit LogRestrictedMint(restrictedMint = minter_);
     }
 
     function setMaxTwapDeviation(int24 maxTwapDeviation_) external onlyOwner {
