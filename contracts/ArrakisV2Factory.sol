@@ -85,7 +85,7 @@ contract ArrakisV2Factory is ArrakisV2FactoryStorage {
         bytes memory data = abi.encodeWithSelector(
             IArrakisV2.initialize.selector,
             name,
-            string(abi.encodePacked("RAKIS-", _uint2str(numVaults() + 1))),
+            string(abi.encodePacked("RAKISv2-", _uint2str(numVaults() + 1))),
             params_
         );
 
