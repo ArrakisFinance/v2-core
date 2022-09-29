@@ -28,15 +28,18 @@ const config: HardhatUserConfig = {
     },
     arrakisMultiSig: {
       default: 1,
-      polygon: "0xDEb4C33D5C3E7e32F55a9D6336FE06010E40E3AB",
+      polygon: "0xd06a7cc1a162fDfB515595A2eC1c47B75743C381",
+      mainnet: "0xb9229ea965FC84f21b63791efC643b2c7ffB77Be",
     },
     owner: {
       default: 2,
-      polygon: "0xF869f0eBDDAa33d7aa394c2c612E6e5a6A64fDA4",
+      polygon: "0xDEb4C33D5C3E7e32F55a9D6336FE06010E40E3AB",
+      mainnet: "0x5108EF86cF493905BcD35A3736e4B46DeCD7de58",
     },
     arrakisTreasury: {
       default: 3,
       polygon: "0xDEb4C33D5C3E7e32F55a9D6336FE06010E40E3AB",
+      mainnet: "0x5108EF86cF493905BcD35A3736e4B46DeCD7de58",
     },
   },
 
