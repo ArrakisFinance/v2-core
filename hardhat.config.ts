@@ -7,6 +7,7 @@ import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
 import "hardhat-deploy";
 import "solidity-coverage";
+import "hardhat-gas-reporter";
 
 import { ethers } from "ethers";
 
