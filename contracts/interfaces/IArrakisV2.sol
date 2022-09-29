@@ -5,7 +5,7 @@ import {
     IUniswapV3Factory
 } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IManagerProxyV2} from "./IManagerProxyV2.sol";
+import {IManager} from "./IManager.sol";
 import {InitializePayload} from "../structs/SArrakisV2.sol";
 import {Range, Rebalance} from "../structs/SArrakisV2.sol";
 
@@ -42,7 +42,7 @@ interface IArrakisV2 {
 
     function arrakisFeeBPS() external view returns (uint16);
 
-    function manager() external view returns (IManagerProxyV2);
+    function manager() external view returns (IManager);
 
     function twapDuration() external view returns (uint24);
 

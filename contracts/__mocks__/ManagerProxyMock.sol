@@ -3,9 +3,9 @@ pragma solidity 0.8.13;
 
 import {IArrakisV2} from "./../interfaces/IArrakisV2.sol";
 import {Range, Rebalance} from "./../structs/SArrakisV2.sol";
-import {IManagerProxyV2} from "../interfaces/IManagerProxyV2.sol";
+import {IManager} from "../interfaces/IManager.sol";
 
-contract ManagerProxyMock is IManagerProxyV2 {
+contract ManagerProxyMock is IManager {
     // solhint-disable-next-line const-name-snakecase
     uint16 public constant managerFeeBPS = 100;
 
