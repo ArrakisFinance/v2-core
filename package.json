@@ -23,6 +23,7 @@
     "verify-vault-v2-resolver": "npx hardhat --network polygon run ./scripts/verify/verifyVaultV2Resolver.ts"
   },
   "devDependencies": {
+    "@arrakisfi/v3-lib-0.8": "0.1.1",
     "@gelatonetwork/core": "1.6.1",
     "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers",
     "@nomiclabs/hardhat-etherscan": "3.1.0",
@@ -48,6 +49,7 @@
     "ethers": "5.6.9",
     "hardhat": "2.9.9",
     "hardhat-deploy": "0.11.10",
+    "hardhat-gas-reporter": "^1.0.9",
     "husky": "8.0.1",
     "jsbi": "^4.3.0",
     "lint-staged": "13.0.2",
@@ -60,8 +62,7 @@
     "ts-generator": "0.1.1",
     "ts-node": "10.8.1",
     "typechain": "8.1.0",
-    "typescript": "4.7.4",
-    "@arrakisfi/v3-lib-0.8": "0.1.1"
+    "typescript": "4.7.4"
   },
   "lint-staged": {
     "*.{ts,js}": "eslint -c .eslintrc.json"

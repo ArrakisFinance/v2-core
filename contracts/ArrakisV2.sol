@@ -5,9 +5,6 @@ import {
     IUniswapV3MintCallback
 } from "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol";
 import {
-    IUniswapV3SwapCallback
-} from "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
-import {
     IUniswapV3Pool
 } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {
@@ -35,11 +32,7 @@ import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
 import {UniswapV3Amounts} from "./libraries/UniswapV3Amounts.sol";
 
 /// @dev DO NOT ADD STATE VARIABLES - APPEND THEM TO ArrakisV2Storage
-contract ArrakisV2 is
-    IUniswapV3MintCallback,
-    IUniswapV3SwapCallback,
-    ArrakisV2Storage
-{
+contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -54,18 +47,6 @@ contract ArrakisV2 is
         bytes calldata /*_data*/
     ) external override {
         _uniswapV3CallBack(amount0Owed_, amount1Owed_);
-    }
-
-    /// @notice Uniswap v3 callback fn, called back on pool.swap
-    function uniswapV3SwapCallback(
-        int256 amount0Delta_,
-        int256 amount1Delta_,
-        bytes calldata /*data*/
-    ) external override {
-        _uniswapV3CallBack(
-            SafeCast.toUint256(amount0Delta_),
-            SafeCast.toUint256(amount1Delta_)
-        );
     }
 
     // solhint-disable-next-line function-max-lines
@@ -201,16 +182,14 @@ contract ArrakisV2 is
             for (uint256 i = 0; i < burns_.length; i++) {
                 require(burns_[i].liquidity != 0, "LZ");
 
-                address pool = factory.getPool(
-                    address(token0),
-                    address(token1),
-                    burns_[i].range.feeTier
-                );
-
-                require(_pools.contains(pool), "NP");
-
                 Withdraw memory withdraw = _withdraw(
-                    IUniswapV3Pool(pool),
+                    IUniswapV3Pool(
+                        factory.getPool(
+                            address(token0),
+                            address(token1),
+                            burns_[i].range.feeTier
+                        )
+                    ),
                     burns_[i].range.lowerTick,
                     burns_[i].range.upperTick,
                     burns_[i].liquidity
@@ -265,20 +244,6 @@ contract ArrakisV2 is
         Rebalance calldata rebalanceParams_,
         Range[] calldata rangesToRemove_
     ) external onlyManager {
-        for (uint256 i = 0; i < rangesToRemove_.length; i++) {
-            (bool exist, uint256 index) = Position.rangeExist(
-                ranges,
-                rangesToRemove_[i]
-            );
-            require(exist, "NR");
-
-            delete ranges[index];
-
-            for (uint256 j = index; j < ranges.length - 1; j++) {
-                ranges[j] = ranges[j + 1];
-            }
-            ranges.pop();
-        }
         for (uint256 i = 0; i < ranges_.length; i++) {
             (bool exist, ) = Position.rangeExist(ranges, ranges_[i]);
             require(!exist, "R");
@@ -291,19 +256,33 @@ contract ArrakisV2 is
             require(pool != address(0), "NUP");
             require(_pools.contains(pool), "P");
             // TODO: can reuse the pool got previously.
-            require(
-                Pool.validateTickSpacing(
-                    factory,
-                    address(token0),
-                    address(token1),
-                    ranges_[i]
-                ),
-                "range"
-            );
+            require(Pool.validateTickSpacing(pool, ranges_[i]), "range");
 
             ranges.push(ranges_[i]);
         }
         _rebalance(rebalanceParams_);
+        for (uint256 i = 0; i < rangesToRemove_.length; i++) {
+            (bool exist, uint256 index) = Position.rangeExist(
+                ranges,
+                rangesToRemove_[i]
+            );
+            require(exist, "NR");
+
+            Position.requireNotActiveRange(
+                factory,
+                address(this),
+                address(token0),
+                address(token1),
+                rangesToRemove_[i]
+            );
+
+            delete ranges[index];
+
+            for (uint256 j = index; j < ranges.length - 1; j++) {
+                ranges[j] = ranges[j + 1];
+            }
+            ranges.pop();
+        }
     }
 
     function withdrawManagerBalance() external {
@@ -357,8 +336,6 @@ contract ArrakisV2 is
                 rebalanceParams_.removes[i].range.feeTier
             );
             IUniswapV3Pool pool = IUniswapV3Pool(poolAddr);
-            require(_pools.contains(poolAddr), "NP");
-
             Twap.checkDeviation(pool, twapDuration, maxTwapDeviation);
 
             Withdraw memory withdraw = _withdraw(
