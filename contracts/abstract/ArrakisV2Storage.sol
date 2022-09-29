@@ -167,8 +167,10 @@ abstract contract ArrakisV2Storage is
     }
 
     // #region setter functions
-    function setInits(uint256 init0_, uint256 init1_) external onlyOwner {
+    function setInits(uint256 init0_, uint256 init1_) external {
         require(totalSupply() == 0, "TS");
+        address requiredCaller = restrictedMint == address(0) ? owner() : restrictedMint;
+        require(msg.sender == requiredCaller, "R");
         emit LogSetInits(init0 = init0_, init1 = init1_);
     }
 
