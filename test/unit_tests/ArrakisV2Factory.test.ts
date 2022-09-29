@@ -98,7 +98,7 @@ describe("Factory function unit test", function () {
     )) as ArrakisV2;
 
     expect(await vaultV2.name()).to.be.eq("Arrakis Vault V2 USDC/WETH");
-    expect(await vaultV2.symbol()).to.be.eq("RAKIS-1");
+    expect(await vaultV2.symbol()).to.be.eq("RAKISv2-1");
   });
 
   it("#1: unit test get token name", async () => {
