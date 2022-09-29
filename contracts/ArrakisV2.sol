@@ -201,16 +201,14 @@ contract ArrakisV2 is
             for (uint256 i = 0; i < burns_.length; i++) {
                 require(burns_[i].liquidity != 0, "LZ");
 
-                address pool = factory.getPool(
-                    address(token0),
-                    address(token1),
-                    burns_[i].range.feeTier
-                );
-
-                require(_pools.contains(pool), "NP");
-
                 Withdraw memory withdraw = _withdraw(
-                    IUniswapV3Pool(pool),
+                    IUniswapV3Pool(
+                        factory.getPool(
+                            address(token0),
+                            address(token1),
+                            burns_[i].range.feeTier
+                        )
+                    ),
                     burns_[i].range.lowerTick,
                     burns_[i].range.upperTick,
                     burns_[i].liquidity
@@ -357,8 +355,6 @@ contract ArrakisV2 is
                 rebalanceParams_.removes[i].range.feeTier
             );
             IUniswapV3Pool pool = IUniswapV3Pool(poolAddr);
-            require(_pools.contains(poolAddr), "NP");
-
             Twap.checkDeviation(pool, twapDuration, maxTwapDeviation);
 
             Withdraw memory withdraw = _withdraw(
