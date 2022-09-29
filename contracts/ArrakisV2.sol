@@ -5,9 +5,6 @@ import {
     IUniswapV3MintCallback
 } from "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol";
 import {
-    IUniswapV3SwapCallback
-} from "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
-import {
     IUniswapV3Pool
 } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {
@@ -35,11 +32,7 @@ import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
 import {UniswapV3Amounts} from "./libraries/UniswapV3Amounts.sol";
 
 /// @dev DO NOT ADD STATE VARIABLES - APPEND THEM TO ArrakisV2Storage
-contract ArrakisV2 is
-    IUniswapV3MintCallback,
-    IUniswapV3SwapCallback,
-    ArrakisV2Storage
-{
+contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -54,18 +47,6 @@ contract ArrakisV2 is
         bytes calldata /*_data*/
     ) external override {
         _uniswapV3CallBack(amount0Owed_, amount1Owed_);
-    }
-
-    /// @notice Uniswap v3 callback fn, called back on pool.swap
-    function uniswapV3SwapCallback(
-        int256 amount0Delta_,
-        int256 amount1Delta_,
-        bytes calldata /*data*/
-    ) external override {
-        _uniswapV3CallBack(
-            SafeCast.toUint256(amount0Delta_),
-            SafeCast.toUint256(amount1Delta_)
-        );
     }
 
     // solhint-disable-next-line function-max-lines
