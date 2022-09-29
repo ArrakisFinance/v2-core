@@ -8,7 +8,7 @@ import {
     IERC20,
     SafeERC20
 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IManagerProxyV2} from "../interfaces/IManagerProxyV2.sol";
+import {IManager} from "../interfaces/IManager.sol";
 import {
     OwnableUpgradeable
 } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -57,7 +57,7 @@ abstract contract ArrakisV2Storage is
 
     uint256 public managerBalance0;
     uint256 public managerBalance1;
-    IManagerProxyV2 public manager;
+    IManager public manager;
     address public restrictedMint;
 
     // #endregion manager data
@@ -154,7 +154,7 @@ abstract contract ArrakisV2Storage is
 
         _transferOwnership(params_.owner);
 
-        manager = IManagerProxyV2(params_.manager);
+        manager = IManager(params_.manager);
 
         emit LogAddPools(params_.feeTiers);
         emit LogSetInits(init0 = params_.init0, init1 = params_.init1);
@@ -167,8 +167,12 @@ abstract contract ArrakisV2Storage is
     }
 
     // #region setter functions
-    function setInits(uint256 init0_, uint256 init1_) external onlyOwner {
+    function setInits(uint256 init0_, uint256 init1_) external {
         require(totalSupply() == 0, "TS");
+        address requiredCaller = restrictedMint == address(0)
+            ? owner()
+            : restrictedMint;
+        require(msg.sender == requiredCaller, "R");
         emit LogSetInits(init0 = init0_, init1 = init1_);
     }
 
@@ -187,7 +191,7 @@ abstract contract ArrakisV2Storage is
         emit LogRemovePools(pools_);
     }
 
-    function setManager(IManagerProxyV2 manager_) external onlyOwner {
+    function setManager(IManager manager_) external onlyOwner {
         emit LogSetManager(address(manager = manager_));
     }
 
