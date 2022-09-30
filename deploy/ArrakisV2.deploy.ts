@@ -29,6 +29,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       Twap: (await ethers.getContract("Twap")).address,
       Underlying: (await ethers.getContract("Underlying")).address,
       UniswapV3Amounts: (await ethers.getContract("UniswapV3Amounts")).address,
+      Manager: (await ethers.getContract("Manager")).address,
     },
     log: hre.network.name != "hardhat" ? true : false,
   });
@@ -51,4 +52,5 @@ func.dependencies = [
   "Twap",
   "Underlying",
   "UniswapV3Amounts",
+  "Manager",
 ];
