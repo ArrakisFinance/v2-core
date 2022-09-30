@@ -28,6 +28,7 @@ import {
 import {Twap} from "./libraries/Twap.sol";
 import {Position} from "./libraries/Position.sol";
 import {Pool} from "./libraries/Pool.sol";
+import {Manager} from "./libraries/Manager.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
 import {UniswapV3Amounts} from "./libraries/UniswapV3Amounts.sol";
 
@@ -134,7 +135,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                     .subtractAdminFees(
                         underlying.fee0,
                         underlying.fee1,
-                        manager.managerFeeBPS(),
+                        Manager.getManagerFeeBPS(manager),
                         arrakisFeeBPS
                     );
 
@@ -206,7 +207,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
             (total.fee0, total.fee1) = UniswapV3Amounts.subtractAdminFees(
                 total.fee0,
                 total.fee1,
-                manager.managerFeeBPS(),
+                Manager.getManagerFeeBPS(manager),
                 arrakisFeeBPS
             );
         }
@@ -354,7 +355,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
             (totalFee0, totalFee1) = UniswapV3Amounts.subtractAdminFees(
                 totalFee0,
                 totalFee1,
-                manager.managerFeeBPS(),
+                Manager.getManagerFeeBPS(manager),
                 arrakisFeeBPS
             );
 
@@ -513,7 +514,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
     }
 
     function _applyFees(uint256 fee0_, uint256 fee1_) internal {
-        uint16 managerFeeBPS = manager.managerFeeBPS();
+        uint16 managerFeeBPS = Manager.getManagerFeeBPS(manager);
         managerBalance0 += (fee0_ * managerFeeBPS) / 10000;
         managerBalance1 += (fee1_ * managerFeeBPS) / 10000;
         arrakisBalance0 += (fee0_ * arrakisFeeBPS) / 10000;
