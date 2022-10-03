@@ -150,6 +150,21 @@ describe("Arrakis V2 integration test!!!", async function () {
       true
     );
 
+    // vaultV2 = (await ethers.getContract("ArrakisV2", user)) as ArrakisV2;
+
+    // vaultV2.initialize("Token 1", "Symbol 1", {
+    //   feeTiers: [500],
+    //   token0: addresses.USDC,
+    //   token1: addresses.WETH,
+    //   owner: userAddr,
+    //   init0: res.amount0,
+    //   init1: res.amount1,
+    //   manager: managerProxyMock.address,
+    //   maxTwapDeviation: 100,
+    //   twapDuration: 2000,
+    //   maxSlippage: 100,
+    // });
+
     const rc = await tx.wait();
     const event = rc?.events?.find((event) => event.event === "VaultCreated");
     // eslint-disable-next-line no-unsafe-optional-chaining
@@ -396,5 +411,83 @@ describe("Arrakis V2 integration test!!!", async function () {
     expect(balance).to.be.eq(0);
 
     // #endregion burn token to get back token to user.
+
+    // #region rebalance to remove the range.
+
+    await managerProxyMock.rebalance(
+      vaultV2.address,
+      [],
+      await arrakisV2Resolver.standardRebalance([], vaultV2.address),
+      [{ lowerTick, upperTick, feeTier: 500 }]
+    );
+
+    // #endregion rebalance to remove the range.
+
+    // #region withdraw as manager.
+
+    const managerAddr = await vaultV2.manager();
+
+    managerProxyMock.fundVaultBalance(vaultV2.address, {
+      value: ethers.utils.parseEther("1"),
+    });
+
+    const managerT0B = await usdc.balanceOf(managerAddr);
+    const managerT1B = await wEth.balanceOf(managerAddr);
+
+    await hre.network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [managerAddr],
+    });
+
+    const managerSigner = await ethers.getSigner(managerAddr);
+
+    await vaultV2.connect(managerSigner).withdrawManagerBalance();
+
+    await hre.network.provider.request({
+      method: "hardhat_stopImpersonatingAccount",
+      params: [managerAddr],
+    });
+
+    const managerT0A = await usdc.balanceOf(managerAddr);
+    const managerT1A = await wEth.balanceOf(managerAddr);
+
+    expect(managerT0A).to.be.gte(managerT0B);
+    expect(managerT1A).to.be.gt(managerT1B);
+
+    // #region withdraw as manager.
+
+    // #region withdraw as arrakis treasury.
+
+    const arrakisAddr = await vaultV2.arrakisTreasury();
+
+    await user.sendTransaction({
+      to: arrakisAddr,
+      value: ethers.utils.parseEther("1"),
+    });
+
+    const arrakisT0B = await usdc.balanceOf(arrakisAddr);
+    const arrakisT1B = await wEth.balanceOf(arrakisAddr);
+
+    await hre.network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [arrakisAddr],
+    });
+
+    const arrakisAddrSigner = await ethers.getSigner(arrakisAddr);
+
+    await vaultV2.connect(arrakisAddrSigner).withdrawArrakisBalance();
+
+    await hre.network.provider.request({
+      method: "hardhat_stopImpersonatingAccount",
+      params: [arrakisAddr],
+    });
+
+    const arrakisT0A = await usdc.balanceOf(arrakisAddr);
+    const arrakisT1A = await wEth.balanceOf(arrakisAddr);
+
+    expect(arrakisT0A).to.be.gte(arrakisT0B);
+    expect(arrakisT1A).to.be.gt(arrakisT1B);
+
+    // #region withdraw as arrakis treasury.
   });
 });

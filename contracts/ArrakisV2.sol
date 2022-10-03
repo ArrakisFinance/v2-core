@@ -81,6 +81,16 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                 : (init0, init1, 0, 0);
         uint256 denominator = totalSupply > 0 ? totalSupply : 1 ether;
         /// @dev current0 and current1 include fees and left over.
+
+        (current0, current1) = UniswapV3Amounts.subtractAdminFeesOnAmounts(
+            fee0,
+            fee1,
+            Manager.getManagerFeeBPS(manager),
+            arrakisFeeBPS,
+            current0,
+            current1
+        );
+
         amount0 = FullMath.mulDivRoundingUp(mintAmount_, current0, denominator);
         amount1 = FullMath.mulDivRoundingUp(mintAmount_, current1, denominator);
 
@@ -130,18 +140,15 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
             (managerBalance1 + arrakisBalance1);
 
         {
-            {
-                (uint256 fee0, uint256 fee1) = UniswapV3Amounts
-                    .subtractAdminFees(
-                        underlying.fee0,
-                        underlying.fee1,
-                        Manager.getManagerFeeBPS(manager),
-                        arrakisFeeBPS
-                    );
-
-                underlying.amount0 -= underlying.fee0 - fee0;
-                underlying.amount1 -= underlying.fee1 - fee1;
-            }
+            (underlying.amount0, underlying.amount1) = UniswapV3Amounts
+                .subtractAdminFeesOnAmounts(
+                    underlying.fee0,
+                    underlying.fee1,
+                    Manager.getManagerFeeBPS(manager),
+                    arrakisFeeBPS,
+                    underlying.amount0,
+                    underlying.amount1
+                );
 
             // the proportion of user balance.
             amount0 = FullMath.mulDiv(
@@ -257,7 +264,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
             require(pool != address(0), "NUP");
             require(_pools.contains(pool), "P");
             // TODO: can reuse the pool got previously.
-            require(Pool.validateTickSpacing(pool, ranges_[i]), "range");
+            require(Pool.validateTickSpacing(pool, ranges_[i]), "R");
 
             ranges.push(ranges_[i]);
         }

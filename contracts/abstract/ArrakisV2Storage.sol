@@ -183,7 +183,6 @@ abstract contract ArrakisV2Storage is
 
     function removePools(address[] calldata pools_) external onlyOwner {
         for (uint256 i = 0; i < pools_.length; i++) {
-            require(pools_[i] != address(0), "Z");
             require(_pools.contains(pools_[i]), "NP");
 
             _pools.remove(pools_[i]);
@@ -195,7 +194,7 @@ abstract contract ArrakisV2Storage is
         emit LogSetManager(address(manager = manager_));
     }
 
-    function setRestrictedMint(address minter_) external onlyManager {
+    function setRestrictedMint(address minter_) external onlyOwner {
         emit LogRestrictedMint(restrictedMint = minter_);
     }
 
