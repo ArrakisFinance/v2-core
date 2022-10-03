@@ -41,9 +41,4 @@ func.skip = async (hre: HardhatRuntimeEnvironment) => {
   return shouldSkip ? true : false;
 };
 func.tags = ["MockFArrakisV2"];
-func.dependencies = [
-  "Pool",
-  "Position",
-  "Underlying",
-  "UniswapV3Amounts",
-];
+func.dependencies = ["Pool", "Position", "Underlying", "UniswapV3Amounts"];
