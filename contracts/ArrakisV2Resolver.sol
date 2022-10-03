@@ -16,7 +16,6 @@ import {
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
 import {UniswapV3Amounts} from "./libraries/UniswapV3Amounts.sol";
-import {Twap} from "./libraries/Twap.sol";
 import {Manager} from "./libraries/Manager.sol";
 import {Position as PositionHelper} from "./libraries/Position.sol";
 import {FullMath} from "@arrakisfi/v3-lib-0.8/contracts/FullMath.sol";
@@ -217,32 +216,32 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
                     rebalanceWithSwap_.swapRatio,
                     10000
                 );
-                swap.expectedMinReturn = FullMath.mulDiv(
-                    swap.amountIn,
-                    Twap.getPrice0(
-                        rebalanceWithSwap_.pool,
-                        rebalanceWithSwap_.vaultV2.twapDuration()
-                    ),
-                    10 **
-                        ERC20(address(rebalanceWithSwap_.vaultV2.token0()))
-                            .decimals()
-                );
+                // swap.expectedMinReturn = FullMath.mulDiv(
+                //     swap.amountIn,
+                //     Twap.getPrice0(
+                //         rebalanceWithSwap_.pool,
+                //         rebalanceWithSwap_.vaultV2.twapDuration()
+                //     ),
+                //     10 **
+                //         ERC20(address(rebalanceWithSwap_.vaultV2.token0()))
+                //             .decimals()
+                // );
             } else {
                 swap.amountIn = FullMath.mulDiv(
                     amount1,
                     rebalanceWithSwap_.swapRatio,
                     10000
                 );
-                swap.expectedMinReturn = FullMath.mulDiv(
-                    swap.amountIn,
-                    Twap.getPrice1(
-                        rebalanceWithSwap_.pool,
-                        rebalanceWithSwap_.vaultV2.twapDuration()
-                    ),
-                    10 **
-                        ERC20(address(rebalanceWithSwap_.vaultV2.token1()))
-                            .decimals()
-                );
+                // swap.expectedMinReturn = FullMath.mulDiv(
+                //     swap.amountIn,
+                //     Twap.getPrice1(
+                //         rebalanceWithSwap_.pool,
+                //         rebalanceWithSwap_.vaultV2.twapDuration()
+                //     ),
+                //     10 **
+                //         ERC20(address(rebalanceWithSwap_.vaultV2.token1()))
+                //             .decimals()
+                // );
             }
 
             swap.payload = abi.encodeWithSelector(

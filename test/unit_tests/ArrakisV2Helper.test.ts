@@ -117,9 +117,6 @@ describe("ArrakisV2Helper functions unit test", function () {
           init0: res.amount0,
           init1: res.amount1,
           manager: managerProxyMock.address,
-          maxTwapDeviation: 100,
-          twapDuration: 2000,
-          maxSlippage: 100,
         },
         true
       );

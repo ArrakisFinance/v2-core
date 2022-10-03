@@ -103,9 +103,6 @@ describe("Factory function unit test", function () {
         init0: res.amount0,
         init1: res.amount1,
         manager: userAddr,
-        maxTwapDeviation: 100,
-        twapDuration: 2000,
-        maxSlippage: 100,
       },
       true
     );
@@ -159,9 +156,6 @@ describe("Factory function unit test", function () {
         init0: res.amount0,
         init1: res.amount1,
         manager: userAddr,
-        maxTwapDeviation: 100,
-        twapDuration: 2000,
-        maxSlippage: 100,
       },
       true
     );
@@ -197,9 +191,6 @@ describe("Factory function unit test", function () {
         init0: res.amount0,
         init1: res.amount1,
         manager: userAddr,
-        maxTwapDeviation: 100,
-        twapDuration: 2000,
-        maxSlippage: 100,
       },
       true
     );
@@ -231,9 +222,6 @@ describe("Factory function unit test", function () {
         init0: res.amount0,
         init1: res.amount1,
         manager: userAddr,
-        maxTwapDeviation: 100,
-        twapDuration: 2000,
-        maxSlippage: 100,
       },
       false
     );
@@ -272,9 +260,6 @@ describe("Factory function unit test", function () {
         init0: res.amount0,
         init1: res.amount1,
         manager: userAddr,
-        maxTwapDeviation: 100,
-        twapDuration: 2000,
-        maxSlippage: 100,
       },
       false
     );
@@ -313,9 +298,6 @@ describe("Factory function unit test", function () {
         init0: res.amount0,
         init1: res.amount1,
         manager: userAddr,
-        maxTwapDeviation: 100,
-        twapDuration: 2000,
-        maxSlippage: 100,
       },
       false
     );
@@ -365,9 +347,6 @@ describe("Factory function unit test", function () {
         init0: res.amount0,
         init1: res.amount1,
         manager: userAddr,
-        maxTwapDeviation: 100,
-        twapDuration: 2000,
-        maxSlippage: 100,
       },
       false
     );
@@ -388,7 +367,6 @@ describe("Factory function unit test", function () {
       libraries: {
         Pool: (await ethers.getContract("Pool")).address,
         Position: (await ethers.getContract("Position")).address,
-        Twap: (await ethers.getContract("Twap")).address,
         Underlying: (await ethers.getContract("Underlying")).address,
         UniswapV3Amounts: (
           await ethers.getContract("UniswapV3Amounts")
@@ -457,9 +435,6 @@ describe("Factory function unit test", function () {
         init0: res.amount0,
         init1: res.amount1,
         manager: userAddr,
-        maxTwapDeviation: 100,
-        twapDuration: 2000,
-        maxSlippage: 100,
       },
       false
     );
@@ -480,7 +455,6 @@ describe("Factory function unit test", function () {
       libraries: {
         Pool: (await ethers.getContract("Pool")).address,
         Position: (await ethers.getContract("Position")).address,
-        Twap: (await ethers.getContract("Twap")).address,
         Underlying: (await ethers.getContract("Underlying")).address,
         UniswapV3Amounts: (
           await ethers.getContract("UniswapV3Amounts")

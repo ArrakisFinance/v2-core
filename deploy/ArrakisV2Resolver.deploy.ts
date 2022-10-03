@@ -31,7 +31,6 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       Position: (await ethers.getContract("Position")).address,
       Underlying: (await ethers.getContract("Underlying")).address,
       UniswapV3Amounts: (await ethers.getContract("UniswapV3Amounts")).address,
-      Twap: (await ethers.getContract("Twap")).address,
       Manager: (await ethers.getContract("Manager")).address,
     },
     log: hre.network.name != "hardhat" ? true : false,
@@ -52,9 +51,7 @@ func.tags = ["ArrakisV2Resolver"];
 func.dependencies = [
   "ArrakisV2Helper",
   "Position",
-  "Twap",
   "Underlying",
-  "Twap",
   "UniswapV3Amounts",
   "Manager",
 ];

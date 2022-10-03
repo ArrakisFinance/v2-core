@@ -26,7 +26,6 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     libraries: {
       Pool: (await ethers.getContract("Pool")).address,
       Position: (await ethers.getContract("Position")).address,
-      Twap: (await ethers.getContract("Twap")).address,
       Underlying: (await ethers.getContract("Underlying")).address,
       UniswapV3Amounts: (await ethers.getContract("UniswapV3Amounts")).address,
       Manager: (await ethers.getContract("Manager")).address,
@@ -49,7 +48,6 @@ func.tags = ["ArrakisV2"];
 func.dependencies = [
   "Pool",
   "Position",
-  "Twap",
   "Underlying",
   "UniswapV3Amounts",
   "Manager",

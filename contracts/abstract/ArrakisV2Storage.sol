@@ -62,15 +62,6 @@ abstract contract ArrakisV2Storage is
 
     // #endregion manager data
 
-    // #region Twap
-
-    int24 public maxTwapDeviation;
-    uint24 public twapDuration;
-
-    uint24 public maxSlippage;
-
-    // #endregion Twap
-
     EnumerableSet.AddressSet internal _pools;
 
     // #region events
@@ -106,9 +97,6 @@ abstract contract ArrakisV2Storage is
     event LogRemovePools(address[] pools);
     event LogSetManager(address newManager);
     event LogRestrictedMint(address minter);
-    event LogSetMaxTwapDeviation(int24 maxTwapDeviation);
-    event LogSetTwapDuration(uint24 newTwapDuration);
-    event LogSetMaxSlippage(uint24 newMaxSlippage);
 
     // #endregion Setting events
 
@@ -159,11 +147,6 @@ abstract contract ArrakisV2Storage is
         emit LogAddPools(params_.feeTiers);
         emit LogSetInits(init0 = params_.init0, init1 = params_.init1);
         emit LogSetManager(params_.manager);
-        emit LogSetMaxTwapDeviation(
-            maxTwapDeviation = params_.maxTwapDeviation
-        );
-        emit LogSetTwapDuration(twapDuration = params_.twapDuration);
-        emit LogSetMaxSlippage(maxSlippage = params_.maxSlippage);
     }
 
     // #region setter functions
@@ -196,18 +179,6 @@ abstract contract ArrakisV2Storage is
 
     function setRestrictedMint(address minter_) external onlyOwner {
         emit LogRestrictedMint(restrictedMint = minter_);
-    }
-
-    function setMaxTwapDeviation(int24 maxTwapDeviation_) external onlyOwner {
-        emit LogSetMaxTwapDeviation(maxTwapDeviation = maxTwapDeviation_);
-    }
-
-    function setTwapDuration(uint24 twapDuration_) external onlyOwner {
-        emit LogSetTwapDuration(twapDuration = twapDuration_);
-    }
-
-    function setMaxSlippage(uint24 maxSlippage_) external onlyOwner {
-        emit LogSetMaxSlippage(maxSlippage = maxSlippage_);
     }
 
     // #endregion setter functions
