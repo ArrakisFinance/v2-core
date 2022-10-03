@@ -25,7 +25,6 @@ import {
     BurnLiquidity,
     UnderlyingOutput
 } from "./structs/SArrakisV2.sol";
-import {Twap} from "./libraries/Twap.sol";
 import {Position} from "./libraries/Position.sol";
 import {Pool} from "./libraries/Pool.sol";
 import {Manager} from "./libraries/Manager.sol";
@@ -335,8 +334,8 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         nonReentrant
     {
         // Burns
-        uint256 totalFee0 = 0;
-        uint256 totalFee1 = 0;
+        uint256 aggregator0 = 0;
+        uint256 aggregator1 = 0;
         for (uint256 i = 0; i < rebalanceParams_.removes.length; i++) {
             address poolAddr = factory.getPool(
                 address(token0),
@@ -344,7 +343,6 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                 rebalanceParams_.removes[i].range.feeTier
             );
             IUniswapV3Pool pool = IUniswapV3Pool(poolAddr);
-            Twap.checkDeviation(pool, twapDuration, maxTwapDeviation);
 
             Withdraw memory withdraw = _withdraw(
                 pool,
@@ -353,20 +351,20 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                 rebalanceParams_.removes[i].liquidity
             );
 
-            totalFee0 += withdraw.fee0;
-            totalFee1 += withdraw.fee1;
+            aggregator0 += withdraw.fee0;
+            aggregator1 += withdraw.fee1;
         }
 
-        if (totalFee0 > 0 || totalFee1 > 0) {
-            _applyFees(totalFee0, totalFee1);
-            (totalFee0, totalFee1) = UniswapV3Amounts.subtractAdminFees(
-                totalFee0,
-                totalFee1,
+        if (aggregator0 > 0 || aggregator1 > 0) {
+            _applyFees(aggregator0, aggregator1);
+            (aggregator0, aggregator1) = UniswapV3Amounts.subtractAdminFees(
+                aggregator0,
+                aggregator1,
                 Manager.getManagerFeeBPS(manager),
                 arrakisFeeBPS
             );
 
-            emit LogFeesEarnRebalance(totalFee0, totalFee1);
+            emit LogFeesEarnRebalance(aggregator0, aggregator1);
         }
 
         // Swap
@@ -403,22 +401,6 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
 
                 if (rebalanceParams_.swap.zeroForOne) {
                     require(
-                        FullMath.mulDiv(
-                            rebalanceParams_.swap.expectedMinReturn,
-                            10**ERC20(address(token0)).decimals(),
-                            rebalanceParams_.swap.amountIn
-                        ) >
-                            FullMath.mulDiv(
-                                Twap.getPrice0(
-                                    IUniswapV3Pool(rebalanceParams_.swap.pool),
-                                    twapDuration
-                                ),
-                                maxSlippage,
-                                10000
-                            ),
-                        "S"
-                    );
-                    require(
                         (balance1After >=
                             balance1Before +
                                 rebalanceParams_.swap.expectedMinReturn) &&
@@ -428,22 +410,6 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                         "SF"
                     );
                 } else {
-                    require(
-                        FullMath.mulDiv(
-                            rebalanceParams_.swap.expectedMinReturn,
-                            10**ERC20(address(token1)).decimals(),
-                            rebalanceParams_.swap.amountIn
-                        ) >
-                            FullMath.mulDiv(
-                                Twap.getPrice1(
-                                    IUniswapV3Pool(rebalanceParams_.swap.pool),
-                                    twapDuration
-                                ),
-                                maxSlippage,
-                                10000
-                            ),
-                        "S"
-                    );
                     require(
                         (balance0After >=
                             balance0Before +
@@ -458,6 +424,8 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         }
 
         // Mints.
+        aggregator0 = 0;
+        aggregator1 = 0;
         for (uint256 i = 0; i < rebalanceParams_.deposits.length; i++) {
             IUniswapV3Pool pool = IUniswapV3Pool(
                 factory.getPool(
@@ -473,16 +441,18 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
             );
             require(exist, "NR");
 
-            Twap.checkDeviation(pool, twapDuration, maxTwapDeviation);
-
-            pool.mint(
+            (uint256 amt0, uint256 amt1) = pool.mint(
                 address(this),
                 rebalanceParams_.deposits[i].range.lowerTick,
                 rebalanceParams_.deposits[i].range.upperTick,
                 rebalanceParams_.deposits[i].liquidity,
                 ""
             );
+            aggregator0 += amt0;
+            aggregator1 += amt1;
         }
+        require(aggregator0 >= rebalanceParams_.minDeposit0, "RF");
+        require(aggregator1 >= rebalanceParams_.minDeposit1, "RF");
 
         emit LogRebalance(rebalanceParams_);
     }

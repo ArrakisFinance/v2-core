@@ -16,7 +16,6 @@ import {
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
 import {UniswapV3Amounts} from "./libraries/UniswapV3Amounts.sol";
-import {Twap} from "./libraries/Twap.sol";
 import {Manager} from "./libraries/Manager.sol";
 import {Position as PositionHelper} from "./libraries/Position.sol";
 import {FullMath} from "@arrakisfi/v3-lib-0.8/contracts/FullMath.sol";
@@ -34,7 +33,6 @@ import {
     Rebalance,
     SwapPayload
 } from "./structs/SArrakisV2.sol";
-import {RebalanceWithSwap} from "./structs/SArrakisV2Resolver.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 contract ArrakisV2Resolver is IArrakisV2Resolver {
@@ -124,155 +122,6 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
             RangeWeight memory rangeWeight = rangeWeights_[i];
             (uint160 sqrtPriceX96, , , , , , ) = IUniswapV3Pool(
                 vaultV2_.factory().getPool(
-                    token0Addr,
-                    token1Addr,
-                    rangeWeight.range.feeTier
-                )
-            ).slot0();
-
-            uint128 liquidity = LiquidityAmounts.getLiquidityForAmounts(
-                sqrtPriceX96,
-                TickMath.getSqrtRatioAtTick(rangeWeight.range.lowerTick),
-                TickMath.getSqrtRatioAtTick(rangeWeight.range.upperTick),
-                FullMath.mulDiv(amount0, rangeWeight.weight, 10000),
-                FullMath.mulDiv(amount1, rangeWeight.weight, 10000)
-            );
-
-            rebalanceParams.deposits[i] = PositionLiquidity({
-                liquidity: liquidity,
-                range: rangeWeight.range
-            });
-        }
-    }
-
-    // solhint-disable-next-line function-max-lines, code-complexity
-    function rebalanceWithSwap(RebalanceWithSwap calldata rebalanceWithSwap_)
-        external
-        view
-        returns (Rebalance memory rebalanceParams)
-    {
-        uint256 amount0;
-        uint256 amount1;
-        address token0Addr;
-        address token1Addr;
-        {
-            Range[] memory ranges = helper.ranges(rebalanceWithSwap_.vaultV2);
-
-            token0Addr = address(rebalanceWithSwap_.vaultV2.token0());
-            token1Addr = address(rebalanceWithSwap_.vaultV2.token1());
-
-            (amount0, amount1) = helper.totalUnderlying(
-                rebalanceWithSwap_.vaultV2
-            );
-
-            PositionLiquidity[] memory pl = new PositionLiquidity[](
-                ranges.length
-            );
-            uint256 numberOfPosLiq;
-
-            for (uint256 i = 0; i < ranges.length; i++) {
-                uint128 liquidity;
-                {
-                    (liquidity, , , , ) = IUniswapV3Pool(
-                        rebalanceWithSwap_.vaultV2.factory().getPool(
-                            token0Addr,
-                            token1Addr,
-                            ranges[i].feeTier
-                        )
-                    ).positions(
-                            PositionHelper.getPositionId(
-                                address(rebalanceWithSwap_.vaultV2),
-                                ranges[i].lowerTick,
-                                ranges[i].upperTick
-                            )
-                        );
-                }
-
-                if (liquidity > 0) numberOfPosLiq++;
-
-                pl[i] = PositionLiquidity({
-                    liquidity: liquidity,
-                    range: ranges[i]
-                });
-            }
-
-            rebalanceParams.removes = new PositionLiquidity[](numberOfPosLiq);
-            uint256 j;
-
-            for (uint256 i = 0; i < pl.length; i++) {
-                if (pl[i].liquidity > 0) {
-                    rebalanceParams.removes[j] = pl[i];
-                    j++;
-                }
-            }
-
-            SwapPayload memory swap;
-            swap.zeroForOne = rebalanceWithSwap_.zeroForOne;
-            swap.pool = address(rebalanceWithSwap_.pool);
-            swap.router = address(swapRouter);
-
-            if (rebalanceWithSwap_.zeroForOne) {
-                swap.amountIn = FullMath.mulDiv(
-                    amount0,
-                    rebalanceWithSwap_.swapRatio,
-                    10000
-                );
-                swap.expectedMinReturn = FullMath.mulDiv(
-                    swap.amountIn,
-                    Twap.getPrice0(
-                        rebalanceWithSwap_.pool,
-                        rebalanceWithSwap_.vaultV2.twapDuration()
-                    ),
-                    10 **
-                        ERC20(address(rebalanceWithSwap_.vaultV2.token0()))
-                            .decimals()
-                );
-            } else {
-                swap.amountIn = FullMath.mulDiv(
-                    amount1,
-                    rebalanceWithSwap_.swapRatio,
-                    10000
-                );
-                swap.expectedMinReturn = FullMath.mulDiv(
-                    swap.amountIn,
-                    Twap.getPrice1(
-                        rebalanceWithSwap_.pool,
-                        rebalanceWithSwap_.vaultV2.twapDuration()
-                    ),
-                    10 **
-                        ERC20(address(rebalanceWithSwap_.vaultV2.token1()))
-                            .decimals()
-                );
-            }
-
-            swap.payload = abi.encodeWithSelector(
-                ISwapRouter.exactInputSingle.selector,
-                ISwapRouter.ExactInputSingleParams({
-                    tokenIn: address(rebalanceWithSwap_.vaultV2.token0()),
-                    tokenOut: address(rebalanceWithSwap_.vaultV2.token1()),
-                    fee: rebalanceWithSwap_.pool.fee(),
-                    recipient: address(rebalanceWithSwap_.vaultV2),
-                    deadline: block.number + 600, // 10 minutes
-                    amountIn: swap.amountIn,
-                    amountOutMinimum: swap.expectedMinReturn,
-                    sqrtPriceLimitX96: 0
-                })
-            );
-            rebalanceParams.swap = swap;
-        }
-
-        // TODO check if sum of weight is < 10000
-
-        _requireWeightUnder100(rebalanceWithSwap_.rangeWeights);
-
-        rebalanceParams.deposits = new PositionLiquidity[](
-            rebalanceWithSwap_.rangeWeights.length
-        );
-
-        for (uint256 i = 0; i < rebalanceWithSwap_.rangeWeights.length; i++) {
-            RangeWeight memory rangeWeight = rebalanceWithSwap_.rangeWeights[i];
-            (uint160 sqrtPriceX96, , , , , , ) = IUniswapV3Pool(
-                rebalanceWithSwap_.vaultV2.factory().getPool(
                     token0Addr,
                     token1Addr,
                     rangeWeight.range.feeTier

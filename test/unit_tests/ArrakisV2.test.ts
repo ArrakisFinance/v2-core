@@ -45,9 +45,6 @@ describe("ArrakisV2 functions unit test", function () {
       init0: ethers.constants.One,
       init1: ethers.constants.Zero,
       manager: managerAddr,
-      maxTwapDeviation: 100,
-      twapDuration: 2000,
-      maxSlippage: 100,
     });
 
     expect(await arrakisV2.token0()).to.be.eq(addresses.USDC);
@@ -57,9 +54,6 @@ describe("ArrakisV2 functions unit test", function () {
     expect(await arrakisV2.init0()).to.be.eq(ethers.constants.One);
     expect(await arrakisV2.init1()).to.be.eq(ethers.constants.Zero);
     expect(await arrakisV2.manager()).to.be.eq(managerAddr);
-    expect(await arrakisV2.maxTwapDeviation()).to.be.eq(100);
-    expect(await arrakisV2.twapDuration()).to.be.eq(2000);
-    expect(await arrakisV2.maxSlippage()).to.be.eq(100);
   });
 
   it("#1: set inits, should revert if caller is not restricted minter or owner", async () => {
@@ -178,42 +172,5 @@ describe("ArrakisV2 functions unit test", function () {
       .reverted;
 
     expect(await arrakisV2.restrictedMint()).to.be.eq(newManagerAddr);
-  });
-
-  it("#17: set max twap deviation, should revert if called by other account than owner", async () => {
-    await expect(
-      arrakisV2.connect(manager).setMaxTwapDeviation(200)
-    ).to.be.revertedWith("Ownable: caller is not the owner");
-  });
-  it("#18: set max twap deviation", async () => {
-    expect(await arrakisV2.maxTwapDeviation()).to.be.eq(100);
-
-    await expect(arrakisV2.setMaxTwapDeviation(200)).to.not.be.reverted;
-
-    expect(await arrakisV2.maxTwapDeviation()).to.be.eq(200);
-  });
-  it("#19: set twap duration, should revert if called by other account than owner", async () => {
-    await expect(
-      arrakisV2.connect(manager).setTwapDuration(1000)
-    ).to.be.revertedWith("Ownable: caller is not the owner");
-  });
-  it("#20: set twap duration", async () => {
-    expect(await arrakisV2.twapDuration()).to.be.eq(2000);
-
-    await expect(arrakisV2.setTwapDuration(1000)).to.not.be.reverted;
-
-    expect(await arrakisV2.twapDuration()).to.be.eq(1000);
-  });
-  it("#21: set max slippage, should revert if called by other account than owner", async () => {
-    await expect(
-      arrakisV2.connect(manager).setMaxSlippage(200)
-    ).to.be.revertedWith("Ownable: caller is not the owner");
-  });
-  it("#22: set max slippage", async () => {
-    expect(await arrakisV2.maxSlippage()).to.be.eq(100);
-
-    await expect(arrakisV2.setMaxSlippage(200)).to.not.be.reverted;
-
-    expect(await arrakisV2.maxSlippage()).to.be.eq(200);
   });
 });

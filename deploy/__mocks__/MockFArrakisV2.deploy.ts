@@ -23,7 +23,6 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     libraries: {
       Pool: (await ethers.getContract("Pool")).address,
       Position: (await ethers.getContract("Position")).address,
-      Twap: (await ethers.getContract("Twap")).address,
       Underlying: (await ethers.getContract("Underlying")).address,
       UniswapV3Amounts: (await ethers.getContract("UniswapV3Amounts")).address,
     },
@@ -42,10 +41,4 @@ func.skip = async (hre: HardhatRuntimeEnvironment) => {
   return shouldSkip ? true : false;
 };
 func.tags = ["MockFArrakisV2"];
-func.dependencies = [
-  "Pool",
-  "Position",
-  "Twap",
-  "Underlying",
-  "UniswapV3Amounts",
-];
+func.dependencies = ["Pool", "Position", "Underlying", "UniswapV3Amounts"];

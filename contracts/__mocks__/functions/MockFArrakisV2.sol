@@ -8,7 +8,6 @@ import {
     IUniswapV3Factory
 } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {Position as PositionHelper} from "../../libraries/Position.sol";
-import {Twap} from "../../libraries/Twap.sol";
 import {Underlying as UnderlyingHelper} from "../../libraries/Underlying.sol";
 import {UniswapV3Amounts} from "../../libraries/UniswapV3Amounts.sol";
 import {Pool} from "../../libraries/Pool.sol";
@@ -27,22 +26,6 @@ contract MockFArrakisV2 {
         returns (uint256 fee)
     {
         return UniswapV3Amounts.computeFeesEarned(computeFeesEarned_);
-    }
-
-    function getTwap(IUniswapV3Pool pool_, uint24 twapDuration_)
-        external
-        view
-        returns (int24)
-    {
-        return Twap.getTwap(pool_, twapDuration_);
-    }
-
-    function checkDeviation(
-        IUniswapV3Pool pool_,
-        uint24 twapDuration_,
-        int24 maxTwapDeviation_
-    ) external view {
-        Twap.checkDeviation(pool_, twapDuration_, maxTwapDeviation_);
     }
 
     // function totalUnderlying(UnderlyingPayload calldata underlyingPayload_)
