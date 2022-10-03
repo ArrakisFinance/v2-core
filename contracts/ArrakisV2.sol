@@ -334,8 +334,8 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         nonReentrant
     {
         // Burns
-        uint256 totalFee0 = 0;
-        uint256 totalFee1 = 0;
+        uint256 aggregator0 = 0;
+        uint256 aggregator1 = 0;
         for (uint256 i = 0; i < rebalanceParams_.removes.length; i++) {
             address poolAddr = factory.getPool(
                 address(token0),
@@ -351,20 +351,20 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                 rebalanceParams_.removes[i].liquidity
             );
 
-            totalFee0 += withdraw.fee0;
-            totalFee1 += withdraw.fee1;
+            aggregator0 += withdraw.fee0;
+            aggregator1 += withdraw.fee1;
         }
 
-        if (totalFee0 > 0 || totalFee1 > 0) {
-            _applyFees(totalFee0, totalFee1);
-            (totalFee0, totalFee1) = UniswapV3Amounts.subtractAdminFees(
-                totalFee0,
-                totalFee1,
+        if (aggregator0 > 0 || aggregator1 > 0) {
+            _applyFees(aggregator0, aggregator1);
+            (aggregator0, aggregator1) = UniswapV3Amounts.subtractAdminFees(
+                aggregator0,
+                aggregator1,
                 Manager.getManagerFeeBPS(manager),
                 arrakisFeeBPS
             );
 
-            emit LogFeesEarnRebalance(totalFee0, totalFee1);
+            emit LogFeesEarnRebalance(aggregator0, aggregator1);
         }
 
         // Swap
@@ -424,8 +424,8 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         }
 
         // Mints.
-        totalFee0 = 0;
-        totalFee1 = 0;
+        aggregator0 = 0;
+        aggregator1 = 0;
         for (uint256 i = 0; i < rebalanceParams_.deposits.length; i++) {
             IUniswapV3Pool pool = IUniswapV3Pool(
                 factory.getPool(
@@ -448,11 +448,11 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                 rebalanceParams_.deposits[i].liquidity,
                 ""
             );
-            totalFee0 += amt0;
-            totalFee1 += amt1;
+            aggregator0 += amt0;
+            aggregator1 += amt1;
         }
-        require(totalFee0 >= rebalanceParams_.minDeposit0, "RF");
-        require(totalFee1 >= rebalanceParams_.minDeposit1, "RF");
+        require(aggregator0 >= rebalanceParams_.minDeposit0, "RF");
+        require(aggregator1 >= rebalanceParams_.minDeposit1, "RF");
 
         emit LogRebalance(rebalanceParams_);
     }
