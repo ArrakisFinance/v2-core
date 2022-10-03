@@ -23,14 +23,6 @@ contract TwapMock {
         return Twap.getSqrtTwapX96(pool_, twapDuration_);
     }
 
-    function getPriceX96FromSqrtPriceX96(uint160 sqrtPriceX96_)
-        public
-        pure
-        returns (uint256 priceX96)
-    {
-        return Twap.getPriceX96FromSqrtPriceX96(sqrtPriceX96_);
-    }
-
     function getPrice0(IUniswapV3Pool pool_, uint24 twapDuration_)
         public
         view

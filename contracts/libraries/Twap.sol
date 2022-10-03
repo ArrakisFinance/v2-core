@@ -87,12 +87,4 @@ library Twap {
         int24 deviation = tick > twap ? tick - twap : twap - tick;
         require(deviation <= maxTwapDeviation_, "maxTwapDeviation");
     }
-
-    function getPriceX96FromSqrtPriceX96(uint160 sqrtPriceX96_)
-        public
-        pure
-        returns (uint256 priceX96)
-    {
-        return FullMath.mulDiv(sqrtPriceX96_, sqrtPriceX96_, FixedPoint96.Q96);
-    }
 }
