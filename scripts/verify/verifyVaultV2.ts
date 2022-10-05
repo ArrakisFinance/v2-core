@@ -10,7 +10,7 @@ async function main() {
     constructorArguments: [addresses.UniswapV3Factory, arrakisTreasury],
     // other args
     libraries: {
-      Twap: (await hre.ethers.getContract("Twap")).address,
+      Manager: (await hre.ethers.getContract("Manager")).address,
       Underlying: (await hre.ethers.getContract("Underlying")).address,
       Pool: (await hre.ethers.getContract("Pool")).address,
       Position: (await hre.ethers.getContract("Position")).address,
