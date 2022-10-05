@@ -1,5 +1,5 @@
 {
-  "name": "hardhat-project",
+  "name": "@arrakisfi/vault-v2-core",
   "scripts": {
     "build": "yarn compile && npx tsc",
     "compile": "npx hardhat compile --force",
@@ -66,5 +66,27 @@
   },
   "lint-staged": {
     "*.{ts,js}": "eslint -c .eslintrc.json"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/ArrakisFinance/vault-v2-core"
+  },
+  "keywords": [
+    "arrakis",
+    "uniswap",
+    "v3",
+    "market",
+    "making",
+    "AMM",
+    "solidity",
+    "0.8"
+  ],
+  "author": "Arrakis",
+  "bugs": {
+    "url": "https://github.com/ArrakisFinance/vault-v2-core/issues"
+  },
+  "homepage": "https://github.com/ArrakisFinance/vault-v2-core#readme",
+  "description": "Arrakis V2 Automated Market Maker",
+  "license": "MIT",
+  "version": "0.1.0"
 }
