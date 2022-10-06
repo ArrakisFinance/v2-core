@@ -391,7 +391,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                 (bool success, ) = rebalanceParams_.swap.router.call(
                     rebalanceParams_.swap.payload
                 );
-                require(success, "swap");
+                require(success, "SC");
 
                 token0.safeApprove(address(rebalanceParams_.swap.router), 0);
                 token1.safeApprove(address(rebalanceParams_.swap.router), 0);
@@ -451,8 +451,8 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
             aggregator0 += amt0;
             aggregator1 += amt1;
         }
-        require(aggregator0 >= rebalanceParams_.minDeposit0, "RF");
-        require(aggregator1 >= rebalanceParams_.minDeposit1, "RF");
+        require(aggregator0 >= rebalanceParams_.minDeposit0, "D0");
+        require(aggregator1 >= rebalanceParams_.minDeposit1, "D1");
 
         emit LogRebalance(rebalanceParams_);
     }
