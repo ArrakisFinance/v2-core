@@ -103,7 +103,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
             token1.safeTransferFrom(msg.sender, me, amount1);
         }
 
-        emit LogFeesEarn(fee0, fee1);
+        emit LogUncollectedFees(fee0, fee1);
         emit LogMint(receiver_, mintAmount_, amount0, amount1);
     }
 
@@ -210,12 +210,6 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
             }
 
             _applyFees(total.fee0, total.fee1);
-            (total.fee0, total.fee1) = UniswapV3Amounts.subtractAdminFees(
-                total.fee0,
-                total.fee1,
-                Manager.getManagerFeeBPS(manager),
-                arrakisFeeBPS
-            );
         }
 
         if (
@@ -240,8 +234,8 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
 
         // For monitoring how much user burn LP token for getting their token back.
         emit LPBurned(msg.sender, total.burn0, total.burn1);
-
-        emit LogFeesEarn(total.fee0, total.fee1);
+        emit LogUncollectedFees(underlying.fee0, underlying.fee1);
+        emit LogCollectedFees(total.fee0, total.fee1);
         emit LogBurn(receiver_, burnAmount_, amount0, amount1);
     }
 
@@ -357,14 +351,8 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
 
         if (aggregator0 > 0 || aggregator1 > 0) {
             _applyFees(aggregator0, aggregator1);
-            (aggregator0, aggregator1) = UniswapV3Amounts.subtractAdminFees(
-                aggregator0,
-                aggregator1,
-                Manager.getManagerFeeBPS(manager),
-                arrakisFeeBPS
-            );
 
-            emit LogFeesEarnRebalance(aggregator0, aggregator1);
+            emit LogCollectedFees(aggregator0, aggregator1);
         }
 
         // Swap
