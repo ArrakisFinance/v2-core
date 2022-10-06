@@ -84,8 +84,8 @@ abstract contract ArrakisV2Storage is
 
     event LogRebalance(Rebalance rebalanceParams);
 
-    event LogFeesEarn(uint256 fee0, uint256 fee1);
-    event LogFeesEarnRebalance(uint256 fee0, uint256 fee1);
+    event LogCollectedFees(uint256 fee0, uint256 fee1);
+    event LogUncollectedFees(uint256 fee0, uint256 fee1);
 
     event LogWithdrawManagerBalance(uint256 amount0, uint256 amount1);
     event LogWithdrawArrakisBalance(uint256 amount0, uint256 amount1);
