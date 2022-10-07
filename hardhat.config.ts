@@ -61,6 +61,7 @@ const config: HardhatUserConfig = {
       accounts: PK ? [PK] : [],
       chainId: 1,
       url: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_ID}`,
+      gasPrice: 20000000000,
     },
     polygon: {
       accounts: PK ? [PK] : [],
