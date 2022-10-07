@@ -18,9 +18,13 @@
     "script-matic:burn": "npx hardhat --network polygon run ./scripts/standardBurn.ts",
     "script-matic:rebalance": "npx hardhat --network polygon run ./scripts/standardRebalance.ts",
     "verify-underlying": "npx hardhat --network polygon run ./scripts/verify/verifyUnderlying.ts",
+    "verify-underlying-mainnet": "npx hardhat --network mainnet run ./scripts/verify/verifyUnderlying.ts",
     "verify-vault-v2": "npx hardhat --network polygon run ./scripts/verify/verifyVaultV2.ts",
+    "verify-vault-v2-mainnet": "npx hardhat --network mainnet run ./scripts/verify/verifyVaultV2.ts",
     "verify-vault-v2-helper": "npx hardhat --network polygon run ./scripts/verify/verifyVaultV2Helper.ts",
-    "verify-vault-v2-resolver": "npx hardhat --network polygon run ./scripts/verify/verifyVaultV2Resolver.ts"
+    "verify-vault-v2-helper-mainnet": "npx hardhat --network mainnet run ./scripts/verify/verifyVaultV2Helper.ts",
+    "verify-vault-v2-resolver": "npx hardhat --network polygon run ./scripts/verify/verifyVaultV2Resolver.ts",
+    "verify-vault-v2-resolver-mainnet": "npx hardhat --network mainnet run ./scripts/verify/verifyVaultV2Resolver.ts"
   },
   "devDependencies": {
     "@arrakisfi/v3-lib-0.8": "0.1.1",
