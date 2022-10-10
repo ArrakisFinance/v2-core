@@ -79,16 +79,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                 )
                 : (init0, init1, 0, 0);
         uint256 denominator = totalSupply > 0 ? totalSupply : 1 ether;
-        /// @dev current0 and current1 include fees and left over.
-
-        (current0, current1) = UniswapV3Amounts.subtractAdminFeesOnAmounts(
-            fee0,
-            fee1,
-            Manager.getManagerFeeBPS(manager),
-            arrakisFeeBPS,
-            current0,
-            current1
-        );
+        /// @dev current0 and current1 include fees and left over (but not admin balances)
 
         amount0 = FullMath.mulDivRoundingUp(mintAmount_, current0, denominator);
         amount1 = FullMath.mulDivRoundingUp(mintAmount_, current1, denominator);
@@ -139,16 +130,6 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
             (managerBalance1 + arrakisBalance1);
 
         {
-            (underlying.amount0, underlying.amount1) = UniswapV3Amounts
-                .subtractAdminFeesOnAmounts(
-                    underlying.fee0,
-                    underlying.fee1,
-                    Manager.getManagerFeeBPS(manager),
-                    arrakisFeeBPS,
-                    underlying.amount0,
-                    underlying.amount1
-                );
-
             // the proportion of user balance.
             amount0 = FullMath.mulDiv(
                 underlying.amount0,
@@ -262,6 +243,16 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
             ranges.push(ranges_[i]);
         }
         _rebalance(rebalanceParams_);
+        require(
+            token0.balanceOf(address(this)) >=
+                managerBalance0 + arrakisBalance0,
+            "MB0"
+        );
+        require(
+            token1.balanceOf(address(this)) >=
+                managerBalance1 + arrakisBalance1,
+            "MB1"
+        );
         for (uint256 i = 0; i < rangesToRemove_.length; i++) {
             (bool exist, uint256 index) = Position.rangeExist(
                 ranges,
@@ -359,7 +350,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
 
         if (rebalanceParams_.swap.amountIn > 0) {
             {
-                require(!_pools.contains(rebalanceParams_.swap.pool), "NP");
+                require(_routers.contains(rebalanceParams_.swap.router), "NR");
 
                 uint256 balance0Before = token0.balanceOf(address(this));
                 uint256 balance1Before = token1.balanceOf(address(this));
@@ -392,7 +383,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                         (balance1After >=
                             balance1Before +
                                 rebalanceParams_.swap.expectedMinReturn) &&
-                            (balance0After ==
+                            (balance0After >=
                                 balance0Before -
                                     rebalanceParams_.swap.amountIn),
                         "SF"
@@ -402,7 +393,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                         (balance0After >=
                             balance0Before +
                                 rebalanceParams_.swap.expectedMinReturn) &&
-                            (balance1After ==
+                            (balance1After >=
                                 balance1Before -
                                     rebalanceParams_.swap.amountIn),
                         "SF"

@@ -148,6 +148,7 @@ describe("Arrakis V2 integration test!!!", async function () {
         init0: res.amount0,
         init1: res.amount1,
         manager: managerProxyMock.address,
+        routers: [addresses.SwapRouter],
       },
       true
     );
@@ -461,7 +462,6 @@ describe("Arrakis V2 integration test!!!", async function () {
               sqrtPriceLimitX96: 0,
             },
           ]),
-          pool: ethers.constants.AddressZero,
         },
         deposits: [],
         minDeposit0: ethers.constants.Zero,

@@ -18,6 +18,7 @@ import {
 } from "../structs/SArrakisV2.sol";
 import {UniswapV3Amounts} from "./UniswapV3Amounts.sol";
 import {Position} from "./Position.sol";
+import {Manager} from "./Manager.sol";
 
 library Underlying {
     // solhint-disable-next-line function-max-lines
@@ -57,6 +58,15 @@ library Underlying {
         }
 
         IArrakisV2 arrakisV2 = IArrakisV2(underlyingPayload_.self);
+
+        (amount0, amount1) = UniswapV3Amounts.subtractAdminFeesOnAmounts(
+            fee0,
+            fee1,
+            Manager.getManagerFeeBPS(arrakisV2.manager()),
+            arrakisV2.arrakisFeeBPS(),
+            amount0,
+            amount1
+        );
 
         amount0 +=
             IERC20(underlyingPayload_.token0).balanceOf(

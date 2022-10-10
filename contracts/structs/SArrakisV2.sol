@@ -20,7 +20,6 @@ struct BurnLiquidity {
 
 struct SwapPayload {
     bytes payload;
-    address pool;
     address router;
     uint256 amountIn;
     uint256 expectedMinReturn;
@@ -54,6 +53,7 @@ struct InitializePayload {
     uint256 init0;
     uint256 init1;
     address manager;
+    address[] routers;
 }
 
 // #region internal Structs
