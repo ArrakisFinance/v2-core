@@ -29,7 +29,6 @@ import {Position} from "./libraries/Position.sol";
 import {Pool} from "./libraries/Pool.sol";
 import {Manager} from "./libraries/Manager.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
-import {UniswapV3Amounts} from "./libraries/UniswapV3Amounts.sol";
 
 /// @dev DO NOT ADD STATE VARIABLES - APPEND THEM TO ArrakisV2Storage
 contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
