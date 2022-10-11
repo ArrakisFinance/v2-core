@@ -1,8 +1,12 @@
-# Vault V2 Core
+# V2 Core
 
-Arrakis Vault Version 2, Core Contracts
+Arrakis Vaults Version 2, Core Contracts
 
-# test
+## Setup
+
+fill in `.env` file (see: `.env.example` for necessary environment vars)
+
+# Test
 
 yarn
 
