@@ -1,5 +1,5 @@
 {
-  "name": "@arrakisfi/vault-v2-core",
+  "name": "@arrakisfi/v2-core",
   "scripts": {
     "build": "yarn compile && npx tsc",
     "compile": "npx hardhat compile --force",
@@ -87,10 +87,10 @@
   ],
   "author": "Arrakis",
   "bugs": {
-    "url": "https://github.com/ArrakisFinance/vault-v2-core/issues"
+    "url": "https://github.com/ArrakisFinance/v2-core/issues"
   },
-  "homepage": "https://github.com/ArrakisFinance/vault-v2-core#readme",
+  "homepage": "https://github.com/ArrakisFinance/v2-core#readme",
   "description": "Arrakis V2 Automated Market Maker",
   "license": "MIT",
-  "version": "0.1.1"
+  "version": "0.1.3"
 }
