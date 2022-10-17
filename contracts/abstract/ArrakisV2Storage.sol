@@ -63,6 +63,7 @@ abstract contract ArrakisV2Storage is
     // #endregion manager data
 
     EnumerableSet.AddressSet internal _pools;
+    EnumerableSet.AddressSet internal _routers;
 
     // #region events
 
@@ -97,7 +98,8 @@ abstract contract ArrakisV2Storage is
     event LogRemovePools(address[] pools);
     event LogSetManager(address newManager);
     event LogRestrictedMint(address minter);
-
+    event LogWhitelistRouters(address[] routers);
+    event LogBlacklistRouters(address[] routers);
     // #endregion Setting events
 
     // #endregion events
@@ -130,12 +132,11 @@ abstract contract ArrakisV2Storage is
 
         require(params_.init0 > 0 || params_.init1 > 0, "I");
 
-        require(params_.manager != address(0), "NAZM");
-
         __ERC20_init(name_, symbol_);
         __ReentrancyGuard_init();
 
         _addPools(params_.feeTiers, params_.token0, params_.token1);
+        _whitelistRouters(params_.routers);
 
         token0 = IERC20(params_.token0);
         token1 = IERC20(params_.token1);
@@ -151,6 +152,7 @@ abstract contract ArrakisV2Storage is
 
     // #region setter functions
     function setInits(uint256 init0_, uint256 init1_) external {
+        require(init0_ > 0 || init1_ > 0, "I");
         require(totalSupply() == 0, "TS");
         address requiredCaller = restrictedMint == address(0)
             ? owner()
@@ -171,6 +173,20 @@ abstract contract ArrakisV2Storage is
             _pools.remove(pools_[i]);
         }
         emit LogRemovePools(pools_);
+    }
+
+    function whitelistRouters(address[] calldata routers_) external onlyOwner {
+        _whitelistRouters(routers_);
+        emit LogWhitelistRouters(routers_);
+    }
+
+    function blacklistRouters(address[] calldata routers_) external onlyOwner {
+        for (uint256 i = 0; i < routers_.length; i++) {
+            require(_routers.contains(routers_[i]), "NR");
+
+            _routers.remove(routers_[i]);
+        }
+        emit LogBlacklistRouters(routers_);
     }
 
     function setManager(IManager manager_) external onlyOwner {
@@ -219,6 +235,19 @@ abstract contract ArrakisV2Storage is
 
             // explicit.
             _pools.add(pool);
+        }
+    }
+
+    function _whitelistRouters(address[] calldata routers_) internal {
+        for (uint256 i = 0; i < routers_.length; i++) {
+            require(
+                routers_[i] != address(token0) &&
+                    routers_[i] != address(token1),
+                "RT"
+            );
+            require(!_routers.contains(routers_[i]), "CR");
+            // explicit.
+            _routers.add(routers_[i]);
         }
     }
 

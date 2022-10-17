@@ -103,6 +103,7 @@ describe("Factory function unit test", function () {
         init0: res.amount0,
         init1: res.amount1,
         manager: userAddr,
+        routers: [],
       },
       true
     );
@@ -156,6 +157,7 @@ describe("Factory function unit test", function () {
         init0: res.amount0,
         init1: res.amount1,
         manager: userAddr,
+        routers: [],
       },
       true
     );
@@ -191,6 +193,7 @@ describe("Factory function unit test", function () {
         init0: res.amount0,
         init1: res.amount1,
         manager: userAddr,
+        routers: [],
       },
       true
     );
@@ -222,6 +225,7 @@ describe("Factory function unit test", function () {
         init0: res.amount0,
         init1: res.amount1,
         manager: userAddr,
+        routers: [],
       },
       false
     );
@@ -260,6 +264,7 @@ describe("Factory function unit test", function () {
         init0: res.amount0,
         init1: res.amount1,
         manager: userAddr,
+        routers: [],
       },
       false
     );
@@ -298,6 +303,7 @@ describe("Factory function unit test", function () {
         init0: res.amount0,
         init1: res.amount1,
         manager: userAddr,
+        routers: [],
       },
       false
     );
@@ -347,6 +353,7 @@ describe("Factory function unit test", function () {
         init0: res.amount0,
         init1: res.amount1,
         manager: userAddr,
+        routers: [],
       },
       false
     );
@@ -435,6 +442,7 @@ describe("Factory function unit test", function () {
         init0: res.amount0,
         init1: res.amount1,
         manager: userAddr,
+        routers: [],
       },
       false
     );

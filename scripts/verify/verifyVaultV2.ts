@@ -14,9 +14,6 @@ async function main() {
       Underlying: (await hre.ethers.getContract("Underlying")).address,
       Pool: (await hre.ethers.getContract("Pool")).address,
       Position: (await hre.ethers.getContract("Position")).address,
-      UniswapV3Amounts: (
-        await hre.ethers.getContract("UniswapV3Amounts")
-      ).address,
     },
   });
 }

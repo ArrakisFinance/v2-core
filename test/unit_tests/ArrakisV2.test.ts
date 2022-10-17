@@ -45,6 +45,7 @@ describe("ArrakisV2 functions unit test", function () {
       init0: ethers.constants.One,
       init1: ethers.constants.Zero,
       manager: managerAddr,
+      routers: [addresses.SwapRouter],
     });
 
     expect(await arrakisV2.token0()).to.be.eq(addresses.USDC);
@@ -60,14 +61,14 @@ describe("ArrakisV2 functions unit test", function () {
     await expect(
       arrakisV2
         .connect(manager)
-        .setInits(ethers.constants.Zero, ethers.constants.Zero)
+        .setInits(ethers.constants.Zero, ethers.constants.One)
     ).to.be.revertedWith("R");
   });
-  //   it("#2: set inits, should revert if init0 and init1 equal to zero", async () => {
-  //     await expect(
-  //       arrakisV2.setInits(ethers.constants.Zero, ethers.constants.Zero)
-  //     ).to.be.revertedWith("I");
-  //   });
+  it("#2: set inits, should revert if init0 and init1 equal to zero", async () => {
+    await expect(
+      arrakisV2.setInits(ethers.constants.Zero, ethers.constants.Zero)
+    ).to.be.revertedWith("I");
+  });
 
   it("#3: set inits as Owner", async () => {
     expect(await arrakisV2.init0()).to.be.eq(ethers.constants.One);

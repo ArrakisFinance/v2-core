@@ -16,7 +16,6 @@ import {
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
 import {UniswapV3Amounts} from "./libraries/UniswapV3Amounts.sol";
-import {Manager} from "./libraries/Manager.sol";
 import {Position as PositionHelper} from "./libraries/Position.sol";
 import {FullMath} from "@arrakisfi/v3-lib-0.8/contracts/FullMath.sol";
 import {TickMath} from "@arrakisfi/v3-lib-0.8/contracts/TickMath.sol";
@@ -170,24 +169,14 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
                     self: address(vaultV2_)
                 })
             );
-            underlying.leftOver0 = vaultV2_.token0().balanceOf(
-                address(vaultV2_)
-            );
-            underlying.leftOver1 = vaultV2_.token1().balanceOf(
-                address(vaultV2_)
-            );
-
-            {
-                (uint256 fee0, uint256 fee1) = UniswapV3Amounts
-                    .subtractAdminFees(
-                        underlying.fee0,
-                        underlying.fee1,
-                        Manager.getManagerFeeBPS(vaultV2_.manager()),
-                        vaultV2_.arrakisFeeBPS()
-                    );
-                underlying.amount0 += underlying.leftOver0 + fee0;
-                underlying.amount1 += underlying.leftOver1 + fee1;
-            }
+            underlying.leftOver0 =
+                vaultV2_.token0().balanceOf(address(vaultV2_)) -
+                vaultV2_.managerBalance0() -
+                vaultV2_.arrakisBalance0();
+            underlying.leftOver1 =
+                vaultV2_.token1().balanceOf(address(vaultV2_)) -
+                vaultV2_.managerBalance1() -
+                vaultV2_.arrakisBalance1();
 
             {
                 uint256 amount0 = FullMath.mulDiv(

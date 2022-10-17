@@ -1,5 +1,5 @@
 {
-  "name": "@arrakisfi/vault-v2-core",
+  "name": "@arrakisfi/v2-core",
   "scripts": {
     "build": "yarn compile && npx tsc",
     "compile": "npx hardhat compile --force",
@@ -17,13 +17,13 @@
     "script-matic:mint": "npx hardhat --network polygon run ./scripts/mint.ts",
     "script-matic:burn": "npx hardhat --network polygon run ./scripts/standardBurn.ts",
     "script-matic:rebalance": "npx hardhat --network polygon run ./scripts/standardRebalance.ts",
-    "verify-underlying": "npx hardhat --network polygon run ./scripts/verify/verifyUnderlying.ts",
+    "verify-underlying-matic": "npx hardhat --network polygon run ./scripts/verify/verifyUnderlying.ts",
     "verify-underlying-mainnet": "npx hardhat --network mainnet run ./scripts/verify/verifyUnderlying.ts",
-    "verify-vault-v2": "npx hardhat --network polygon run ./scripts/verify/verifyVaultV2.ts",
+    "verify-vault-v2-matic": "npx hardhat --network polygon run ./scripts/verify/verifyVaultV2.ts",
     "verify-vault-v2-mainnet": "npx hardhat --network mainnet run ./scripts/verify/verifyVaultV2.ts",
-    "verify-vault-v2-helper": "npx hardhat --network polygon run ./scripts/verify/verifyVaultV2Helper.ts",
+    "verify-vault-v2-helper-matic": "npx hardhat --network polygon run ./scripts/verify/verifyVaultV2Helper.ts",
     "verify-vault-v2-helper-mainnet": "npx hardhat --network mainnet run ./scripts/verify/verifyVaultV2Helper.ts",
-    "verify-vault-v2-resolver": "npx hardhat --network polygon run ./scripts/verify/verifyVaultV2Resolver.ts",
+    "verify-vault-v2-resolver-matic": "npx hardhat --network polygon run ./scripts/verify/verifyVaultV2Resolver.ts",
     "verify-vault-v2-resolver-mainnet": "npx hardhat --network mainnet run ./scripts/verify/verifyVaultV2Resolver.ts"
   },
   "devDependencies": {
@@ -87,10 +87,10 @@
   ],
   "author": "Arrakis",
   "bugs": {
-    "url": "https://github.com/ArrakisFinance/vault-v2-core/issues"
+    "url": "https://github.com/ArrakisFinance/v2-core/issues"
   },
-  "homepage": "https://github.com/ArrakisFinance/vault-v2-core#readme",
+  "homepage": "https://github.com/ArrakisFinance/v2-core#readme",
   "description": "Arrakis V2 Automated Market Maker",
   "license": "MIT",
-  "version": "0.1.1"
+  "version": "0.1.3"
 }

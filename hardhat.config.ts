@@ -16,7 +16,7 @@ import * as dotenv from "dotenv";
 dotenv.config({ path: __dirname + "/.env" });
 const ALCHEMY_ID = process.env.ALCHEMY_ID;
 const PK = process.env.PK;
-const PK_TEST = process.env.PK_TEST;
+const TEST_PK = process.env.TEST_PK;
 
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
@@ -39,7 +39,7 @@ const config: HardhatUserConfig = {
     arrakisTreasury: {
       default: 3,
       polygon: "0xDEb4C33D5C3E7e32F55a9D6336FE06010E40E3AB",
-      mainnet: "0x5108EF86cF493905BcD35A3736e4B46DeCD7de58",
+      mainnet: "0x2FF5D1da4985113F467BBBFF015e76ce8aB05F29",
     },
   },
 
@@ -61,7 +61,6 @@ const config: HardhatUserConfig = {
       accounts: PK ? [PK] : [],
       chainId: 1,
       url: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_ID}`,
-      gasPrice: 20000000000,
     },
     polygon: {
       accounts: PK ? [PK] : [],
@@ -74,7 +73,7 @@ const config: HardhatUserConfig = {
       url: `https://opt-mainnet.g.alchemy.com/v2/${ALCHEMY_ID}`,
     },
     goerli: {
-      accounts: PK_TEST ? [PK_TEST] : [],
+      accounts: TEST_PK ? [TEST_PK] : [],
       chainId: 5,
       url: `https://eth-goerli.alchemyapi.io/v2/${ALCHEMY_ID}`,
     },

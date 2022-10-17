@@ -53,5 +53,4 @@ func.dependencies = [
   "Position",
   "Underlying",
   "UniswapV3Amounts",
-  "Manager",
 ];
