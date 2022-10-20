@@ -1,5 +1,5 @@
 {
-  "name": "@arrakisfi/v2-test",
+  "name": "@arrakisfi/v2-core",
   "scripts": {
     "build": "yarn compile && npx tsc",
     "compile": "npx hardhat compile --force",
@@ -95,5 +95,5 @@
   "homepage": "https://github.com/ArrakisFinance/v2-core#readme",
   "description": "Arrakis V2 Automated Market Maker",
   "license": "MIT",
-  "version": "0.1.0"
+  "version": "0.1.1"
 }
