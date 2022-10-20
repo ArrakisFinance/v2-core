@@ -1,5 +1,5 @@
 {
-  "name": "@arrakisfi/v2-core",
+  "name": "@arrakisfi/v2-test",
   "scripts": {
     "build": "yarn compile && npx tsc",
     "compile": "npx hardhat compile --force",
@@ -76,7 +76,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/ArrakisFinance/vault-v2-core"
+    "url": "git+ssh://git@github.com/ArrakisFinance/v2-core"
   },
   "keywords": [
     "arrakis",
