@@ -354,6 +354,9 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                 uint256 balance0Before = token0.balanceOf(address(this));
                 uint256 balance1Before = token1.balanceOf(address(this));
 
+                token0.safeApprove(address(rebalanceParams_.swap.router), 0);
+                token1.safeApprove(address(rebalanceParams_.swap.router), 0);
+
                 token0.safeApprove(
                     address(rebalanceParams_.swap.router),
                     balance0Before
@@ -367,9 +370,6 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                     rebalanceParams_.swap.payload
                 );
                 require(success, "SC");
-
-                token0.safeApprove(address(rebalanceParams_.swap.router), 0);
-                token1.safeApprove(address(rebalanceParams_.swap.router), 0);
 
                 uint256 balance0After = token0.balanceOf(address(this));
                 uint256 balance1After = token1.balanceOf(address(this));
