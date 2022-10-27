@@ -89,7 +89,7 @@ abstract contract ArrakisV2FactoryStorage is
         (bool success, bytes memory returndata) = proxy.staticcall(
             hex"f851a440"
         );
-        require(success);
+        require(success, "PA");
         return abi.decode(returndata, (address));
     }
 
@@ -103,7 +103,7 @@ abstract contract ArrakisV2FactoryStorage is
         (bool success, bytes memory returndata) = proxy.staticcall(
             hex"5c60da1b"
         );
-        require(success);
+        require(success, "PI");
         return abi.decode(returndata, (address));
     }
 

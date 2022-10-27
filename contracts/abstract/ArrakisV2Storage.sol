@@ -182,7 +182,7 @@ abstract contract ArrakisV2Storage is
 
     function blacklistRouters(address[] calldata routers_) external onlyOwner {
         for (uint256 i = 0; i < routers_.length; i++) {
-            require(_routers.contains(routers_[i]), "NR");
+            require(_routers.contains(routers_[i]), "RW");
 
             _routers.remove(routers_[i]);
         }

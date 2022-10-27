@@ -227,7 +227,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
     ) external onlyManager {
         for (uint256 i = 0; i < ranges_.length; i++) {
             (bool exist, ) = Position.rangeExist(ranges, ranges_[i]);
-            require(!exist, "R");
+            require(!exist, "NRRE");
             // check that the pool exist on Uniswap V3.
             address pool = factory.getPool(
                 address(token0),
@@ -237,7 +237,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
             require(pool != address(0), "NUP");
             require(_pools.contains(pool), "P");
             // TODO: can reuse the pool got previously.
-            require(Pool.validateTickSpacing(pool, ranges_[i]), "R");
+            require(Pool.validateTickSpacing(pool, ranges_[i]), "RTS");
 
             ranges.push(ranges_[i]);
         }
@@ -257,7 +257,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                 ranges,
                 rangesToRemove_[i]
             );
-            require(exist, "NR");
+            require(exist, "RRNE");
 
             Position.requireNotActiveRange(
                 factory,
@@ -371,9 +371,6 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                 );
                 require(success, "SC");
 
-                token0.safeApprove(address(rebalanceParams_.swap.router), 0);
-                token1.safeApprove(address(rebalanceParams_.swap.router), 0);
-
                 uint256 balance0After = token0.balanceOf(address(this));
                 uint256 balance1After = token1.balanceOf(address(this));
 
@@ -417,7 +414,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                 ranges,
                 rebalanceParams_.deposits[i].range
             );
-            require(exist, "NR");
+            require(exist, "DRE");
 
             (uint256 amt0, uint256 amt1) = pool.mint(
                 address(this),
