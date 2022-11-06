@@ -438,16 +438,15 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         int24 upperTick_,
         uint128 liquidity_
     ) internal returns (Withdraw memory withdraw) {
-        uint256 preBalance0 = token0.balanceOf(address(this));
-        uint256 preBalance1 = token1.balanceOf(address(this));
-
         (withdraw.burn0, withdraw.burn1) = pool_.burn(
             lowerTick_,
             upperTick_,
             liquidity_
         );
 
-        pool_.collect(
+        /// @dev relying on return values here means we WILL BREAK with fee-on-transfer tokens
+        /// we assume this is fine as UniswapV3 is already broken for fee-on-transfer tokens
+        (uint256 collect0, uint256 collect1) = pool_.collect(
             address(this),
             lowerTick_,
             upperTick_,
@@ -455,14 +454,8 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
             type(uint128).max
         );
 
-        withdraw.fee0 =
-            token0.balanceOf(address(this)) -
-            preBalance0 -
-            withdraw.burn0;
-        withdraw.fee1 =
-            token1.balanceOf(address(this)) -
-            preBalance1 -
-            withdraw.burn1;
+        withdraw.fee0 = collect0 - withdraw.burn0;
+        withdraw.fee1 = collect1 - withdraw.burn1;
     }
 
     function _applyFees(uint256 fee0_, uint256 fee1_) internal {
