@@ -15,7 +15,6 @@ import {
 } from "@arrakisfi/v3-lib-0.8/contracts/interfaces/ISwapRouter.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
-import {UniswapV3Amounts} from "./libraries/UniswapV3Amounts.sol";
 import {Position as PositionHelper} from "./libraries/Position.sol";
 import {FullMath} from "@arrakisfi/v3-lib-0.8/contracts/FullMath.sol";
 import {TickMath} from "@arrakisfi/v3-lib-0.8/contracts/TickMath.sol";
@@ -245,7 +244,7 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
 
         uint256 totalSupply = vaultV2_.totalSupply();
         if (totalSupply > 0) {
-            (amount0, amount1, mintAmount) = UniswapV3Amounts
+            (amount0, amount1, mintAmount) = UnderlyingHelper
                 .computeMintAmounts(
                     current0,
                     current1,
@@ -254,7 +253,7 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
                     amount1Max_
                 );
         } else
-            (amount0, amount1, mintAmount) = UniswapV3Amounts
+            (amount0, amount1, mintAmount) = UnderlyingHelper
                 .computeMintAmounts(
                     vaultV2_.init0(),
                     vaultV2_.init1(),

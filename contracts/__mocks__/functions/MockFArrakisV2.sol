@@ -9,10 +9,9 @@ import {
 } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {Position as PositionHelper} from "../../libraries/Position.sol";
 import {Underlying as UnderlyingHelper} from "../../libraries/Underlying.sol";
-import {UniswapV3Amounts} from "../../libraries/UniswapV3Amounts.sol";
 import {Pool} from "../../libraries/Pool.sol";
 import {
-    FeesEarnedPayload,
+    ComputeFeesPayload,
     UnderlyingPayload,
     RangeData,
     PositionUnderlying,
@@ -20,32 +19,20 @@ import {
 } from "../../structs/SArrakisV2.sol";
 
 contract MockFArrakisV2 {
-    function computeFeesEarned(FeesEarnedPayload calldata computeFeesEarned_)
+    function getUnderlyingBalances(
+        PositionUnderlying calldata positionUnderlying_
+    )
         external
         view
-        returns (uint256 fee)
+        returns (
+            uint256 amount0,
+            uint256 amount1,
+            uint256 fee0,
+            uint256 fee1
+        )
     {
-        return UniswapV3Amounts.computeFeesEarned(computeFeesEarned_);
+        return UnderlyingHelper.getUnderlyingBalances(positionUnderlying_);
     }
-
-    // function totalUnderlying(UnderlyingPayload calldata underlyingPayload_)
-    //     external
-    //     view
-    //     returns (uint256 amount0, uint256 amount1)
-    // {
-    //     return UnderlyingHelper.totalUnderlying(underlyingPayload_);
-    // }
-
-    // function totalUnderlyingAtPrice(
-    //     UnderlyingPayload calldata underlyingPayload_,
-    //     uint160 sqrtRatioX96_
-    // ) external view returns (uint256 amount0, uint256 amount1) {
-    //     return
-    //         UnderlyingHelper.totalUnderlyingAtPrice(
-    //             underlyingPayload_,
-    //             sqrtRatioX96_
-    //         );
-    // }
 
     function totalUnderlyingWithFees(
         UnderlyingPayload calldata underlyingPayload_
@@ -77,7 +64,7 @@ contract MockFArrakisV2 {
         uint16 arrakisFeeBPS_
     ) external pure returns (uint256 fee0, uint256 fee1) {
         return
-            UniswapV3Amounts.subtractAdminFees(
+            UnderlyingHelper.subtractAdminFees(
                 rawFee0_,
                 rawFee1_,
                 managerFeeBPS_,
@@ -109,7 +96,7 @@ contract MockFArrakisV2 {
         )
     {
         return
-            UniswapV3Amounts.computeMintAmounts(
+            UnderlyingHelper.computeMintAmounts(
                 current0_,
                 current1_,
                 totalSupply_,
