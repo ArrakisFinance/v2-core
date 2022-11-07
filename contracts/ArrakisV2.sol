@@ -192,25 +192,24 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
             _applyFees(total.fee0, total.fee1);
         }
 
-        if (
-            amount0 > 0 &&
-            (token0.balanceOf(address(this)) -
-                (managerBalance0 + arrakisBalance0)) -
-                amount0 >=
-            0
-        ) {
+        if (amount0 > 0) {
             token0.safeTransfer(receiver_, amount0);
         }
 
-        if (
-            amount1 > 0 &&
-            (token1.balanceOf(address(this)) -
-                (managerBalance1 + arrakisBalance1)) -
-                amount1 >=
-            0
-        ) {
+        if (amount1 > 0) {
             token1.safeTransfer(receiver_, amount1);
         }
+
+        require(
+            token0.balanceOf(address(this)) >=
+                managerBalance0 + arrakisBalance0,
+            "MAF0"
+        );
+        require(
+            token1.balanceOf(address(this)) >=
+                managerBalance1 + arrakisBalance1,
+            "MAF1"
+        );
 
         // For monitoring how much user burn LP token for getting their token back.
         emit LPBurned(msg.sender, total.burn0, total.burn1);
