@@ -203,12 +203,12 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         require(
             token0.balanceOf(address(this)) >=
                 managerBalance0 + arrakisBalance0,
-            "MAF0"
+            "MB0"
         );
         require(
             token1.balanceOf(address(this)) >=
                 managerBalance1 + arrakisBalance1,
-            "MAF1"
+            "MB1"
         );
 
         // For monitoring how much user burn LP token for getting their token back.
