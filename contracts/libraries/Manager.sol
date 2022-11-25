@@ -7,6 +7,7 @@ import {Range} from "../structs/SArrakisV2.sol";
 library Manager {
     function getManagerFeeBPS(IManager manager_) public view returns (uint16) {
         try manager_.managerFeeBPS() returns (uint16 feeBPS) {
+            require(feeBPS <= 9750, "FTH"); // FTH: Fee too high
             return feeBPS;
         } catch {
             return 0;
