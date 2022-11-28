@@ -61,12 +61,13 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         );
         address me = address(this);
         uint256 totalSupply = totalSupply();
+        bool isTotalSupplyGtZero = totalSupply > 0;
         (
             uint256 current0,
             uint256 current1,
             uint256 fee0,
             uint256 fee1
-        ) = totalSupply > 0
+        ) = isTotalSupplyGtZero
                 ? UnderlyingHelper.totalUnderlyingWithFees(
                     UnderlyingPayload({
                         ranges: ranges,
@@ -77,11 +78,34 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                     })
                 )
                 : (init0, init1, 0, 0);
-        uint256 denominator = totalSupply > 0 ? totalSupply : 1 ether;
+        uint256 denominator = isTotalSupplyGtZero ? totalSupply : 1 ether;
         /// @dev current0 and current1 include fees and left over (but not admin balances)
 
         amount0 = FullMath.mulDivRoundingUp(mintAmount_, current0, denominator);
         amount1 = FullMath.mulDivRoundingUp(mintAmount_, current1, denominator);
+
+        // #region check amount0 is a multiple of current0.
+
+        if (!isTotalSupplyGtZero) {
+            uint256 amount0Mint = FullMath.mulDiv(
+                amount0,
+                denominator,
+                current0
+            );
+            uint256 amount1Mint = FullMath.mulDiv(
+                amount1,
+                denominator,
+                current1
+            );
+
+            require(
+                (amount0Mint < amount1Mint ? amount0Mint : amount1Mint) ==
+                    mintAmount_,
+                "A0&A1"
+            );
+        }
+
+        // #endregion check amount0 is a multiple of current0.
 
         _mint(receiver_, mintAmount_);
 
