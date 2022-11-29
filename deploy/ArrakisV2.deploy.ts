@@ -19,10 +19,10 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const addresses = getAddresses(hre.network.name);
   const { deploy } = deployments;
-  const { deployer, arrakisTreasury } = await getNamedAccounts();
+  const { deployer } = await getNamedAccounts();
   await deploy("ArrakisV2", {
     from: deployer,
-    args: [addresses.UniswapV3Factory, arrakisTreasury],
+    args: [addresses.UniswapV3Factory],
     libraries: {
       Pool: (await ethers.getContract("Pool")).address,
       Position: (await ethers.getContract("Position")).address,

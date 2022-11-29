@@ -48,12 +48,10 @@ contract ArrakisV2Helper is IArrakisV2Helper {
 
         underlying.leftOver0 =
             IERC20(underlyingPayload.token0).balanceOf(underlyingPayload.self) -
-            IArrakisV2(underlyingPayload.self).managerBalance0() -
-            IArrakisV2(underlyingPayload.self).arrakisBalance0();
+            IArrakisV2(underlyingPayload.self).managerBalance0();
         underlying.leftOver1 =
             IERC20(underlyingPayload.token1).balanceOf(underlyingPayload.self) -
-            IArrakisV2(underlyingPayload.self).managerBalance1() -
-            IArrakisV2(underlyingPayload.self).arrakisBalance1();
+            IArrakisV2(underlyingPayload.self).managerBalance1();
     }
 
     function totalUnderlyingWithFees(IArrakisV2 vault_)

@@ -34,8 +34,6 @@ interface IArrakisV2 {
         Range[] calldata rangesToRemove_
     ) external;
 
-    function withdrawArrakisBalance() external;
-
     function withdrawManagerBalance() external;
 
     // #endregion state modifiying functions.
@@ -54,15 +52,9 @@ interface IArrakisV2 {
 
     function ranges(uint256 index) external view returns (Range memory);
 
-    function arrakisFeeBPS() external view returns (uint16);
-
     function manager() external view returns (IManager);
 
     function managerBalance0() external view returns (uint256);
 
     function managerBalance1() external view returns (uint256);
-
-    function arrakisBalance0() external view returns (uint256);
-
-    function arrakisBalance1() external view returns (uint256);
 }

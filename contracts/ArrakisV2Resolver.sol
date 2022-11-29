@@ -170,12 +170,10 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
             );
             underlying.leftOver0 =
                 vaultV2_.token0().balanceOf(address(vaultV2_)) -
-                vaultV2_.managerBalance0() -
-                vaultV2_.arrakisBalance0();
+                vaultV2_.managerBalance0();
             underlying.leftOver1 =
                 vaultV2_.token1().balanceOf(address(vaultV2_)) -
-                vaultV2_.managerBalance1() -
-                vaultV2_.arrakisBalance1();
+                vaultV2_.managerBalance1();
 
             {
                 uint256 amount0 = FullMath.mulDiv(
