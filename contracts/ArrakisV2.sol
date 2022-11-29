@@ -227,15 +227,19 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         require(token1.balanceOf(address(this)) >= managerBalance1, "MB1");
 
         require(
-            underlying.leftOver0 +
-                FullMath.mulDiv(underlying.leftOver0, _burnBuffer, 10000) >=
-                token0.balanceOf(address(this)) - managerBalance0,
+            ((token0.balanceOf(address(this)) - managerBalance0) <
+                underlying.leftOver0) ||
+                ((token0.balanceOf(address(this)) - managerBalance0) -
+                    underlying.leftOver0 <=
+                    FullMath.mulDiv(total.burn0, _burnBuffer, 10000)),
             "L0"
         );
         require(
-            underlying.leftOver1 +
-                FullMath.mulDiv(underlying.leftOver1, _burnBuffer, 10000) >=
-                token1.balanceOf(address(this)) - managerBalance1,
+            ((token1.balanceOf(address(this)) - managerBalance1) <
+                underlying.leftOver1) ||
+                ((token1.balanceOf(address(this)) - managerBalance1) -
+                    underlying.leftOver1 <=
+                    FullMath.mulDiv(total.burn1, _burnBuffer, 10000)),
             "L1"
         );
 

@@ -195,7 +195,7 @@ abstract contract ArrakisV2Storage is
     }
 
     function setBurnBuffer(uint16 newBurnBuffer_) external onlyOwner {
-        /// @dev not capped because for vault with low left over, we can have like 300% burn buffer.
+        require(newBurnBuffer_ < 5000, "MTMB");
         emit LogSetBurnBuffer(_burnBuffer = newBurnBuffer_);
     }
 
