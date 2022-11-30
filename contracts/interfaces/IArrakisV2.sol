@@ -57,4 +57,6 @@ interface IArrakisV2 {
     function managerBalance0() external view returns (uint256);
 
     function managerBalance1() external view returns (uint256);
+
+    function getRanges() external view returns (Range[] memory);
 }

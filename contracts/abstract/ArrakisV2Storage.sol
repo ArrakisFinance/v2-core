@@ -201,6 +201,14 @@ abstract contract ArrakisV2Storage is
 
     // #endregion setter functions
 
+    // #region getter functions
+
+    function getRanges() external view returns (Range[] memory) {
+        return ranges;
+    }
+
+    // #endregion getter functions
+
     // #region internal functions
 
     function _uniswapV3CallBack(uint256 amount0_, uint256 amount1_) internal {
