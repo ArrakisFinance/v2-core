@@ -215,6 +215,8 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
                     );
             }
 
+            if (liquidity == 0) continue;
+
             burns[i] = BurnLiquidity({
                 liquidity: SafeCast.toUint128(
                     FullMath.mulDiv(liquidity, amountToBurn_, totalSupply)
