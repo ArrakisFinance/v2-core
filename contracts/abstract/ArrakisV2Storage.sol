@@ -221,12 +221,10 @@ abstract contract ArrakisV2Storage is
         require(_pools.contains(msg.sender), "CC");
 
         if (
-            amount0_ > 0 &&
-            amount0_ <= token0.balanceOf(address(this)) - managerBalance0
+            amount0_ > 0
         ) token0.safeTransfer(msg.sender, amount0_);
         if (
-            amount1_ > 0 &&
-            amount1_ <= token1.balanceOf(address(this)) - managerBalance1
+            amount1_ > 0
         ) token1.safeTransfer(msg.sender, amount1_);
     }
 

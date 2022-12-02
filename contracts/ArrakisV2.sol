@@ -255,6 +255,8 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
             ranges.push(rangesToAdd_[i]);
         }
         _rebalance(rebalanceParams_);
+        require(token0.balanceOf(address(this)) >= managerBalance0, "MB0");
+        require(token1.balanceOf(address(this)) >= managerBalance1, "MB1");
         for (uint256 i = 0; i < rangesToRemove_.length; i++) {
             (bool exist, uint256 index) = Position.rangeExist(
                 ranges,
@@ -330,11 +332,11 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
 
                 token0.safeApprove(
                     address(rebalanceParams_.swap.router),
-                    balance0Before - managerBalance0
+                    balance0Before
                 );
                 token1.safeApprove(
                     address(rebalanceParams_.swap.router),
-                    balance1Before - managerBalance1
+                    balance1Before
                 );
 
                 (bool success, ) = rebalanceParams_.swap.router.call(
