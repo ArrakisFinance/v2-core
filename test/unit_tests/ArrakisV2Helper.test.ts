@@ -218,13 +218,18 @@ describe("ArrakisV2Helper functions unit test", function () {
       // #region rebalance to deposit user token into the uniswap v3 pool.
 
       const rebalanceParams = await arrakisV2Resolver.standardRebalance(
-        [{ range: { lowerTick, upperTick, feeTier: 500 }, weight: 10000 }],
+        [
+          {
+            range: { lowerTick, upperTick, pool: uniswapV3Pool.address },
+            weight: 10000,
+          },
+        ],
         arrakisV2.address
       );
 
       await managerProxyMock.rebalance(
         arrakisV2.address,
-        [{ lowerTick, upperTick, feeTier: 500 }],
+        [{ lowerTick, upperTick, pool: uniswapV3Pool.address }],
         rebalanceParams,
         []
       );
@@ -276,7 +281,7 @@ describe("ArrakisV2Helper functions unit test", function () {
         {
           lowerTick: lowerTick,
           upperTick: upperTick,
-          feeTier: 500,
+          pool: uniswapV3Pool.address,
         },
       ],
       await arrakisV2.token0(),
@@ -294,7 +299,7 @@ describe("ArrakisV2Helper functions unit test", function () {
         {
           lowerTick: lowerTick,
           upperTick: upperTick,
-          feeTier: 500,
+          pool: uniswapV3Pool.address,
         },
       ],
       await arrakisV2.token0(),

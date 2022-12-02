@@ -220,12 +220,8 @@ abstract contract ArrakisV2Storage is
     function _uniswapV3CallBack(uint256 amount0_, uint256 amount1_) internal {
         require(_pools.contains(msg.sender), "CC");
 
-        if (
-            amount0_ > 0
-        ) token0.safeTransfer(msg.sender, amount0_);
-        if (
-            amount1_ > 0
-        ) token1.safeTransfer(msg.sender, amount1_);
+        if (amount0_ > 0) token0.safeTransfer(msg.sender, amount0_);
+        if (amount1_ > 0) token1.safeTransfer(msg.sender, amount1_);
     }
 
     function _addPools(

@@ -1,14 +1,8 @@
 import { ethers } from "hardhat";
-import { ArrakisV2, ArrakisV2Resolver } from "../typechain";
+import { ArrakisV2, ArrakisV2Resolver, IUniswapV3Factory } from "../typechain";
 import { RangeWeightStruct } from "../typechain/contracts/ArrakisV2Resolver";
 
 //standard mint.
-const rangeWeights: RangeWeightStruct[] = [
-  {
-    range: { lowerTick: "-81120", upperTick: "-76000", feeTier: 500 },
-    weight: "5000",
-  },
-]; // list of rangeWeigth.
 const vaultV2 = "0xe6F6f62a2e2802980dA493FfD14b4aaFE71972D0";
 
 async function main() {
@@ -23,13 +17,31 @@ async function main() {
     user
   )) as ArrakisV2;
 
+  const factory = (await ethers.getContractAt(
+    "IUniswpaV3Factory",
+    "0x1F98431c8aD98523631AE4a59f267346ea31F984"
+  )) as IUniswapV3Factory;
+
+  const pool = await factory.getPool(
+    await vault.token0(),
+    await vault.token1(),
+    500
+  );
+
+  const rangeWeights: RangeWeightStruct[] = [
+    {
+      range: { lowerTick: "-81120", upperTick: "-76000", pool: pool },
+      weight: "5000",
+    },
+  ];
+
   const result = await arrakisV2Resolver.standardRebalance(
     rangeWeights,
     vaultV2
   );
 
   await vault.rebalance(
-    [{ lowerTick: "-81120", upperTick: "-76000", feeTier: 500 }],
+    [{ lowerTick: "-81120", upperTick: "-76000", pool: pool }],
     result,
     []
   );

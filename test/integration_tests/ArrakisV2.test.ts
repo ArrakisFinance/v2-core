@@ -355,13 +355,18 @@ describe("Arrakis V2 integration test!!!", async function () {
     // #region rebalance to deposit user token into the uniswap v3 pool.
 
     const rebalanceParams = await arrakisV2Resolver.standardRebalance(
-      [{ range: { lowerTick, upperTick, feeTier: 500 }, weight: 10000 }],
+      [
+        {
+          range: { lowerTick, upperTick, pool: uniswapV3Pool.address },
+          weight: 10000,
+        },
+      ],
       vaultV2.address
     );
 
     await managerProxyMock.rebalance(
       vaultV2.address,
-      [{ lowerTick, upperTick, feeTier: 500 }],
+      [{ lowerTick, upperTick, pool: uniswapV3Pool.address }],
       rebalanceParams,
       []
     );
@@ -447,7 +452,7 @@ describe("Arrakis V2 integration test!!!", async function () {
       {
         removes: [
           {
-            range: { lowerTick, upperTick, feeTier: 500 },
+            range: { lowerTick, upperTick, pool: uniswapV3Pool.address },
             liquidity: (await liquidity)._liquidity,
           },
         ],
@@ -496,7 +501,7 @@ describe("Arrakis V2 integration test!!!", async function () {
       vaultV2.address,
       [],
       await arrakisV2Resolver.standardRebalance([], vaultV2.address),
-      [{ lowerTick, upperTick, feeTier: 500 }]
+      [{ lowerTick, upperTick, pool: uniswapV3Pool.address }]
     );
 
     // #endregion rebalance to remove the range.
@@ -568,13 +573,18 @@ describe("Arrakis V2 integration test!!!", async function () {
     // #region rebalance to deposit user token into the uniswap v3 pool.
 
     const rebalanceParams = await arrakisV2Resolver.standardRebalance(
-      [{ range: { lowerTick, upperTick, feeTier: 500 }, weight: 10000 }],
+      [
+        {
+          range: { lowerTick, upperTick, pool: uniswapV3Pool.address },
+          weight: 10000,
+        },
+      ],
       vaultV2.address
     );
 
     await managerProxyMock.rebalance(
       vaultV2.address,
-      [{ lowerTick, upperTick, feeTier: 500 }],
+      [{ lowerTick, upperTick, pool: uniswapV3Pool.address }],
       rebalanceParams,
       []
     );
@@ -641,7 +651,7 @@ describe("Arrakis V2 integration test!!!", async function () {
       vaultV2.address,
       [],
       await arrakisV2Resolver.standardRebalance([], vaultV2.address),
-      [{ lowerTick, upperTick, feeTier: 500 }]
+      [{ lowerTick, upperTick, pool: uniswapV3Pool.address }]
     );
 
     // #endregion rebalance to remove the range.
