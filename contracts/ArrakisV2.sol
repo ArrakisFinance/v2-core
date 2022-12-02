@@ -189,6 +189,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         Withdraw memory total;
         {
             for (uint256 i = 0; i < burns_.length; i++) {
+                require(_pools.contains(address(burns_[i].range.pool)), "P");
                 require(burns_[i].liquidity != 0, "LZ");
 
                 Withdraw memory withdraw = _withdraw(
@@ -302,6 +303,12 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         uint256 aggregator0 = 0;
         uint256 aggregator1 = 0;
         for (uint256 i = 0; i < rebalanceParams_.removes.length; i++) {
+            require(
+                _pools.contains(
+                    address(rebalanceParams_.removes[i].range.pool)
+                ),
+                "P"
+            );
             Withdraw memory withdraw = _withdraw(
                 rebalanceParams_.removes[i].range.pool,
                 rebalanceParams_.removes[i].range.lowerTick,
