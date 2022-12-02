@@ -62,9 +62,7 @@ library Underlying {
         (uint256 fee0After, uint256 fee1After) = subtractAdminFees(
             fee0,
             fee1,
-            arrakisV2.managerFeeBPS(),
-            amount0,
-            amount1
+            arrakisV2.managerFeeBPS()
         );
 
         amount0 +=
