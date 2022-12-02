@@ -48,8 +48,8 @@ contract ArrakisV2Factory is ArrakisV2FactoryStorage {
         return _append("Arrakis Vault V2 ", symbol0, "/", symbol1);
     }
 
-    /// @notice numVaults counts the total number of Harvesters in existence
-    /// @return result total number of Harvesters deployed
+    /// @notice numVaults counts the total number of vaults in existence
+    /// @return result total number of vaults deployed
     function numVaults() public view returns (uint256 result) {
         return _vaults.length();
     }

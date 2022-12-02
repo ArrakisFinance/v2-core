@@ -44,9 +44,10 @@ abstract contract ArrakisV2Storage is
 
     // #region manager data
 
+    uint16 public managerFeeBPS;
     uint256 public managerBalance0;
     uint256 public managerBalance1;
-    IManager public manager;
+    address public manager;
     address public restrictedMint;
 
     // #endregion manager data
@@ -92,6 +93,7 @@ abstract contract ArrakisV2Storage is
     event LogAddPools(uint24[] feeTiers);
     event LogRemovePools(address[] pools);
     event LogSetManager(address newManager);
+    event LogSetManagerFeeBPS(uint16 managerFeeBPS);
     event LogRestrictedMint(address minter);
     event LogWhitelistRouters(address[] routers);
     event LogBlacklistRouters(address[] routers);
@@ -103,7 +105,7 @@ abstract contract ArrakisV2Storage is
     // #region modifiers
 
     modifier onlyManager() {
-        require(address(manager) == msg.sender, "NM");
+        require(manager == msg.sender, "NM");
         _;
     }
 
@@ -137,7 +139,7 @@ abstract contract ArrakisV2Storage is
 
         _transferOwnership(params_.owner);
 
-        manager = IManager(params_.manager);
+        manager = params_.manager;
 
         _burnBuffer = params_.burnBuffer;
 
@@ -186,8 +188,12 @@ abstract contract ArrakisV2Storage is
         emit LogBlacklistRouters(routers_);
     }
 
-    function setManager(IManager manager_) external onlyOwner {
-        emit LogSetManager(address(manager = manager_));
+    function setManager(address manager_) external onlyOwner {
+        emit LogSetManager(manager = manager_);
+    }
+
+    function setManagerFeeBPS(uint16 managerFeeBPS_) external onlyManager {
+        emit LogSetManagerFeeBPS(managerFeeBPS = managerFeeBPS_);
     }
 
     function setRestrictedMint(address minter_) external onlyOwner {
@@ -200,6 +206,14 @@ abstract contract ArrakisV2Storage is
     }
 
     // #endregion setter functions
+
+    // #region getter functions
+
+    function getRanges() external view returns (Range[] memory) {
+        return ranges;
+    }
+
+    // #endregion getter functions
 
     // #region internal functions
 

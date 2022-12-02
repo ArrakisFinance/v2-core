@@ -32,7 +32,7 @@ contract ArrakisV2Helper is IArrakisV2Helper {
         returns (UnderlyingOutput memory underlying)
     {
         UnderlyingPayload memory underlyingPayload = UnderlyingPayload({
-            ranges: ranges(vault_),
+            ranges: vault_.getRanges(),
             factory: vault_.factory(),
             token0: address(vault_.token0()),
             token1: address(vault_.token1()),
@@ -65,7 +65,7 @@ contract ArrakisV2Helper is IArrakisV2Helper {
         )
     {
         UnderlyingPayload memory underlyingPayload = UnderlyingPayload({
-            ranges: ranges(vault_),
+            ranges: vault_.getRanges(),
             factory: vault_.factory(),
             token0: address(vault_.token0()),
             token1: address(vault_.token1()),
@@ -82,7 +82,7 @@ contract ArrakisV2Helper is IArrakisV2Helper {
         returns (uint256 amount0, uint256 amount1)
     {
         UnderlyingPayload memory underlyingPayload = UnderlyingPayload({
-            ranges: ranges(vault_),
+            ranges: vault_.getRanges(),
             factory: vault_.factory(),
             token0: address(vault_.token0()),
             token1: address(vault_.token1()),
@@ -165,27 +165,6 @@ contract ArrakisV2Helper is IArrakisV2Helper {
     }
 
     // #endregion Rebalance helper functions
-
-    function ranges(IArrakisV2 vault_)
-        public
-        view
-        returns (Range[] memory rgs)
-    {
-        uint256 index;
-        while (true) {
-            try vault_.ranges(index) returns (Range memory) {
-                index++;
-            } catch {
-                break;
-            }
-        }
-
-        rgs = new Range[](index);
-
-        for (uint256 i = 0; i < index; i++) {
-            rgs[i] = vault_.ranges(i);
-        }
-    }
 
     // #region internal functions
 
