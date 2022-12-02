@@ -16,6 +16,7 @@ import {
     EnumerableSet
 } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
+/// @title Arrakis Factory Storage Smart Contract
 // solhint-disable-next-line max-states-count
 abstract contract ArrakisV2FactoryStorage is
     IArrakisV2Factory,

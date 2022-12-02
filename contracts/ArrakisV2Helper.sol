@@ -26,6 +26,11 @@ contract ArrakisV2Helper is IArrakisV2Helper {
         factory = factory_;
     }
 
+    /// @notice get underlying, fees and left over separatly.
+    /// @param vault_ Arrakis V2 vault to get underlying info about.
+    /// @return underlying struct containing underlying amounts of
+    /// token0 and token1, fees of token0 and token1, finally left over
+    /// on vault of token0 and token1.
     function totalUnderlyingWithFeesAndLeftOver(IArrakisV2 vault_)
         external
         view
@@ -54,6 +59,12 @@ contract ArrakisV2Helper is IArrakisV2Helper {
             IArrakisV2(underlyingPayload.self).managerBalance1();
     }
 
+    /// @notice get underlying, fees.
+    /// @param vault_ Arrakis V2 vault to get underlying info about.
+    /// @return amount0 amount of underlying of token 0.
+    /// @return amount1 amount of underlying of token 1.
+    /// @return fee0 amount of fee of token 0.
+    /// @return fee1 amount of fee of token 0.
     function totalUnderlyingWithFees(IArrakisV2 vault_)
         external
         view
@@ -76,6 +87,10 @@ contract ArrakisV2Helper is IArrakisV2Helper {
             .totalUnderlyingWithFees(underlyingPayload);
     }
 
+    /// @notice get underlying.
+    /// @param vault_ Arrakis V2 vault to get underlying info about.
+    /// @return amount0 amount of underlying of token 0.
+    /// @return amount1 amount of underlying of token 1.
     function totalUnderlying(IArrakisV2 vault_)
         external
         view
@@ -96,6 +111,13 @@ contract ArrakisV2Helper is IArrakisV2Helper {
 
     // #region Rebalance helper functions
 
+    /// @notice get underlyings of token0 and token1 in two lists.
+    /// @param ranges_ list of range to get underlying info about.
+    /// @param token0_ address of first token.
+    /// @param token1_ address of second token.
+    /// @param vaultV2_ address of Arrakis V2 vault.
+    /// @return amount0s amounts of underlying of token 0.
+    /// @return amount1s amounts of underlying of token 1.
     function token0AndToken1ByRange(
         Range[] calldata ranges_,
         address token0_,
@@ -126,6 +148,15 @@ contract ArrakisV2Helper is IArrakisV2Helper {
         }
     }
 
+    /// @notice get underlyings and fees of token0 and token1 in two lists.
+    /// @param ranges_ list of range to get underlying info about.
+    /// @param token0_ address of first token.
+    /// @param token1_ address of second token.
+    /// @param vaultV2_ address of Arrakis V2 vault.
+    /// @return amount0s amounts of underlying of token 1.
+    /// @return amount1s amounts of underlying of token 1.
+    /// @return fee0s amounts of fees of token 0.
+    /// @return fee1s amounts of fees of token 1.
     function token0AndToken1PlusFeesByRange(
         Range[] calldata ranges_,
         address token0_,

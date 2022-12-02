@@ -23,6 +23,7 @@ import {
 } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {Range, Rebalance, InitializePayload} from "../structs/SArrakisV2.sol";
 
+/// @title Arrakis V2 Storage Smart Contract
 // solhint-disable-next-line max-states-count
 abstract contract ArrakisV2Storage is
     OwnableUpgradeable,
