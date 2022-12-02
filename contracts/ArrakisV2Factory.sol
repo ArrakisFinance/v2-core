@@ -20,6 +20,7 @@ import {
 } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {_getTokenOrder, _append} from "./functions/FArrakisV2Factory.sol";
 
+/// @title ArrakisV2Factory factory for creating vault instances.
 contract ArrakisV2Factory is ArrakisV2FactoryStorage {
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -27,6 +28,13 @@ contract ArrakisV2Factory is ArrakisV2FactoryStorage {
         ArrakisV2FactoryStorage(arrakisV2Beacon_)
     {} // solhint-disable-line no-empty-blocks
 
+    /// @notice will deploy an instance of Vault using Beacon or
+    /// transparentProxy
+    /// @param params_ contains all data needed to create an instance of
+    /// ArrakisV2 vault.
+    /// @param isBeacon_ boolean, if true the instance will be a beacon proxy
+    /// or a transparent proxy.
+    /// @return vault the address of the Arrakis V2 vault instance created.
     function deployVault(InitializePayload calldata params_, bool isBeacon_)
         external
         returns (address vault)
@@ -38,6 +46,11 @@ contract ArrakisV2Factory is ArrakisV2FactoryStorage {
 
     // #region public external view functions.
 
+    /// @notice get Arrakis V2 vault token name for
+    /// two corresponding tokens.
+    /// @param token0_ address of the first token.
+    /// @param token1_ address of the second token.
+    /// @return name name of the arrakis V2 vault.
     function getTokenName(address token0_, address token1_)
         external
         view
@@ -54,6 +67,8 @@ contract ArrakisV2Factory is ArrakisV2FactoryStorage {
         return _vaults.length();
     }
 
+    /// @notice get a list of vaults created by this factory
+    /// @return vaults list of all created vaults.
     function vaults() public view returns (address[] memory) {
         uint256 length = numVaults();
         address[] memory vs = new address[](length);
