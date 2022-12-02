@@ -60,15 +60,13 @@ contract MockFArrakisV2 {
     function subtractAdminFees(
         uint256 rawFee0_,
         uint256 rawFee1_,
-        uint16 managerFeeBPS_,
-        uint16 arrakisFeeBPS_
+        uint16 managerFeeBPS_
     ) external pure returns (uint256 fee0, uint256 fee1) {
         return
             UnderlyingHelper.subtractAdminFees(
                 rawFee0_,
                 rawFee1_,
-                managerFeeBPS_,
-                arrakisFeeBPS_
+                managerFeeBPS_
             );
     }
 

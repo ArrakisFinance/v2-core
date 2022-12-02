@@ -48,7 +48,7 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
         swapRouter = swapRouter_;
     }
 
-    // no swapping. Standard rebalance.
+    // Standard rebalance (without swapping)
     // solhint-disable-next-line function-max-lines, code-complexity
     function standardRebalance(
         RangeWeight[] memory rangeWeights_,
@@ -59,7 +59,7 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
         address token0Addr;
         address token1Addr;
         {
-            Range[] memory ranges = helper.ranges(vaultV2_);
+            Range[] memory ranges = vaultV2_.getRanges();
 
             token0Addr = address(vaultV2_.token0());
             token1Addr = address(vaultV2_.token1());
@@ -108,8 +108,6 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
             }
         }
 
-        // TODO check if sum of weight is < 10000
-
         _requireWeightUnder100(rangeWeights_);
 
         rebalanceParams.deposits = new PositionLiquidity[](
@@ -150,7 +148,7 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
         uint256 totalSupply = vaultV2_.totalSupply();
         require(totalSupply > 0, "total supply");
 
-        Range[] memory ranges = helper.ranges(vaultV2_);
+        Range[] memory ranges = vaultV2_.getRanges();
 
         {
             UnderlyingOutput memory underlying;
@@ -170,12 +168,10 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
             );
             underlying.leftOver0 =
                 vaultV2_.token0().balanceOf(address(vaultV2_)) -
-                vaultV2_.managerBalance0() -
-                vaultV2_.arrakisBalance0();
+                vaultV2_.managerBalance0();
             underlying.leftOver1 =
                 vaultV2_.token1().balanceOf(address(vaultV2_)) -
-                vaultV2_.managerBalance1() -
-                vaultV2_.arrakisBalance1();
+                vaultV2_.managerBalance1();
 
             {
                 uint256 amount0 = FullMath.mulDiv(
@@ -216,6 +212,8 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
                         )
                     );
             }
+
+            if (liquidity == 0) continue;
 
             burns[i] = BurnLiquidity({
                 liquidity: SafeCast.toUint128(

@@ -19,15 +19,14 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const addresses = getAddresses(hre.network.name);
   const { deploy } = deployments;
-  const { deployer, arrakisTreasury } = await getNamedAccounts();
+  const { deployer } = await getNamedAccounts();
   await deploy("ArrakisV2", {
     from: deployer,
-    args: [addresses.UniswapV3Factory, arrakisTreasury],
+    args: [addresses.UniswapV3Factory],
     libraries: {
       Pool: (await ethers.getContract("Pool")).address,
       Position: (await ethers.getContract("Position")).address,
       Underlying: (await ethers.getContract("Underlying")).address,
-      Manager: (await ethers.getContract("Manager")).address,
     },
     log: hre.network.name != "hardhat" ? true : false,
   });
@@ -44,4 +43,4 @@ func.skip = async (hre: HardhatRuntimeEnvironment) => {
   return shouldSkip ? true : false;
 };
 func.tags = ["ArrakisV2"];
-func.dependencies = ["Pool", "Position", "Underlying", "Manager"];
+func.dependencies = ["Pool", "Position", "Underlying"];

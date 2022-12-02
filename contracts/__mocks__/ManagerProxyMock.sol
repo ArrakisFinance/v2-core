@@ -26,4 +26,8 @@ contract ManagerProxyMock is IManager {
     function fundVaultBalance(address vault) external payable {
         // empty
     }
+
+    function setManagerFeeBPS(address vault_, uint16 fees_) external {
+        IArrakisV2(vault_).setManagerFeeBPS(fees_);
+    }
 }

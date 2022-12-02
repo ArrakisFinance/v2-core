@@ -32,11 +32,7 @@ abstract contract ArrakisV2Storage is
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    // solhint-disable-next-line const-name-snakecase
-    uint16 public constant arrakisFeeBPS = 250;
-
     IUniswapV3Factory public immutable factory;
-    address public immutable arrakisTreasury;
 
     IERC20 public token0;
     IERC20 public token1;
@@ -46,24 +42,24 @@ abstract contract ArrakisV2Storage is
 
     Range[] public ranges;
 
-    // #region arrakis data
-
-    uint256 public arrakisBalance0;
-    uint256 public arrakisBalance1;
-
-    // #endregion arrakis data
-
     // #region manager data
 
+    uint16 public managerFeeBPS;
     uint256 public managerBalance0;
     uint256 public managerBalance1;
-    IManager public manager;
+    address public manager;
     address public restrictedMint;
 
     // #endregion manager data
 
     EnumerableSet.AddressSet internal _pools;
     EnumerableSet.AddressSet internal _routers;
+
+    // #region burn buffer
+
+    uint16 internal _burnBuffer;
+
+    // #endregion burn buffer
 
     // #region events
 
@@ -97,9 +93,11 @@ abstract contract ArrakisV2Storage is
     event LogAddPools(uint24[] feeTiers);
     event LogRemovePools(address[] pools);
     event LogSetManager(address newManager);
+    event LogSetManagerFeeBPS(uint16 managerFeeBPS);
     event LogRestrictedMint(address minter);
     event LogWhitelistRouters(address[] routers);
     event LogBlacklistRouters(address[] routers);
+    event LogSetBurnBuffer(uint16 newBurnBuffer);
     // #endregion Setting events
 
     // #endregion events
@@ -107,17 +105,15 @@ abstract contract ArrakisV2Storage is
     // #region modifiers
 
     modifier onlyManager() {
-        require(address(manager) == msg.sender, "NM");
+        require(manager == msg.sender, "NM");
         _;
     }
 
     // #endregion modifiers
 
-    constructor(IUniswapV3Factory factory_, address arrakisTreasury_) {
+    constructor(IUniswapV3Factory factory_) {
         require(address(factory_) != address(0), "ZF");
-        require(arrakisTreasury_ != address(0), "ZAT");
         factory = factory_;
-        arrakisTreasury = arrakisTreasury_;
     }
 
     // solhint-disable-next-line function-max-lines
@@ -143,11 +139,14 @@ abstract contract ArrakisV2Storage is
 
         _transferOwnership(params_.owner);
 
-        manager = IManager(params_.manager);
+        manager = params_.manager;
+
+        _burnBuffer = params_.burnBuffer;
 
         emit LogAddPools(params_.feeTiers);
         emit LogSetInits(init0 = params_.init0, init1 = params_.init1);
         emit LogSetManager(params_.manager);
+        emit LogSetBurnBuffer(params_.burnBuffer);
     }
 
     // #region setter functions
@@ -189,15 +188,32 @@ abstract contract ArrakisV2Storage is
         emit LogBlacklistRouters(routers_);
     }
 
-    function setManager(IManager manager_) external onlyOwner {
-        emit LogSetManager(address(manager = manager_));
+    function setManager(address manager_) external onlyOwner {
+        emit LogSetManager(manager = manager_);
+    }
+
+    function setManagerFeeBPS(uint16 managerFeeBPS_) external onlyManager {
+        emit LogSetManagerFeeBPS(managerFeeBPS = managerFeeBPS_);
     }
 
     function setRestrictedMint(address minter_) external onlyOwner {
         emit LogRestrictedMint(restrictedMint = minter_);
     }
 
+    function setBurnBuffer(uint16 newBurnBuffer_) external onlyOwner {
+        require(newBurnBuffer_ < 5000, "MTMB");
+        emit LogSetBurnBuffer(_burnBuffer = newBurnBuffer_);
+    }
+
     // #endregion setter functions
+
+    // #region getter functions
+
+    function getRanges() external view returns (Range[] memory) {
+        return ranges;
+    }
+
+    // #endregion getter functions
 
     // #region internal functions
 
@@ -206,15 +222,11 @@ abstract contract ArrakisV2Storage is
 
         if (
             amount0_ > 0 &&
-            amount0_ <=
-            token0.balanceOf(address(this)) -
-                (managerBalance0 + arrakisBalance0)
+            amount0_ <= token0.balanceOf(address(this)) - managerBalance0
         ) token0.safeTransfer(msg.sender, amount0_);
         if (
             amount1_ > 0 &&
-            amount1_ <=
-            token1.balanceOf(address(this)) -
-                (managerBalance1 + arrakisBalance1)
+            amount1_ <= token1.balanceOf(address(this)) - managerBalance1
         ) token1.safeTransfer(msg.sender, amount1_);
     }
 

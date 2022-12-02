@@ -104,6 +104,7 @@ describe("Factory function unit test", function () {
         init1: res.amount1,
         manager: userAddr,
         routers: [],
+        burnBuffer: 1000,
       },
       true
     );
@@ -158,6 +159,7 @@ describe("Factory function unit test", function () {
         init1: res.amount1,
         manager: userAddr,
         routers: [],
+        burnBuffer: 1000,
       },
       true
     );
@@ -194,6 +196,7 @@ describe("Factory function unit test", function () {
         init1: res.amount1,
         manager: userAddr,
         routers: [],
+        burnBuffer: 1000,
       },
       true
     );
@@ -226,6 +229,7 @@ describe("Factory function unit test", function () {
         init1: res.amount1,
         manager: userAddr,
         routers: [],
+        burnBuffer: 1000,
       },
       false
     );
@@ -265,6 +269,7 @@ describe("Factory function unit test", function () {
         init1: res.amount1,
         manager: userAddr,
         routers: [],
+        burnBuffer: 1000,
       },
       false
     );
@@ -304,6 +309,7 @@ describe("Factory function unit test", function () {
         init1: res.amount1,
         manager: userAddr,
         routers: [],
+        burnBuffer: 1000,
       },
       false
     );
@@ -354,6 +360,7 @@ describe("Factory function unit test", function () {
         init1: res.amount1,
         manager: userAddr,
         routers: [],
+        burnBuffer: 1000,
       },
       false
     );
@@ -370,12 +377,11 @@ describe("Factory function unit test", function () {
 
     const deployResult = await deployments.deploy("ArrakisV2", {
       from: userAddr,
-      args: [addresses.UniswapV3Factory, userAddr],
+      args: [userAddr],
       libraries: {
         Pool: (await ethers.getContract("Pool")).address,
         Position: (await ethers.getContract("Position")).address,
         Underlying: (await ethers.getContract("Underlying")).address,
-        Manager: (await ethers.getContract("Manager")).address,
       },
       log: hre.network.name != "hardhat" ? true : false,
     });
@@ -400,7 +406,7 @@ describe("Factory function unit test", function () {
       user
     )) as ArrakisV2Beacon;
 
-    beacon.upgradeTo(newImplementation.address);
+    await beacon.upgradeTo(newImplementation.address);
 
     // #endregion get arrakis v2 beacon.
 
@@ -440,6 +446,7 @@ describe("Factory function unit test", function () {
         init1: res.amount1,
         manager: userAddr,
         routers: [],
+        burnBuffer: 1000,
       },
       false
     );
@@ -456,12 +463,11 @@ describe("Factory function unit test", function () {
 
     const deployResult = await deployments.deploy("ArrakisV2", {
       from: userAddr,
-      args: [addresses.UniswapV3Factory, userAddr],
+      args: [userAddr],
       libraries: {
         Pool: (await ethers.getContract("Pool")).address,
         Position: (await ethers.getContract("Position")).address,
         Underlying: (await ethers.getContract("Underlying")).address,
-        Manager: (await ethers.getContract("Manager")).address,
       },
       log: hre.network.name != "hardhat" ? true : false,
     });
@@ -480,7 +486,7 @@ describe("Factory function unit test", function () {
       user
     )) as ArrakisV2Beacon;
 
-    beacon.upgradeTo(newImplementation.address);
+    await beacon.upgradeTo(newImplementation.address);
 
     // #endregion get arrakis v2 beacon.
 
