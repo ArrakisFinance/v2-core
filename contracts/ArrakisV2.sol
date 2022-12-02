@@ -222,21 +222,19 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
             token1.safeTransfer(receiver_, amount1);
         }
 
-        uint256 balance0 = token0.balanceOf(address(this));
-        uint256 balance1 = token1.balanceOf(address(this));
-
-        require(balance0 >= managerBalance0, "MB0");
-        require(balance1 >= managerBalance1, "MB1");
+        // intentional underflow revert if managerBalance > contract's token balance
+        uint256 leftover0 = token0.balanceOf(address(this)) - managerBalance0;
+        uint256 leftover1 = token1.balanceOf(address(this)) - managerBalance1;
 
         require(
-            ((balance0 - managerBalance0) < underlying.leftOver0) ||
-                ((balance0 - managerBalance0) - underlying.leftOver0 <=
+            (leftover0 <= underlying.leftOver0) ||
+                ((leftover0 - underlying.leftOver0) <=
                     FullMath.mulDiv(total.burn0, _burnBuffer, 10000)),
             "L0"
         );
         require(
-            ((balance1 - managerBalance1) < underlying.leftOver1) ||
-                ((balance1 - managerBalance1) - underlying.leftOver1 <=
+            (leftover1 <= underlying.leftOver1) ||
+                ((leftover1 - underlying.leftOver1) <=
                     FullMath.mulDiv(total.burn1, _burnBuffer, 10000)),
             "L1"
         );
