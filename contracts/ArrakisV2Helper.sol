@@ -89,11 +89,9 @@ contract ArrakisV2Helper is IArrakisV2Helper {
             self: address(vault_)
         });
 
-        (uint256 a0, uint256 a1, uint256 fee0, uint256 fee1) = UnderlyingHelper
-            .totalUnderlyingWithFees(underlyingPayload);
-
-        amount0 = a0 + fee0;
-        amount1 = a1 + fee1;
+        (amount0, amount1, , ) = UnderlyingHelper.totalUnderlyingWithFees(
+            underlyingPayload
+        );
     }
 
     // #region Rebalance helper functions
