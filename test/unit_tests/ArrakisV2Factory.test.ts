@@ -382,7 +382,6 @@ describe("Factory function unit test", function () {
         Pool: (await ethers.getContract("Pool")).address,
         Position: (await ethers.getContract("Position")).address,
         Underlying: (await ethers.getContract("Underlying")).address,
-        Manager: (await ethers.getContract("Manager")).address,
       },
       log: hre.network.name != "hardhat" ? true : false,
     });
@@ -469,7 +468,6 @@ describe("Factory function unit test", function () {
         Pool: (await ethers.getContract("Pool")).address,
         Position: (await ethers.getContract("Position")).address,
         Underlying: (await ethers.getContract("Underlying")).address,
-        Manager: (await ethers.getContract("Manager")).address,
       },
       log: hre.network.name != "hardhat" ? true : false,
     });

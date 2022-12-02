@@ -180,6 +180,11 @@ describe("Arrakis V2 integration test!!!", async function () {
       user
     )) as ArrakisV2;
 
+    await managerProxyMock.setManagerFeeBPS(
+      vaultV2.address,
+      await managerProxyMock.managerFeeBPS()
+    );
+
     // #region get some USDC and WETH tokens from Uniswap V3.
 
     swapRouter = (await ethers.getContractAt(

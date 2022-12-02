@@ -19,7 +19,6 @@ import {
     GetFeesPayload
 } from "../structs/SArrakisV2.sol";
 import {Position} from "./Position.sol";
-import {Manager} from "./Manager.sol";
 
 library Underlying {
     // solhint-disable-next-line function-max-lines
@@ -63,7 +62,7 @@ library Underlying {
         (amount0, amount1) = subtractAdminFeesOnAmounts(
             fee0,
             fee1,
-            Manager.getManagerFeeBPS(arrakisV2.manager()),
+            arrakisV2.managerFeeBPS(),
             amount0,
             amount1
         );
