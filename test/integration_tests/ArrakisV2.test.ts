@@ -149,6 +149,7 @@ describe("Arrakis V2 integration test!!!", async function () {
         init1: res.amount1,
         manager: managerProxyMock.address,
         routers: [addresses.SwapRouter],
+        burnBuffer: 1000,
       },
       true
     );
@@ -178,6 +179,11 @@ describe("Arrakis V2 integration test!!!", async function () {
       result?.vault,
       user
     )) as ArrakisV2;
+
+    await managerProxyMock.setManagerFeeBPS(
+      vaultV2.address,
+      await managerProxyMock.managerFeeBPS()
+    );
 
     // #region get some USDC and WETH tokens from Uniswap V3.
 
@@ -480,13 +486,6 @@ describe("Arrakis V2 integration test!!!", async function () {
 
     balance = await vaultV2.balanceOf(userAddr);
 
-    expect(await usdc.balanceOf(vaultV2.address)).to.be.eq(
-      (await vaultV2.managerBalance0()).add(await vaultV2.arrakisBalance0())
-    );
-    expect(await wEth.balanceOf(vaultV2.address)).to.be.eq(
-      (await vaultV2.managerBalance1()).add(await vaultV2.arrakisBalance1())
-    );
-
     expect(balance).to.be.eq(0);
 
     // #endregion burn token to get back token to user.
@@ -534,40 +533,6 @@ describe("Arrakis V2 integration test!!!", async function () {
     expect(managerT1A).to.be.gt(managerT1B);
 
     // #region withdraw as manager.
-
-    // #region withdraw as arrakis treasury.
-
-    const arrakisAddr = await vaultV2.arrakisTreasury();
-
-    await user.sendTransaction({
-      to: arrakisAddr,
-      value: ethers.utils.parseEther("1"),
-    });
-
-    const arrakisT0B = await usdc.balanceOf(arrakisAddr);
-    const arrakisT1B = await wEth.balanceOf(arrakisAddr);
-
-    await hre.network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [arrakisAddr],
-    });
-
-    const arrakisAddrSigner = await ethers.getSigner(arrakisAddr);
-
-    await vaultV2.connect(arrakisAddrSigner).withdrawArrakisBalance();
-
-    await hre.network.provider.request({
-      method: "hardhat_stopImpersonatingAccount",
-      params: [arrakisAddr],
-    });
-
-    const arrakisT0A = await usdc.balanceOf(arrakisAddr);
-    const arrakisT1A = await wEth.balanceOf(arrakisAddr);
-
-    expect(arrakisT0A).to.be.gte(arrakisT0B);
-    expect(arrakisT1A).to.be.gt(arrakisT1B);
-
-    // #region withdraw as arrakis treasury.
   });
 
   it("#3: Rebalance without swap after mint and burn of Arrakis V2 tokens", async () => {
@@ -666,13 +631,6 @@ describe("Arrakis V2 integration test!!!", async function () {
 
     balance = await vaultV2.balanceOf(userAddr);
 
-    expect(await usdc.balanceOf(vaultV2.address)).to.be.eq(
-      (await vaultV2.managerBalance0()).add(await vaultV2.arrakisBalance0())
-    );
-    expect(await wEth.balanceOf(vaultV2.address)).to.be.eq(
-      (await vaultV2.managerBalance1()).add(await vaultV2.arrakisBalance1())
-    );
-
     expect(balance).to.be.eq(0);
 
     // #endregion burn token to get back token to user.
@@ -720,39 +678,5 @@ describe("Arrakis V2 integration test!!!", async function () {
     expect(managerT1A).to.be.gt(managerT1B);
 
     // #region withdraw as manager.
-
-    // #region withdraw as arrakis treasury.
-
-    const arrakisAddr = await vaultV2.arrakisTreasury();
-
-    await user.sendTransaction({
-      to: arrakisAddr,
-      value: ethers.utils.parseEther("1"),
-    });
-
-    const arrakisT0B = await usdc.balanceOf(arrakisAddr);
-    const arrakisT1B = await wEth.balanceOf(arrakisAddr);
-
-    await hre.network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [arrakisAddr],
-    });
-
-    const arrakisAddrSigner = await ethers.getSigner(arrakisAddr);
-
-    await vaultV2.connect(arrakisAddrSigner).withdrawArrakisBalance();
-
-    await hre.network.provider.request({
-      method: "hardhat_stopImpersonatingAccount",
-      params: [arrakisAddr],
-    });
-
-    const arrakisT0A = await usdc.balanceOf(arrakisAddr);
-    const arrakisT1A = await wEth.balanceOf(arrakisAddr);
-
-    expect(arrakisT0A).to.be.gte(arrakisT0B);
-    expect(arrakisT1A).to.be.gt(arrakisT1B);
-
-    // #region withdraw as arrakis treasury.
   });
 });

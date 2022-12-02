@@ -19,7 +19,6 @@ import {
     GetFeesPayload
 } from "../structs/SArrakisV2.sol";
 import {Position} from "./Position.sol";
-import {Manager} from "./Manager.sol";
 
 library Underlying {
     // solhint-disable-next-line function-max-lines
@@ -63,8 +62,9 @@ library Underlying {
         (uint256 fee0After, uint256 fee1After) = subtractAdminFees(
             fee0,
             fee1,
-            Manager.getManagerFeeBPS(arrakisV2.manager()),
-            arrakisV2.arrakisFeeBPS()
+            arrakisV2.managerFeeBPS(),
+            amount0,
+            amount1
         );
 
         amount0 +=
@@ -72,15 +72,13 @@ library Underlying {
             IERC20(underlyingPayload_.token0).balanceOf(
                 underlyingPayload_.self
             ) -
-            arrakisV2.managerBalance0() -
-            arrakisV2.arrakisBalance0();
+            arrakisV2.managerBalance0();
         amount1 +=
             fee1After +
             IERC20(underlyingPayload_.token1).balanceOf(
                 underlyingPayload_.self
             ) -
-            arrakisV2.managerBalance1() -
-            arrakisV2.arrakisBalance1();
+            arrakisV2.managerBalance1();
     }
 
     function underlying(RangeData memory underlying_)
@@ -162,30 +160,23 @@ library Underlying {
     function subtractAdminFees(
         uint256 rawFee0_,
         uint256 rawFee1_,
-        uint16 managerFeeBPS_,
-        uint16 arrakisFeeBPS_
+        uint16 managerFeeBPS_
     ) public pure returns (uint256 fee0, uint256 fee1) {
-        fee0 =
-            rawFee0_ -
-            ((rawFee0_ * (managerFeeBPS_ + arrakisFeeBPS_)) / 10000);
-        fee1 =
-            rawFee1_ -
-            ((rawFee1_ * (managerFeeBPS_ + arrakisFeeBPS_)) / 10000);
+        fee0 = rawFee0_ - ((rawFee0_ * (managerFeeBPS_)) / 10000);
+        fee1 = rawFee1_ - ((rawFee1_ * (managerFeeBPS_)) / 10000);
     }
 
     function subtractAdminFeesOnAmounts(
         uint256 rawFee0_,
         uint256 rawFee1_,
         uint16 managerFeeBPS_,
-        uint16 arrakisFeeBPS_,
         uint256 amount0_,
         uint256 amount1_
     ) public pure returns (uint256 amount0, uint256 amount1) {
         (uint256 fee0, uint256 fee1) = subtractAdminFees(
             rawFee0_,
             rawFee1_,
-            managerFeeBPS_,
-            arrakisFeeBPS_
+            managerFeeBPS_
         );
         amount0 = amount0_ - (rawFee0_ - fee0);
         amount1 = amount1_ - (rawFee1_ - fee1);

@@ -19,12 +19,8 @@ import {
 // solhint-disable-next-line max-states-count
 abstract contract ArrakisV2FactoryStorage is
     IArrakisV2Factory,
-    OwnableUpgradeable /* XXXX DONT MODIFY ORDERING XXXX */
-    // APPEND ADDITIONAL BASE WITH STATE VARS BELOW:
-    // XXXX DONT MODIFY ORDERING XXXX
+    OwnableUpgradeable
 {
-    // XXXXXXXX DO NOT MODIFY ORDERING XXXXXXXX
-
     using EnumerableSet for EnumerableSet.AddressSet;
 
     // solhint-disable-next-line const-name-snakecase
@@ -32,10 +28,6 @@ abstract contract ArrakisV2FactoryStorage is
 
     IArrakisV2Beacon public immutable arrakisV2Beacon;
     EnumerableSet.AddressSet internal _vaults;
-
-    // APPPEND ADDITIONAL STATE VARS BELOW:
-
-    // XXXXXXXX DO NOT MODIFY ORDERING XXXXXXXX
 
     // #region constructor.
 
