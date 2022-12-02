@@ -41,7 +41,9 @@ abstract contract ArrakisV2FactoryStorage is
     }
 
     // #region admin set functions
-
+    /// @notice upgrade vaults instance using transparent proxy
+    /// with the current implementation
+    /// @param vaults_ the list of vault.
     function upgradeVaults(address[] memory vaults_) external onlyOwner {
         for (uint256 i = 0; i < vaults_.length; i++) {
             ITransparentUpgradeableProxy(vaults_[i]).upgradeTo(
@@ -50,6 +52,10 @@ abstract contract ArrakisV2FactoryStorage is
         }
     }
 
+    /// @notice upgrade vaults instance using transparent proxy
+    /// with the current implementation and call the instance
+    /// @param vaults_ the list of vault.
+    /// @param datas_ payloads of instances call.
     function upgradeVaultsAndCall(
         address[] memory vaults_,
         bytes[] calldata datas_
@@ -63,6 +69,8 @@ abstract contract ArrakisV2FactoryStorage is
         }
     }
 
+    /// @notice make the vault immutable
+    /// @param vaults_ the list of vault.
     function makeVaultsImmutable(address[] memory vaults_) external onlyOwner {
         for (uint256 i = 0; i < vaults_.length; i++) {
             ITransparentUpgradeableProxy(vaults_[i]).changeAdmin(address(1));
@@ -73,6 +81,9 @@ abstract contract ArrakisV2FactoryStorage is
 
     // #region admin view call.
 
+    /// @notice get vault instance admin
+    /// @param proxy instance of Arrakis V2.
+    /// @return admin address of Arrakis V2 instance admin.
     function getProxyAdmin(address proxy) public view returns (address) {
         // We need to manually run the static call since the getter cannot be flagged as view
         // bytes4(keccak256("admin()")) == 0xf851a440
@@ -83,6 +94,9 @@ abstract contract ArrakisV2FactoryStorage is
         return abi.decode(returndata, (address));
     }
 
+    /// @notice get vault implementation
+    /// @param proxy instance of Arrakis V2.
+    /// @return implementation address of Arrakis V2 implementation.
     function getProxyImplementation(address proxy)
         public
         view
