@@ -29,7 +29,7 @@ struct SwapPayload {
 struct Range {
     int24 lowerTick;
     int24 upperTick;
-    uint24 feeTier;
+    IUniswapV3Pool pool;
 }
 
 struct Rebalance {
@@ -117,7 +117,5 @@ struct UnderlyingPayload {
 struct RangeData {
     address self;
     Range range;
-    IUniswapV3Pool pool;
 }
-
 // #endregion internal Structs

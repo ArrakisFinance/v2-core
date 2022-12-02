@@ -49,12 +49,12 @@ contract MockFArrakisV2 {
         return UnderlyingHelper.totalUnderlyingWithFees(underlyingPayload_);
     }
 
-    function validateTickSpacing(address pool_, Range memory range_)
+    function validateTickSpacing(Range memory range_)
         external
         view
         returns (bool)
     {
-        return Pool.validateTickSpacing(pool_, range_);
+        return Pool.validateTickSpacing(range_);
     }
 
     function subtractAdminFees(

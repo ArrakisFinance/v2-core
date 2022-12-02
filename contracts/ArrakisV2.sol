@@ -192,13 +192,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                 require(burns_[i].liquidity != 0, "LZ");
 
                 Withdraw memory withdraw = _withdraw(
-                    IUniswapV3Pool(
-                        factory.getPool(
-                            address(token0),
-                            address(token1),
-                            burns_[i].range.feeTier
-                        )
-                    ),
+                    burns_[i].range.pool,
                     burns_[i].range.lowerTick,
                     burns_[i].range.upperTick,
                     burns_[i].liquidity
@@ -255,21 +249,12 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         for (uint256 i = 0; i < rangesToAdd_.length; i++) {
             (bool exist, ) = Position.rangeExist(ranges, rangesToAdd_[i]);
             require(!exist, "NRRE");
-            // check that the pool exist on Uniswap V3.
-            address pool = factory.getPool(
-                address(token0),
-                address(token1),
-                rangesToAdd_[i].feeTier
-            );
-            require(pool != address(0), "NUP");
-            require(_pools.contains(pool), "P");
-            require(Pool.validateTickSpacing(pool, rangesToAdd_[i]), "RTS");
+            require(_pools.contains(address(rangesToAdd_[i].pool)), "P");
+            require(Pool.validateTickSpacing(rangesToAdd_[i]), "RTS");
 
             ranges.push(rangesToAdd_[i]);
         }
         _rebalance(rebalanceParams_);
-        require(token0.balanceOf(address(this)) >= managerBalance0, "MB0");
-        require(token1.balanceOf(address(this)) >= managerBalance1, "MB1");
         for (uint256 i = 0; i < rangesToRemove_.length; i++) {
             (bool exist, uint256 index) = Position.rangeExist(
                 ranges,
@@ -277,13 +262,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
             );
             require(exist, "RRNE");
 
-            Position.requireNotActiveRange(
-                factory,
-                address(this),
-                address(token0),
-                address(token1),
-                rangesToRemove_[i]
-            );
+            Position.requireNotActiveRange(address(this), rangesToRemove_[i]);
 
             delete ranges[index];
 
@@ -321,15 +300,8 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         uint256 aggregator0 = 0;
         uint256 aggregator1 = 0;
         for (uint256 i = 0; i < rebalanceParams_.removes.length; i++) {
-            address poolAddr = factory.getPool(
-                address(token0),
-                address(token1),
-                rebalanceParams_.removes[i].range.feeTier
-            );
-            IUniswapV3Pool pool = IUniswapV3Pool(poolAddr);
-
             Withdraw memory withdraw = _withdraw(
-                pool,
+                rebalanceParams_.removes[i].range.pool,
                 rebalanceParams_.removes[i].range.lowerTick,
                 rebalanceParams_.removes[i].range.upperTick,
                 rebalanceParams_.removes[i].liquidity
@@ -358,11 +330,11 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
 
                 token0.safeApprove(
                     address(rebalanceParams_.swap.router),
-                    balance0Before
+                    balance0Before - managerBalance0
                 );
                 token1.safeApprove(
                     address(rebalanceParams_.swap.router),
-                    balance1Before
+                    balance1Before - managerBalance1
                 );
 
                 (bool success, ) = rebalanceParams_.swap.router.call(
@@ -401,27 +373,23 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         aggregator0 = 0;
         aggregator1 = 0;
         for (uint256 i = 0; i < rebalanceParams_.deposits.length; i++) {
-            IUniswapV3Pool pool = IUniswapV3Pool(
-                factory.getPool(
-                    address(token0),
-                    address(token1),
-                    rebalanceParams_.deposits[i].range.feeTier
-                )
-            );
-
             (bool exist, ) = Position.rangeExist(
                 ranges,
                 rebalanceParams_.deposits[i].range
             );
             require(exist, "DRE");
 
-            (uint256 amt0, uint256 amt1) = pool.mint(
-                address(this),
-                rebalanceParams_.deposits[i].range.lowerTick,
-                rebalanceParams_.deposits[i].range.upperTick,
-                rebalanceParams_.deposits[i].liquidity,
-                ""
-            );
+            (uint256 amt0, uint256 amt1) = rebalanceParams_
+                .deposits[i]
+                .range
+                .pool
+                .mint(
+                    address(this),
+                    rebalanceParams_.deposits[i].range.lowerTick,
+                    rebalanceParams_.deposits[i].range.upperTick,
+                    rebalanceParams_.deposits[i].liquidity,
+                    ""
+                );
             aggregator0 += amt0;
             aggregator1 += amt1;
         }

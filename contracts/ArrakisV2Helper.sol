@@ -187,12 +187,8 @@ contract ArrakisV2Helper is IArrakisV2Helper {
             ? (token0_, token1_)
             : (token1_, token0_);
 
-        IUniswapV3Pool pool = IUniswapV3Pool(
-            factory.getPool(token0_, token1_, range_.feeTier)
-        );
-
         (amount0, amount1, fee0, fee1) = UnderlyingHelper.underlying(
-            RangeData({self: vaultV2_, range: range_, pool: pool})
+            RangeData({self: vaultV2_, range: range_})
         );
 
         amount0 += fee0;

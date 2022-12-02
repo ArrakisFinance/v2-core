@@ -10,12 +10,12 @@ import {
 import {Range} from "../structs/SArrakisV2.sol";
 
 library Pool {
-    function validateTickSpacing(address pool_, Range memory range_)
+    function validateTickSpacing(Range memory range_)
         public
         view
         returns (bool)
     {
-        int24 spacing = IUniswapV3Pool(pool_).tickSpacing();
+        int24 spacing = range_.pool.tickSpacing();
         return
             range_.lowerTick < range_.upperTick &&
             range_.lowerTick % spacing == 0 &&

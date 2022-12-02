@@ -36,18 +36,10 @@ library Underlying {
     {
         for (uint256 i = 0; i < underlyingPayload_.ranges.length; i++) {
             {
-                IUniswapV3Pool pool = IUniswapV3Pool(
-                    underlyingPayload_.factory.getPool(
-                        underlyingPayload_.token0,
-                        underlyingPayload_.token1,
-                        underlyingPayload_.ranges[i].feeTier
-                    )
-                );
                 (uint256 a0, uint256 a1, uint256 f0, uint256 f1) = underlying(
                     RangeData({
                         self: underlyingPayload_.self,
-                        range: underlyingPayload_.ranges[i],
-                        pool: pool
+                        range: underlyingPayload_.ranges[i]
                     })
                 );
                 amount0 += a0;
@@ -62,9 +54,7 @@ library Underlying {
         (uint256 fee0After, uint256 fee1After) = subtractAdminFees(
             fee0,
             fee1,
-            arrakisV2.managerFeeBPS(),
-            amount0,
-            amount1
+            arrakisV2.managerFeeBPS()
         );
 
         amount0 +=
@@ -91,7 +81,10 @@ library Underlying {
             uint256 fee1
         )
     {
-        (uint160 sqrtPriceX96, int24 tick, , , , , ) = underlying_.pool.slot0();
+        (uint160 sqrtPriceX96, int24 tick, , , , , ) = underlying_
+            .range
+            .pool
+            .slot0();
         bytes32 positionId = Position.getPositionId(
             underlying_.self,
             underlying_.range.lowerTick,
@@ -103,7 +96,7 @@ library Underlying {
             tick: tick,
             lowerTick: underlying_.range.lowerTick,
             upperTick: underlying_.range.upperTick,
-            pool: underlying_.pool
+            pool: underlying_.range.pool
         });
         (amount0, amount1, fee0, fee1) = getUnderlyingBalances(
             positionUnderlying

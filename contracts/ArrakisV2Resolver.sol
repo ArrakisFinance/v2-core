@@ -74,19 +74,13 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
             for (uint256 i = 0; i < ranges.length; i++) {
                 uint128 liquidity;
                 {
-                    (liquidity, , , , ) = IUniswapV3Pool(
-                        vaultV2_.factory().getPool(
-                            token0Addr,
-                            token1Addr,
-                            ranges[i].feeTier
+                    (liquidity, , , , ) = ranges[i].pool.positions(
+                        PositionHelper.getPositionId(
+                            address(vaultV2_),
+                            ranges[i].lowerTick,
+                            ranges[i].upperTick
                         )
-                    ).positions(
-                            PositionHelper.getPositionId(
-                                address(vaultV2_),
-                                ranges[i].lowerTick,
-                                ranges[i].upperTick
-                            )
-                        );
+                    );
                 }
 
                 if (liquidity > 0) numberOfPosLiq++;
@@ -116,13 +110,10 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
 
         for (uint256 i = 0; i < rangeWeights_.length; i++) {
             RangeWeight memory rangeWeight = rangeWeights_[i];
-            (uint160 sqrtPriceX96, , , , , , ) = IUniswapV3Pool(
-                vaultV2_.factory().getPool(
-                    token0Addr,
-                    token1Addr,
-                    rangeWeight.range.feeTier
-                )
-            ).slot0();
+            (uint160 sqrtPriceX96, , , , , , ) = rangeWeights_[i]
+                .range
+                .pool
+                .slot0();
 
             uint128 liquidity = LiquidityAmounts.getLiquidityForAmounts(
                 sqrtPriceX96,
@@ -198,19 +189,13 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
         for (uint256 i = 0; i < ranges.length; i++) {
             uint128 liquidity;
             {
-                (liquidity, , , , ) = IUniswapV3Pool(
-                    vaultV2_.factory().getPool(
-                        address(vaultV2_.token0()),
-                        address(vaultV2_.token1()),
-                        ranges[i].feeTier
+                (liquidity, , , , ) = ranges[i].pool.positions(
+                    PositionHelper.getPositionId(
+                        address(vaultV2_),
+                        ranges[i].lowerTick,
+                        ranges[i].upperTick
                     )
-                ).positions(
-                        PositionHelper.getPositionId(
-                            address(vaultV2_),
-                            ranges[i].lowerTick,
-                            ranges[i].upperTick
-                        )
-                    );
+                );
             }
 
             if (liquidity == 0) continue;
