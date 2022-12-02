@@ -50,8 +50,8 @@ library Underlying {
                         pool: pool
                     })
                 );
-                amount0 += a0 + f0;
-                amount1 += a1 + f1;
+                amount0 += a0;
+                amount1 += a1;
                 fee0 += f0;
                 fee1 += f1;
             }
@@ -59,7 +59,7 @@ library Underlying {
 
         IArrakisV2 arrakisV2 = IArrakisV2(underlyingPayload_.self);
 
-        (amount0, amount1) = subtractAdminFeesOnAmounts(
+        (uint256 fee0After, uint256 fee1After) = subtractAdminFees(
             fee0,
             fee1,
             arrakisV2.managerFeeBPS(),
@@ -68,11 +68,13 @@ library Underlying {
         );
 
         amount0 +=
+            fee0After +
             IERC20(underlyingPayload_.token0).balanceOf(
                 underlyingPayload_.self
             ) -
             arrakisV2.managerBalance0();
         amount1 +=
+            fee1After +
             IERC20(underlyingPayload_.token1).balanceOf(
                 underlyingPayload_.self
             ) -
