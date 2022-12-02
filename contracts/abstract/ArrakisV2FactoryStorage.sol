@@ -24,9 +24,6 @@ abstract contract ArrakisV2FactoryStorage is
 {
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    // solhint-disable-next-line const-name-snakecase
-    string public constant version = "1.0.0";
-
     IArrakisV2Beacon public immutable arrakisV2Beacon;
     EnumerableSet.AddressSet internal _vaults;
 

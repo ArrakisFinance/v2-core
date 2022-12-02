@@ -15,8 +15,6 @@ interface IArrakisV2Factory {
 
     // #region view functions
 
-    function version() external view returns (string memory);
-
     function arrakisV2Beacon() external view returns (IArrakisV2Beacon);
 
     function numVaults() external view returns (uint256);
