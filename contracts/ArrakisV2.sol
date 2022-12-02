@@ -77,8 +77,8 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                 )
                 : (init0, init1, 0, 0);
         uint256 denominator = isTotalSupplyGtZero ? totalSupply : 1 ether;
-        /// @dev current0 and current1 include fees and left over (but not admin balances)
 
+        /// @dev current0 and current1 include fees and left over (but not manager balances)
         amount0 = FullMath.mulDivRoundingUp(mintAmount_, current0, denominator);
         amount1 = FullMath.mulDivRoundingUp(mintAmount_, current1, denominator);
 
@@ -222,22 +222,19 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
             token1.safeTransfer(receiver_, amount1);
         }
 
-        require(token0.balanceOf(address(this)) >= managerBalance0, "MB0");
-        require(token1.balanceOf(address(this)) >= managerBalance1, "MB1");
+        // intentional underflow revert if managerBalance > contract's token balance
+        uint256 leftover0 = token0.balanceOf(address(this)) - managerBalance0;
+        uint256 leftover1 = token1.balanceOf(address(this)) - managerBalance1;
 
         require(
-            ((token0.balanceOf(address(this)) - managerBalance0) <
-                underlying.leftOver0) ||
-                ((token0.balanceOf(address(this)) - managerBalance0) -
-                    underlying.leftOver0 <=
+            (leftover0 <= underlying.leftOver0) ||
+                ((leftover0 - underlying.leftOver0) <=
                     FullMath.mulDiv(total.burn0, _burnBuffer, 10000)),
             "L0"
         );
         require(
-            ((token1.balanceOf(address(this)) - managerBalance1) <
-                underlying.leftOver1) ||
-                ((token1.balanceOf(address(this)) - managerBalance1) -
-                    underlying.leftOver1 <=
+            (leftover1 <= underlying.leftOver1) ||
+                ((leftover1 - underlying.leftOver1) <=
                     FullMath.mulDiv(total.burn1, _burnBuffer, 10000)),
             "L1"
         );
@@ -251,25 +248,24 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
 
     // solhint-disable-next-line function-max-lines
     function rebalance(
-        Range[] calldata ranges_,
+        Range[] calldata rangesToAdd_,
         Rebalance calldata rebalanceParams_,
         Range[] calldata rangesToRemove_
     ) external onlyManager {
-        for (uint256 i = 0; i < ranges_.length; i++) {
-            (bool exist, ) = Position.rangeExist(ranges, ranges_[i]);
+        for (uint256 i = 0; i < rangesToAdd_.length; i++) {
+            (bool exist, ) = Position.rangeExist(ranges, rangesToAdd_[i]);
             require(!exist, "NRRE");
             // check that the pool exist on Uniswap V3.
             address pool = factory.getPool(
                 address(token0),
                 address(token1),
-                ranges_[i].feeTier
+                rangesToAdd_[i].feeTier
             );
             require(pool != address(0), "NUP");
             require(_pools.contains(pool), "P");
-            // TODO: can reuse the pool got previously.
-            require(Pool.validateTickSpacing(pool, ranges_[i]), "RTS");
+            require(Pool.validateTickSpacing(pool, rangesToAdd_[i]), "RTS");
 
-            ranges.push(ranges_[i]);
+            ranges.push(rangesToAdd_[i]);
         }
         _rebalance(rebalanceParams_);
         require(token0.balanceOf(address(this)) >= managerBalance0, "MB0");
@@ -306,11 +302,11 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         managerBalance1 = 0;
 
         if (amount0 > 0) {
-            token0.safeTransfer(address(manager), amount0);
+            token0.safeTransfer(manager, amount0);
         }
 
         if (amount1 > 0) {
-            token1.safeTransfer(address(manager), amount1);
+            token1.safeTransfer(manager, amount1);
         }
 
         emit LogWithdrawManagerBalance(amount0, amount1);
@@ -321,7 +317,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         internal
         nonReentrant
     {
-        // Burns
+        // Burns.
         uint256 aggregator0 = 0;
         uint256 aggregator1 = 0;
         for (uint256 i = 0; i < rebalanceParams_.removes.length; i++) {
@@ -349,8 +345,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
             emit LogCollectedFees(aggregator0, aggregator1);
         }
 
-        // Swap
-
+        // Swap.
         if (rebalanceParams_.swap.amountIn > 0) {
             {
                 require(_routers.contains(rebalanceParams_.swap.router), "NR");
@@ -448,8 +443,6 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
             liquidity_
         );
 
-        /// @dev relying on return values here means we WILL BREAK with fee-on-transfer tokens
-        /// we assume this is fine as UniswapV3 is already broken for fee-on-transfer tokens
         (uint256 collect0, uint256 collect1) = pool_.collect(
             address(this),
             lowerTick_,

@@ -48,7 +48,7 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
         swapRouter = swapRouter_;
     }
 
-    // no swapping. Standard rebalance.
+    // Standard rebalance (without swapping)
     // solhint-disable-next-line function-max-lines, code-complexity
     function standardRebalance(
         RangeWeight[] memory rangeWeights_,
@@ -107,8 +107,6 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
                 }
             }
         }
-
-        // TODO check if sum of weight is < 10000
 
         _requireWeightUnder100(rangeWeights_);
 
