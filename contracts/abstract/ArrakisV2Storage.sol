@@ -23,6 +23,7 @@ import {
 } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {Range, Rebalance, InitializePayload} from "../structs/SArrakisV2.sol";
 
+/// @title Arrakis V2 Storage Smart Contract
 // solhint-disable-next-line max-states-count
 abstract contract ArrakisV2Storage is
     OwnableUpgradeable,
@@ -150,6 +151,11 @@ abstract contract ArrakisV2Storage is
     }
 
     // #region setter functions
+
+    /// @notice set initials virtual allocation of token0 and token1
+    /// @param init0_ initial virtual allocation of token 0.
+    /// @param init1_ initial virtual allocation of token 1.
+    /// @dev only be callable by restrictedMinter or by default by the owner.
     function setInits(uint256 init0_, uint256 init1_) external {
         require(init0_ > 0 || init1_ > 0, "I");
         require(totalSupply() == 0, "TS");
@@ -160,11 +166,17 @@ abstract contract ArrakisV2Storage is
         emit LogSetInits(init0 = init0_, init1 = init1_);
     }
 
+    /// @notice whitelist pools
+    /// @param feeTiers_ list of fee tiers associated to pools to whitelist.
+    /// @dev only be callable by owner.
     function addPools(uint24[] calldata feeTiers_) external onlyOwner {
         _addPools(feeTiers_, address(token0), address(token1));
         emit LogAddPools(feeTiers_);
     }
 
+    /// @notice unwhitelist pools
+    /// @param pools_ list of pool to remove from whitelist.
+    /// @dev only be callable by owner.
     function removePools(address[] calldata pools_) external onlyOwner {
         for (uint256 i = 0; i < pools_.length; i++) {
             require(_pools.contains(pools_[i]), "NP");
@@ -174,11 +186,17 @@ abstract contract ArrakisV2Storage is
         emit LogRemovePools(pools_);
     }
 
+    /// @notice whitelist routers
+    /// @param routers_ list of routers addresses to whitelist.
+    /// @dev only be callable by owner.
     function whitelistRouters(address[] calldata routers_) external onlyOwner {
         _whitelistRouters(routers_);
         emit LogWhitelistRouters(routers_);
     }
 
+    /// @notice blacklist routers
+    /// @param routers_ list of routers addresses to blacklist.
+    /// @dev only be callable by owner.
     function blacklistRouters(address[] calldata routers_) external onlyOwner {
         for (uint256 i = 0; i < routers_.length; i++) {
             require(_routers.contains(routers_[i]), "RW");
@@ -188,18 +206,30 @@ abstract contract ArrakisV2Storage is
         emit LogBlacklistRouters(routers_);
     }
 
+    /// @notice set manager
+    /// @param manager_ manager address.
+    /// @dev only be callable by owner.
     function setManager(address manager_) external onlyOwner {
         emit LogSetManager(manager = manager_);
     }
 
+    /// @notice set manager fee bps
+    /// @param managerFeeBPS_ manager fee.
+    /// @dev only be callable by manager.
     function setManagerFeeBPS(uint16 managerFeeBPS_) external onlyManager {
         emit LogSetManagerFeeBPS(managerFeeBPS = managerFeeBPS_);
     }
 
+    /// @notice set restricted minter
+    /// @param minter_ address of restricted minter.
+    /// @dev only be callable by owner.
     function setRestrictedMint(address minter_) external onlyOwner {
         emit LogRestrictedMint(restrictedMint = minter_);
     }
 
+    /// @notice set burn buffer
+    /// @param newBurnBuffer_ buffer value.
+    /// @dev only be callable by owner.
     function setBurnBuffer(uint16 newBurnBuffer_) external onlyOwner {
         require(newBurnBuffer_ < 5000, "MTMB");
         emit LogSetBurnBuffer(_burnBuffer = newBurnBuffer_);
@@ -209,6 +239,8 @@ abstract contract ArrakisV2Storage is
 
     // #region getter functions
 
+    /// @notice get list of ranges where liquidity are put
+    /// @return ranges list of ranges
     function getRanges() external view returns (Range[] memory) {
         return ranges;
     }
@@ -220,14 +252,8 @@ abstract contract ArrakisV2Storage is
     function _uniswapV3CallBack(uint256 amount0_, uint256 amount1_) internal {
         require(_pools.contains(msg.sender), "CC");
 
-        if (
-            amount0_ > 0 &&
-            amount0_ <= token0.balanceOf(address(this)) - managerBalance0
-        ) token0.safeTransfer(msg.sender, amount0_);
-        if (
-            amount1_ > 0 &&
-            amount1_ <= token1.balanceOf(address(this)) - managerBalance1
-        ) token1.safeTransfer(msg.sender, amount1_);
+        if (amount0_ > 0) token0.safeTransfer(msg.sender, amount0_);
+        if (amount1_ > 0) token1.safeTransfer(msg.sender, amount1_);
     }
 
     function _addPools(
