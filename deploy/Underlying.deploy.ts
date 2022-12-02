@@ -22,7 +22,6 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     from: deployer,
     libraries: {
       Position: (await ethers.getContract("Position")).address,
-      Manager: (await ethers.getContract("Manager")).address,
     },
     log: hre.network.name != "hardhat" ? true : false,
   });
@@ -39,4 +38,4 @@ func.skip = async (hre: HardhatRuntimeEnvironment) => {
   return shouldSkip ? true : false;
 };
 func.tags = ["Underlying"];
-func.dependencies = ["Position", "Manager"];
+func.dependencies = ["Position"];

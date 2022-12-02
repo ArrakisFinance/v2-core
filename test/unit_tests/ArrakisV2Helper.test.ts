@@ -118,6 +118,7 @@ describe("ArrakisV2Helper functions unit test", function () {
           init1: res.amount1,
           manager: managerProxyMock.address,
           routers: [],
+          burnBuffer: 1000,
         },
         true
       );
@@ -269,16 +270,7 @@ describe("ArrakisV2Helper functions unit test", function () {
     }
   );
 
-  it("#0: get ranges of vault", async () => {
-    const ranges = await arrakisV2Helper.ranges(arrakisV2.address);
-
-    expect(ranges.length).to.be.eq(1);
-    expect(ranges[0].lowerTick).to.be.eq(lowerTick);
-    expect(ranges[0].upperTick).to.be.eq(upperTick);
-    expect(ranges[0].feeTier).to.be.eq(500);
-  });
-
-  it("#1: get token0 and token1 amounts of vault for first range", async () => {
+  it("#0: get token0 and token1 amounts of vault for first range", async () => {
     const result = await arrakisV2Helper.token0AndToken1ByRange(
       [
         {
@@ -296,7 +288,7 @@ describe("ArrakisV2Helper functions unit test", function () {
     expect(result.amount1s[0].amount).to.be.gt(0);
   });
 
-  it("#2: get token0 and token1 amounts with their fees of vault for first range with fees", async () => {
+  it("#1: get token0 and token1 amounts with their fees of vault for first range with fees", async () => {
     const result = await arrakisV2Helper.token0AndToken1PlusFeesByRange(
       [
         {
@@ -316,14 +308,14 @@ describe("ArrakisV2Helper functions unit test", function () {
     expect(result.fee1s[0].amount).to.be.gt(0);
   });
 
-  it("#3: get token0 and token1 amounts of vault ", async () => {
+  it("#2: get token0 and token1 amounts of vault ", async () => {
     const result = await arrakisV2Helper.totalUnderlying(arrakisV2.address);
 
     expect(result.amount0).to.be.gt(0);
     expect(result.amount1).to.be.gt(0);
   });
 
-  it("#4: get token0 and token1 with their fees amounts of vault ", async () => {
+  it("#3: get token0 and token1 with their fees amounts of vault ", async () => {
     const result = await arrakisV2Helper.totalUnderlyingWithFees(
       arrakisV2.address
     );
@@ -333,7 +325,7 @@ describe("ArrakisV2Helper functions unit test", function () {
     expect(result.fee0).to.be.eq(0);
     expect(result.fee1).to.be.gt(0);
   });
-  it("#5: get token0 and token1 with their fees and left over amounts of vault ", async () => {
+  it("#4: get token0 and token1 with their fees and left over amounts of vault ", async () => {
     const result = await arrakisV2Helper.totalUnderlyingWithFeesAndLeftOver(
       arrakisV2.address
     );
