@@ -33,21 +33,14 @@ import {
 } from "./structs/SArrakisV2.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-/// @title Smart contract for resolver/ computing payload
-/// that need to be sent to Arrakis V2 vault.
+/// @title ArrakisV2Resolver helpers that resolve / compute payloads for ArrakisV2 calls
 contract ArrakisV2Resolver is IArrakisV2Resolver {
     IUniswapV3Factory public immutable factory;
     IArrakisV2Helper public immutable helper;
-    ISwapRouter public immutable swapRouter;
 
-    constructor(
-        IUniswapV3Factory factory_,
-        IArrakisV2Helper helper_,
-        ISwapRouter swapRouter_
-    ) {
+    constructor(IUniswapV3Factory factory_, IArrakisV2Helper helper_) {
         factory = factory_;
         helper = helper_;
-        swapRouter = swapRouter_;
     }
 
     /// @notice Standard rebalance (without swapping)
@@ -145,7 +138,7 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
         }
     }
 
-    /// @notice Standard Burn proportional burn.
+    /// @notice Standard Burn (proportional burn from all ranges).
     /// @param amountToBurn_ amount of Arrakis V2 token to burn.
     /// @param vaultV2_ Arrakis V2 vault.
     /// @return burns list of ranges and liquidities to burn.
@@ -239,12 +232,9 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
     /// @param vaultV2_ Arrakis V2 vault.
     /// @param amount0Max_ max amount of token 0.
     /// @param amount1Max_ max amount of token 1.
-    /// @return amount0 of token 0 need to be approved to Arrakis V2 vault
-    /// before calling mint function of Arrakis V2
-    /// @return amount1 of token 1 need to be approved to Arrakis V2 vault
-    /// before calling mint function of Arrakis V2
-    /// @return mintAmount amount to be sent as param to mint function of
-    /// Arrakis V2 vault.
+    /// @return amount0 of token 0 expected to be deposited.
+    /// @return amount1 of token 1 expected to be deposited.
+    /// @return mintAmount amount f shares expected to be minted.
     // solhint-disable-next-line function-max-lines
     function getMintAmounts(
         IArrakisV2 vaultV2_,
@@ -282,8 +272,8 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
                 );
     }
 
-    /// @notice return amount0 and amount1 of token0 and token1
-    /// for a correspond amount of liquidity.
+    /// @notice Exposes Uniswap's getAmountsForLiquidity helper function,
+    /// returns amount0 and amount1 for a given amount of liquidity.
     function getAmountsForLiquidity(
         int24 currentTick_,
         int24 lowerTick_,

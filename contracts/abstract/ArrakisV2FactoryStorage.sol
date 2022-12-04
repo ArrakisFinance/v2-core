@@ -44,6 +44,7 @@ abstract contract ArrakisV2FactoryStorage is
     /// @notice upgrade vaults instance using transparent proxy
     /// with the current implementation
     /// @param vaults_ the list of vault.
+    /// @dev only callable by owner
     function upgradeVaults(address[] memory vaults_) external onlyOwner {
         for (uint256 i = 0; i < vaults_.length; i++) {
             ITransparentUpgradeableProxy(vaults_[i]).upgradeTo(
@@ -56,6 +57,7 @@ abstract contract ArrakisV2FactoryStorage is
     /// with the current implementation and call the instance
     /// @param vaults_ the list of vault.
     /// @param datas_ payloads of instances call.
+    /// @dev only callable by owner
     function upgradeVaultsAndCall(
         address[] memory vaults_,
         bytes[] calldata datas_
@@ -71,6 +73,7 @@ abstract contract ArrakisV2FactoryStorage is
 
     /// @notice make the vault immutable
     /// @param vaults_ the list of vault.
+    /// @dev only callable by owner
     function makeVaultsImmutable(address[] memory vaults_) external onlyOwner {
         for (uint256 i = 0; i < vaults_.length; i++) {
             ITransparentUpgradeableProxy(vaults_[i]).changeAdmin(address(1));

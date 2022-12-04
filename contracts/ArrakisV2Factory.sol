@@ -28,12 +28,9 @@ contract ArrakisV2Factory is ArrakisV2FactoryStorage {
         ArrakisV2FactoryStorage(arrakisV2Beacon_)
     {} // solhint-disable-line no-empty-blocks
 
-    /// @notice will deploy an instance of Vault using Beacon or
-    /// transparentProxy
-    /// @param params_ contains all data needed to create an instance of
-    /// ArrakisV2 vault.
-    /// @param isBeacon_ boolean, if true the instance will be a beacon proxy
-    /// or a transparent proxy.
+    /// @notice Deploys an instance of Vault using BeaconProxy or TransparentProxy.
+    /// @param params_ contains all data needed to create an instance of ArrakisV2 vault.
+    /// @param isBeacon_ boolean, if true the instance will be BeaconProxy or TransparentProxy.
     /// @return vault the address of the Arrakis V2 vault instance created.
     function deployVault(InitializePayload calldata params_, bool isBeacon_)
         external
@@ -46,8 +43,7 @@ contract ArrakisV2Factory is ArrakisV2FactoryStorage {
 
     // #region public external view functions.
 
-    /// @notice get Arrakis V2 vault token name for
-    /// two corresponding tokens.
+    /// @notice get Arrakis V2 standard token name for two corresponding tokens.
     /// @param token0_ address of the first token.
     /// @param token1_ address of the second token.
     /// @return name name of the arrakis V2 vault.

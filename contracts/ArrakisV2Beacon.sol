@@ -5,7 +5,7 @@ import {
     UpgradeableBeacon
 } from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 
-/// @title ArrakisV2Beacon sm containing vault implementation.
+/// @title ArrakisV2Beacon stores vault implementation.
 contract ArrakisV2Beacon is UpgradeableBeacon {
     // solhint-disable-next-line no-empty-blocks
     constructor(address implementation_, address owner_)
