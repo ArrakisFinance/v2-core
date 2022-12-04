@@ -10,9 +10,6 @@ import {IArrakisV2} from "./interfaces/IArrakisV2.sol";
 import {
     IUniswapV3Pool
 } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {
-    ISwapRouter
-} from "@arrakisfi/v3-lib-0.8/contracts/interfaces/ISwapRouter.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
 import {Position as PositionHelper} from "./libraries/Position.sol";
