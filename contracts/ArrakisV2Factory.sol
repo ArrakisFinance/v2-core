@@ -61,22 +61,35 @@ contract ArrakisV2Factory is ArrakisV2FactoryStorage {
         return _append("Arrakis Vault V2 ", symbol0, "/", symbol1);
     }
 
-    /// @notice numVaults counts the total number of vaults in existence
-    /// @return result total number of vaults deployed
-    function numVaults() public view returns (uint256 result) {
-        return _vaults.length();
-    }
-
     /// @notice get a list of vaults created by this factory
+    /// @param startIndex_ start index
+    /// @param endIndex_ end index
     /// @return vaults list of all created vaults.
-    function vaults() public view returns (address[] memory) {
-        uint256 length = numVaults();
-        address[] memory vs = new address[](length);
-        for (uint256 i = 0; i < length; i++) {
+    function vaults(uint256 startIndex_, uint256 endIndex_)
+        external
+        view
+        returns (address[] memory)
+    {
+        require(
+            startIndex_ < endIndex_,
+            "start index is equal or greater than end index."
+        );
+        require(
+            endIndex_ <= numVaults(),
+            "end index is greater than vaults array length"
+        );
+        address[] memory vs = new address[](endIndex_ - startIndex_);
+        for (uint256 i = startIndex_; i < endIndex_; i++) {
             vs[i] = _vaults.at(i);
         }
 
         return vs;
+    }
+
+    /// @notice numVaults counts the total number of vaults in existence
+    /// @return result total number of vaults deployed
+    function numVaults() public view returns (uint256 result) {
+        return _vaults.length();
     }
 
     // #endregion public external view functions.

@@ -11,6 +11,11 @@ contract ArrakisV2Beacon is UpgradeableBeacon {
     constructor(address implementation_, address owner_)
         UpgradeableBeacon(implementation_)
     {
+        require(
+            implementation_ != address(0),
+            "implementation is address zero"
+        );
+        require(owner_ != address(0), "owner is address zero");
         _transferOwnership(owner_);
     }
 }

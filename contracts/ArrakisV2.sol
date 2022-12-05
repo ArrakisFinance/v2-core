@@ -28,6 +28,7 @@ import {
 import {Position} from "./libraries/Position.sol";
 import {Pool} from "./libraries/Pool.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
+import {hundredPercent} from "./constants/CArrakisV2.sol";
 
 /// @title Arrakis vault version 2
 /// @notice Smart contract managing liquidity providing strategy using
@@ -71,8 +72,8 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
             "R"
         );
         address me = address(this);
-        uint256 totalSupply = totalSupply();
-        bool isTotalSupplyGtZero = totalSupply > 0;
+        uint256 ts = totalSupply();
+        bool isTotalSupplyGtZero = ts > 0;
         (
             uint256 current0,
             uint256 current1,
@@ -89,7 +90,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                     })
                 )
                 : (init0, init1, 0, 0);
-        uint256 denominator = isTotalSupplyGtZero ? totalSupply : 1 ether;
+        uint256 denominator = isTotalSupplyGtZero ? ts : 1 ether;
 
         /// @dev current0 and current1 include fees and left over (but not manager balances)
         amount0 = FullMath.mulDivRoundingUp(mintAmount_, current0, denominator);
@@ -146,8 +147,10 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         uint256 burnAmount_,
         address receiver_
     ) external nonReentrant returns (uint256 amount0, uint256 amount1) {
-        uint256 totalSupply = totalSupply();
-        require(totalSupply > 0, "TS");
+        require(burnAmount_ > 0, "BA");
+
+        uint256 ts = totalSupply();
+        require(ts > 0, "TS");
 
         UnderlyingOutput memory underlying;
         (
@@ -173,16 +176,8 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
 
         {
             // the proportion of user balance.
-            amount0 = FullMath.mulDiv(
-                underlying.amount0,
-                burnAmount_,
-                totalSupply
-            );
-            amount1 = FullMath.mulDiv(
-                underlying.amount1,
-                burnAmount_,
-                totalSupply
-            );
+            amount0 = FullMath.mulDiv(underlying.amount0, burnAmount_, ts);
+            amount1 = FullMath.mulDiv(underlying.amount1, burnAmount_, ts);
         }
 
         if (
@@ -209,8 +204,15 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
 
         Withdraw memory total;
         {
-            for (uint256 i = 0; i < burns_.length; i++) {
+            for (uint256 i; i < burns_.length; i++) {
                 require(burns_[i].liquidity != 0, "LZ");
+                {
+                    (bool exist, ) = Position.rangeExist(
+                        ranges,
+                        burns_[i].range
+                    );
+                    require(exist, "RRNE");
+                }
 
                 Withdraw memory withdraw = _withdraw(
                     IUniswapV3Pool(
@@ -250,13 +252,13 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         require(
             (leftover0 <= underlying.leftOver0) ||
                 ((leftover0 - underlying.leftOver0) <=
-                    FullMath.mulDiv(total.burn0, _burnBuffer, 10000)),
+                    FullMath.mulDiv(total.burn0, _burnBuffer, hundredPercent)),
             "L0"
         );
         require(
             (leftover1 <= underlying.leftOver1) ||
                 ((leftover1 - underlying.leftOver1) <=
-                    FullMath.mulDiv(total.burn1, _burnBuffer, 10000)),
+                    FullMath.mulDiv(total.burn1, _burnBuffer, hundredPercent)),
             "L1"
         );
 
@@ -282,7 +284,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         Rebalance calldata rebalanceParams_,
         Range[] calldata rangesToRemove_
     ) external onlyManager {
-        for (uint256 i = 0; i < rangesToAdd_.length; i++) {
+        for (uint256 i; i < rangesToAdd_.length; i++) {
             (bool exist, ) = Position.rangeExist(ranges, rangesToAdd_[i]);
             require(!exist, "NRRE");
             // check that the pool exist on Uniswap V3.
@@ -300,7 +302,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         _rebalance(rebalanceParams_);
         require(token0.balanceOf(address(this)) >= managerBalance0, "MB0");
         require(token1.balanceOf(address(this)) >= managerBalance1, "MB1");
-        for (uint256 i = 0; i < rangesToRemove_.length; i++) {
+        for (uint256 i; i < rangesToRemove_.length; i++) {
             (bool exist, uint256 index) = Position.rangeExist(
                 ranges,
                 rangesToRemove_[i]
@@ -314,8 +316,6 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                 address(token1),
                 rangesToRemove_[i]
             );
-
-            delete ranges[index];
 
             for (uint256 j = index; j < ranges.length - 1; j++) {
                 ranges[j] = ranges[j + 1];
@@ -352,10 +352,13 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         // Burns.
         uint256 aggregator0 = 0;
         uint256 aggregator1 = 0;
-        for (uint256 i = 0; i < rebalanceParams_.removes.length; i++) {
-            address poolAddr = factory.getPool(
-                address(token0),
-                address(token1),
+        IUniswapV3Factory mFactory = factory;
+        address mToken0Addr = address(token0);
+        address mToken1Addr = address(token1);
+        for (uint256 i; i < rebalanceParams_.removes.length; i++) {
+            address poolAddr = mFactory.getPool(
+                mToken0Addr,
+                mToken1Addr,
                 rebalanceParams_.removes[i].range.feeTier
             );
             IUniswapV3Pool pool = IUniswapV3Pool(poolAddr);
@@ -432,11 +435,11 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         // Mints.
         aggregator0 = 0;
         aggregator1 = 0;
-        for (uint256 i = 0; i < rebalanceParams_.deposits.length; i++) {
+        for (uint256 i; i < rebalanceParams_.deposits.length; i++) {
             IUniswapV3Pool pool = IUniswapV3Pool(
-                factory.getPool(
-                    address(token0),
-                    address(token1),
+                mFactory.getPool(
+                    mToken0Addr,
+                    mToken1Addr,
                     rebalanceParams_.deposits[i].range.feeTier
                 )
             );
@@ -488,7 +491,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
     }
 
     function _applyFees(uint256 fee0_, uint256 fee1_) internal {
-        managerBalance0 += (fee0_ * managerFeeBPS) / 10000;
-        managerBalance1 += (fee1_ * managerFeeBPS) / 10000;
+        managerBalance0 += (fee0_ * managerFeeBPS) / hundredPercent;
+        managerBalance1 += (fee1_ * managerFeeBPS) / hundredPercent;
     }
 }

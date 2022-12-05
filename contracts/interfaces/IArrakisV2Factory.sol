@@ -19,7 +19,10 @@ interface IArrakisV2Factory {
 
     function numVaults() external view returns (uint256);
 
-    function vaults() external view returns (address[] memory);
+    function vaults(uint256 startIndex_, uint256 endIndex_)
+        external
+        view
+        returns (address[] memory);
 
     function getProxyAdmin(address proxy) external view returns (address);
 
