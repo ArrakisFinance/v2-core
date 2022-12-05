@@ -8,7 +8,6 @@ import {
     IERC20,
     SafeERC20
 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IManager} from "../interfaces/IManager.sol";
 import {
     OwnableUpgradeable
 } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -22,8 +21,9 @@ import {
     EnumerableSet
 } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {Range, Rebalance, InitializePayload} from "../structs/SArrakisV2.sol";
+import {fiftyPercent} from "../constants/CArrakisV2.sol";
 
-/// @title Arrakis V2 Storage Smart Contract
+/// @title ArrakisV2Storage base contract containing all ArrakisV2 storage variables.
 // solhint-disable-next-line max-states-count
 abstract contract ArrakisV2Storage is
     OwnableUpgradeable,
@@ -65,20 +65,24 @@ abstract contract ArrakisV2Storage is
     // #region events
 
     event LogMint(
-        address receiver,
+        address indexed receiver,
         uint256 mintAmount,
         uint256 amount0In,
         uint256 amount1In
     );
 
     event LogBurn(
-        address receiver,
+        address indexed receiver,
         uint256 burnAmount,
         uint256 amount0Out,
         uint256 amount1Out
     );
 
-    event LPBurned(address user, uint256 burnAmount0, uint256 burnAmount1);
+    event LPBurned(
+        address indexed user,
+        uint256 burnAmount0,
+        uint256 burnAmount1
+    );
 
     event LogRebalance(Rebalance rebalanceParams);
 
@@ -126,7 +130,9 @@ abstract contract ArrakisV2Storage is
         require(params_.feeTiers.length > 0, "NFT");
         require(params_.token0 != address(0), "T0");
         require(params_.token0 < params_.token1, "WTO");
-
+        require(params_.owner != address(0), "OAZ");
+        require(params_.manager != address(0), "MAZ");
+        require(params_.burnBuffer <= fiftyPercent, "MTMB");
         require(params_.init0 > 0 || params_.init1 > 0, "I");
 
         __ERC20_init(name_, symbol_);
@@ -143,19 +149,21 @@ abstract contract ArrakisV2Storage is
         manager = params_.manager;
 
         _burnBuffer = params_.burnBuffer;
+        init0 = params_.init0;
+        init1 = params_.init1;
 
         emit LogAddPools(params_.feeTiers);
-        emit LogSetInits(init0 = params_.init0, init1 = params_.init1);
+        emit LogSetInits(params_.init0, params_.init1);
         emit LogSetManager(params_.manager);
         emit LogSetBurnBuffer(params_.burnBuffer);
     }
 
     // #region setter functions
 
-    /// @notice set initials virtual allocation of token0 and token1
+    /// @notice set initial virtual allocation of token0 and token1
     /// @param init0_ initial virtual allocation of token 0.
     /// @param init1_ initial virtual allocation of token 1.
-    /// @dev only be callable by restrictedMinter or by default by the owner.
+    /// @dev only callable by restrictedMint or by owner if restrictedMint is unset.
     function setInits(uint256 init0_, uint256 init1_) external {
         require(init0_ > 0 || init1_ > 0, "I");
         require(totalSupply() == 0, "TS");
@@ -168,15 +176,15 @@ abstract contract ArrakisV2Storage is
 
     /// @notice whitelist pools
     /// @param feeTiers_ list of fee tiers associated to pools to whitelist.
-    /// @dev only be callable by owner.
+    /// @dev only callable by owner.
     function addPools(uint24[] calldata feeTiers_) external onlyOwner {
         _addPools(feeTiers_, address(token0), address(token1));
         emit LogAddPools(feeTiers_);
     }
 
     /// @notice unwhitelist pools
-    /// @param pools_ list of pool to remove from whitelist.
-    /// @dev only be callable by owner.
+    /// @param pools_ list of pools to remove from whitelist.
+    /// @dev only callable by owner.
     function removePools(address[] calldata pools_) external onlyOwner {
         for (uint256 i = 0; i < pools_.length; i++) {
             require(_pools.contains(pools_[i]), "NP");
@@ -187,8 +195,8 @@ abstract contract ArrakisV2Storage is
     }
 
     /// @notice whitelist routers
-    /// @param routers_ list of routers addresses to whitelist.
-    /// @dev only be callable by owner.
+    /// @param routers_ list of router addresses to whitelist.
+    /// @dev only callable by owner.
     function whitelistRouters(address[] calldata routers_) external onlyOwner {
         _whitelistRouters(routers_);
         emit LogWhitelistRouters(routers_);
@@ -196,7 +204,7 @@ abstract contract ArrakisV2Storage is
 
     /// @notice blacklist routers
     /// @param routers_ list of routers addresses to blacklist.
-    /// @dev only be callable by owner.
+    /// @dev only callable by owner.
     function blacklistRouters(address[] calldata routers_) external onlyOwner {
         for (uint256 i = 0; i < routers_.length; i++) {
             require(_routers.contains(routers_[i]), "RW");
@@ -208,38 +216,42 @@ abstract contract ArrakisV2Storage is
 
     /// @notice set manager
     /// @param manager_ manager address.
-    /// @dev only be callable by owner.
+    /// @dev only callable by owner.
     function setManager(address manager_) external onlyOwner {
-        emit LogSetManager(manager = manager_);
+        manager = manager_;
+        emit LogSetManager(manager_);
     }
 
     /// @notice set manager fee bps
-    /// @param managerFeeBPS_ manager fee.
-    /// @dev only be callable by manager.
+    /// @param managerFeeBPS_ manager fee in basis points.
+    /// @dev only callable by manager.
     function setManagerFeeBPS(uint16 managerFeeBPS_) external onlyManager {
-        emit LogSetManagerFeeBPS(managerFeeBPS = managerFeeBPS_);
+        managerFeeBPS = managerFeeBPS_;
+        emit LogSetManagerFeeBPS(managerFeeBPS_);
     }
 
     /// @notice set restricted minter
     /// @param minter_ address of restricted minter.
-    /// @dev only be callable by owner.
+    /// @dev only callable by owner.
     function setRestrictedMint(address minter_) external onlyOwner {
-        emit LogRestrictedMint(restrictedMint = minter_);
+        restrictedMint = minter_;
+        emit LogRestrictedMint(minter_);
     }
 
     /// @notice set burn buffer
     /// @param newBurnBuffer_ buffer value.
-    /// @dev only be callable by owner.
+    /// @dev only callable by owner.
     function setBurnBuffer(uint16 newBurnBuffer_) external onlyOwner {
-        require(newBurnBuffer_ < 5000, "MTMB");
-        emit LogSetBurnBuffer(_burnBuffer = newBurnBuffer_);
+        require(newBurnBuffer_ <= fiftyPercent, "MTMB");
+        _burnBuffer = newBurnBuffer_;
+        emit LogSetBurnBuffer(newBurnBuffer_);
     }
 
     // #endregion setter functions
 
     // #region getter functions
 
-    /// @notice get list of ranges where liquidity are put
+    /// @notice get full list of ranges, guaranteed to contain all active vault LP Positions.
     /// @return ranges list of ranges
     function getRanges() external view returns (Range[] memory) {
         return ranges;

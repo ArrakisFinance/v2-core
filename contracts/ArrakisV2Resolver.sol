@@ -10,9 +10,6 @@ import {IArrakisV2} from "./interfaces/IArrakisV2.sol";
 import {
     IUniswapV3Pool
 } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {
-    ISwapRouter
-} from "@arrakisfi/v3-lib-0.8/contracts/interfaces/ISwapRouter.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
 import {Position as PositionHelper} from "./libraries/Position.sol";
@@ -32,22 +29,16 @@ import {
     SwapPayload
 } from "./structs/SArrakisV2.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import {hundredPercent} from "./constants/CArrakisV2.sol";
 
-/// @title Smart contract for resolver/ computing payload
-/// that need to be sent to Arrakis V2 vault.
+/// @title ArrakisV2Resolver helpers that resolve / compute payloads for ArrakisV2 calls
 contract ArrakisV2Resolver is IArrakisV2Resolver {
     IUniswapV3Factory public immutable factory;
     IArrakisV2Helper public immutable helper;
-    ISwapRouter public immutable swapRouter;
 
-    constructor(
-        IUniswapV3Factory factory_,
-        IArrakisV2Helper helper_,
-        ISwapRouter swapRouter_
-    ) {
+    constructor(IUniswapV3Factory factory_, IArrakisV2Helper helper_) {
         factory = factory_;
         helper = helper_;
-        swapRouter = swapRouter_;
     }
 
     /// @notice Standard rebalance (without swapping)
@@ -77,11 +68,11 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
             );
             uint256 numberOfPosLiq;
 
-            for (uint256 i = 0; i < ranges.length; i++) {
+            for (uint256 i; i < ranges.length; i++) {
                 uint128 liquidity;
                 {
                     (liquidity, , , , ) = IUniswapV3Pool(
-                        vaultV2_.factory().getPool(
+                        factory.getPool(
                             token0Addr,
                             token1Addr,
                             ranges[i].feeTier
@@ -106,7 +97,7 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
             rebalanceParams.removes = new PositionLiquidity[](numberOfPosLiq);
             uint256 j;
 
-            for (uint256 i = 0; i < pl.length; i++) {
+            for (uint256 i; i < pl.length; i++) {
                 if (pl[i].liquidity > 0) {
                     rebalanceParams.removes[j] = pl[i];
                     j++;
@@ -120,10 +111,10 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
             rangeWeights_.length
         );
 
-        for (uint256 i = 0; i < rangeWeights_.length; i++) {
+        for (uint256 i; i < rangeWeights_.length; i++) {
             RangeWeight memory rangeWeight = rangeWeights_[i];
             (uint160 sqrtPriceX96, , , , , , ) = IUniswapV3Pool(
-                vaultV2_.factory().getPool(
+                factory.getPool(
                     token0Addr,
                     token1Addr,
                     rangeWeight.range.feeTier
@@ -134,8 +125,8 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
                 sqrtPriceX96,
                 TickMath.getSqrtRatioAtTick(rangeWeight.range.lowerTick),
                 TickMath.getSqrtRatioAtTick(rangeWeight.range.upperTick),
-                FullMath.mulDiv(amount0, rangeWeight.weight, 10000),
-                FullMath.mulDiv(amount1, rangeWeight.weight, 10000)
+                FullMath.mulDiv(amount0, rangeWeight.weight, hundredPercent),
+                FullMath.mulDiv(amount1, rangeWeight.weight, hundredPercent)
             );
 
             rebalanceParams.deposits[i] = PositionLiquidity({
@@ -145,7 +136,7 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
         }
     }
 
-    /// @notice Standard Burn proportional burn.
+    /// @notice Standard Burn (proportional burn from all ranges).
     /// @param amountToBurn_ amount of Arrakis V2 token to burn.
     /// @param vaultV2_ Arrakis V2 vault.
     /// @return burns list of ranges and liquidities to burn.
@@ -206,11 +197,11 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
 
         burns = new BurnLiquidity[](ranges.length);
 
-        for (uint256 i = 0; i < ranges.length; i++) {
+        for (uint256 i; i < ranges.length; i++) {
             uint128 liquidity;
             {
                 (liquidity, , , , ) = IUniswapV3Pool(
-                    vaultV2_.factory().getPool(
+                    factory.getPool(
                         address(vaultV2_.token0()),
                         address(vaultV2_.token1()),
                         ranges[i].feeTier
@@ -239,12 +230,9 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
     /// @param vaultV2_ Arrakis V2 vault.
     /// @param amount0Max_ max amount of token 0.
     /// @param amount1Max_ max amount of token 1.
-    /// @return amount0 of token 0 need to be approved to Arrakis V2 vault
-    /// before calling mint function of Arrakis V2
-    /// @return amount1 of token 1 need to be approved to Arrakis V2 vault
-    /// before calling mint function of Arrakis V2
-    /// @return mintAmount amount to be sent as param to mint function of
-    /// Arrakis V2 vault.
+    /// @return amount0 of token 0 expected to be deposited.
+    /// @return amount1 of token 1 expected to be deposited.
+    /// @return mintAmount amount f shares expected to be minted.
     // solhint-disable-next-line function-max-lines
     function getMintAmounts(
         IArrakisV2 vaultV2_,
@@ -282,14 +270,14 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
                 );
     }
 
-    /// @notice return amount0 and amount1 of token0 and token1
-    /// for a correspond amount of liquidity.
+    /// @notice Exposes Uniswap's getAmountsForLiquidity helper function,
+    /// returns amount0 and amount1 for a given amount of liquidity.
     function getAmountsForLiquidity(
         int24 currentTick_,
         int24 lowerTick_,
         int24 upperTick_,
         uint128 liquidity_
-    ) public pure returns (uint256 amount0, uint256 amount1) {
+    ) external pure returns (uint256 amount0, uint256 amount1) {
         return
             LiquidityAmounts.getAmountsForLiquidity(
                 TickMath.getSqrtRatioAtTick(currentTick_),
@@ -310,7 +298,7 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
             totalWeight += rangeWeights_[i].weight;
         }
 
-        require(totalWeight <= 10000, "total weight");
+        require(totalWeight <= hundredPercent, "total weight");
     }
 
     // #endregion view internal functions.

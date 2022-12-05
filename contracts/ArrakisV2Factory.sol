@@ -28,12 +28,9 @@ contract ArrakisV2Factory is ArrakisV2FactoryStorage {
         ArrakisV2FactoryStorage(arrakisV2Beacon_)
     {} // solhint-disable-line no-empty-blocks
 
-    /// @notice will deploy an instance of Vault using Beacon or
-    /// transparentProxy
-    /// @param params_ contains all data needed to create an instance of
-    /// ArrakisV2 vault.
-    /// @param isBeacon_ boolean, if true the instance will be a beacon proxy
-    /// or a transparent proxy.
+    /// @notice Deploys an instance of Vault using BeaconProxy or TransparentProxy.
+    /// @param params_ contains all data needed to create an instance of ArrakisV2 vault.
+    /// @param isBeacon_ boolean, if true the instance will be BeaconProxy or TransparentProxy.
     /// @return vault the address of the Arrakis V2 vault instance created.
     function deployVault(InitializePayload calldata params_, bool isBeacon_)
         external
@@ -46,8 +43,7 @@ contract ArrakisV2Factory is ArrakisV2FactoryStorage {
 
     // #region public external view functions.
 
-    /// @notice get Arrakis V2 vault token name for
-    /// two corresponding tokens.
+    /// @notice get Arrakis V2 standard token name for two corresponding tokens.
     /// @param token0_ address of the first token.
     /// @param token1_ address of the second token.
     /// @return name name of the arrakis V2 vault.
@@ -61,22 +57,35 @@ contract ArrakisV2Factory is ArrakisV2FactoryStorage {
         return _append("Arrakis Vault V2 ", symbol0, "/", symbol1);
     }
 
-    /// @notice numVaults counts the total number of vaults in existence
-    /// @return result total number of vaults deployed
-    function numVaults() public view returns (uint256 result) {
-        return _vaults.length();
-    }
-
     /// @notice get a list of vaults created by this factory
+    /// @param startIndex_ start index
+    /// @param endIndex_ end index
     /// @return vaults list of all created vaults.
-    function vaults() public view returns (address[] memory) {
-        uint256 length = numVaults();
-        address[] memory vs = new address[](length);
-        for (uint256 i = 0; i < length; i++) {
+    function vaults(uint256 startIndex_, uint256 endIndex_)
+        external
+        view
+        returns (address[] memory)
+    {
+        require(
+            startIndex_ < endIndex_,
+            "start index is equal or greater than end index."
+        );
+        require(
+            endIndex_ <= numVaults(),
+            "end index is greater than vaults array length"
+        );
+        address[] memory vs = new address[](endIndex_ - startIndex_);
+        for (uint256 i = startIndex_; i < endIndex_; i++) {
             vs[i] = _vaults.at(i);
         }
 
         return vs;
+    }
+
+    /// @notice numVaults counts the total number of vaults in existence
+    /// @return result total number of vaults deployed
+    function numVaults() public view returns (uint256 result) {
+        return _vaults.length();
     }
 
     // #endregion public external view functions.

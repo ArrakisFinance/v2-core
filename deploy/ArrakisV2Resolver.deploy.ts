@@ -25,7 +25,6 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     args: [
       addresses.UniswapV3Factory,
       (await ethers.getContract("ArrakisV2Helper")).address,
-      addresses.SwapRouter,
     ],
     libraries: {
       Position: (await ethers.getContract("Position")).address,

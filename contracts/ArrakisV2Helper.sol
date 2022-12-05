@@ -19,6 +19,7 @@ import {
 } from "./structs/SArrakisV2.sol";
 import {Amount} from "./structs/SArrakisV2Helper.sol";
 
+/// @title ArrakisV2Helper helpers for querying common info about ArrakisV2 vaults
 contract ArrakisV2Helper is IArrakisV2Helper {
     IUniswapV3Factory public immutable factory;
 
@@ -26,10 +27,10 @@ contract ArrakisV2Helper is IArrakisV2Helper {
         factory = factory_;
     }
 
-    /// @notice get underlying, fees and left over separatly.
+    /// @notice get total underlying, also returns uncollected fees and leftover separatly.
     /// @param vault_ Arrakis V2 vault to get underlying info about.
     /// @return underlying struct containing underlying amounts of
-    /// token0 and token1, fees of token0 and token1, finally left over
+    /// token0 and token1, fees of token0 and token1, finally leftover
     /// on vault of token0 and token1.
     function totalUnderlyingWithFeesAndLeftOver(IArrakisV2 vault_)
         external
@@ -38,7 +39,7 @@ contract ArrakisV2Helper is IArrakisV2Helper {
     {
         UnderlyingPayload memory underlyingPayload = UnderlyingPayload({
             ranges: vault_.getRanges(),
-            factory: vault_.factory(),
+            factory: factory,
             token0: address(vault_.token0()),
             token1: address(vault_.token1()),
             self: address(vault_)
@@ -59,7 +60,7 @@ contract ArrakisV2Helper is IArrakisV2Helper {
             IArrakisV2(underlyingPayload.self).managerBalance1();
     }
 
-    /// @notice get underlying, fees.
+    /// @notice get total underlying, also returns uncollected fees separately.
     /// @param vault_ Arrakis V2 vault to get underlying info about.
     /// @return amount0 amount of underlying of token 0.
     /// @return amount1 amount of underlying of token 1.
@@ -77,7 +78,7 @@ contract ArrakisV2Helper is IArrakisV2Helper {
     {
         UnderlyingPayload memory underlyingPayload = UnderlyingPayload({
             ranges: vault_.getRanges(),
-            factory: vault_.factory(),
+            factory: factory,
             token0: address(vault_.token0()),
             token1: address(vault_.token1()),
             self: address(vault_)
@@ -98,7 +99,7 @@ contract ArrakisV2Helper is IArrakisV2Helper {
     {
         UnderlyingPayload memory underlyingPayload = UnderlyingPayload({
             ranges: vault_.getRanges(),
-            factory: vault_.factory(),
+            factory: factory,
             token0: address(vault_.token0()),
             token1: address(vault_.token1()),
             self: address(vault_)
