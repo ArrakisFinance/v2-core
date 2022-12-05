@@ -38,7 +38,7 @@ contract ArrakisV2Helper is IArrakisV2Helper {
     {
         UnderlyingPayload memory underlyingPayload = UnderlyingPayload({
             ranges: vault_.getRanges(),
-            factory: vault_.factory(),
+            factory: factory,
             token0: address(vault_.token0()),
             token1: address(vault_.token1()),
             self: address(vault_)
@@ -77,7 +77,7 @@ contract ArrakisV2Helper is IArrakisV2Helper {
     {
         UnderlyingPayload memory underlyingPayload = UnderlyingPayload({
             ranges: vault_.getRanges(),
-            factory: vault_.factory(),
+            factory: factory,
             token0: address(vault_.token0()),
             token1: address(vault_.token1()),
             self: address(vault_)
@@ -98,7 +98,7 @@ contract ArrakisV2Helper is IArrakisV2Helper {
     {
         UnderlyingPayload memory underlyingPayload = UnderlyingPayload({
             ranges: vault_.getRanges(),
-            factory: vault_.factory(),
+            factory: factory,
             token0: address(vault_.token0()),
             token1: address(vault_.token1()),
             self: address(vault_)

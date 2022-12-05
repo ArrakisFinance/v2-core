@@ -36,6 +36,7 @@ abstract contract ArrakisV2FactoryStorage is
     // #endregion constructor.
 
     function initialize(address _owner_) external initializer {
+        require(_owner_ != address(0), "owner is address zero");
         _transferOwnership(_owner_);
         emit InitFactory(_owner_);
     }
@@ -45,9 +46,14 @@ abstract contract ArrakisV2FactoryStorage is
     /// with the current implementation
     /// @param vaults_ the list of vault.
     function upgradeVaults(address[] memory vaults_) external onlyOwner {
+        address implementation = arrakisV2Beacon.implementation();
+        require(
+            implementation != address(0),
+            "implementation is address zero"
+        );
         for (uint256 i = 0; i < vaults_.length; i++) {
             ITransparentUpgradeableProxy(vaults_[i]).upgradeTo(
-                arrakisV2Beacon.implementation()
+                implementation
             );
         }
     }
@@ -84,7 +90,7 @@ abstract contract ArrakisV2FactoryStorage is
     /// @notice get vault instance admin
     /// @param proxy instance of Arrakis V2.
     /// @return admin address of Arrakis V2 instance admin.
-    function getProxyAdmin(address proxy) public view returns (address) {
+    function getProxyAdmin(address proxy) external view returns (address) {
         // We need to manually run the static call since the getter cannot be flagged as view
         // bytes4(keccak256("admin()")) == 0xf851a440
         (bool success, bytes memory returndata) = proxy.staticcall(
@@ -98,7 +104,7 @@ abstract contract ArrakisV2FactoryStorage is
     /// @param proxy instance of Arrakis V2.
     /// @return implementation address of Arrakis V2 implementation.
     function getProxyImplementation(address proxy)
-        public
+        external
         view
         returns (address)
     {

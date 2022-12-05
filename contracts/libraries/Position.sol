@@ -37,7 +37,7 @@ library Position {
         pure
         returns (bool ok, uint256 index)
     {
-        for (uint256 i = 0; i < currentRanges_.length; i++) {
+        for (uint256 i; i < currentRanges_.length; i++) {
             ok =
                 range_.lowerTick == currentRanges_[i].lowerTick &&
                 range_.upperTick == currentRanges_[i].upperTick &&
