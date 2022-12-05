@@ -5,7 +5,6 @@ import {
     IUniswapV3Factory
 } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IManager} from "./IManager.sol";
 import {InitializePayload} from "../structs/SArrakisV2.sol";
 import {BurnLiquidity, Range, Rebalance} from "../structs/SArrakisV2.sol";
 

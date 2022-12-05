@@ -8,7 +8,6 @@ import {
     IERC20,
     SafeERC20
 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IManager} from "../interfaces/IManager.sol";
 import {
     OwnableUpgradeable
 } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -22,6 +21,7 @@ import {
     EnumerableSet
 } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {Range, Rebalance, InitializePayload} from "../structs/SArrakisV2.sol";
+import {fiftyPercent} from "../constants/CArrakisV2.sol";
 
 /// @title ArrakisV2Storage base contract containing all ArrakisV2 storage variables.
 // solhint-disable-next-line max-states-count
@@ -65,20 +65,24 @@ abstract contract ArrakisV2Storage is
     // #region events
 
     event LogMint(
-        address receiver,
+        address indexed receiver,
         uint256 mintAmount,
         uint256 amount0In,
         uint256 amount1In
     );
 
     event LogBurn(
-        address receiver,
+        address indexed receiver,
         uint256 burnAmount,
         uint256 amount0Out,
         uint256 amount1Out
     );
 
-    event LPBurned(address user, uint256 burnAmount0, uint256 burnAmount1);
+    event LPBurned(
+        address indexed user,
+        uint256 burnAmount0,
+        uint256 burnAmount1
+    );
 
     event LogRebalance(Rebalance rebalanceParams);
 
@@ -126,7 +130,9 @@ abstract contract ArrakisV2Storage is
         require(params_.feeTiers.length > 0, "NFT");
         require(params_.token0 != address(0), "T0");
         require(params_.token0 < params_.token1, "WTO");
-
+        require(params_.owner != address(0), "OAZ");
+        require(params_.manager != address(0), "MAZ");
+        require(params_.burnBuffer <= fiftyPercent, "MTMB");
         require(params_.init0 > 0 || params_.init1 > 0, "I");
 
         __ERC20_init(name_, symbol_);
@@ -143,9 +149,11 @@ abstract contract ArrakisV2Storage is
         manager = params_.manager;
 
         _burnBuffer = params_.burnBuffer;
+        init0 = params_.init0;
+        init1 = params_.init1;
 
         emit LogAddPools(params_.feeTiers);
-        emit LogSetInits(init0 = params_.init0, init1 = params_.init1);
+        emit LogSetInits(params_.init0, params_.init1);
         emit LogSetManager(params_.manager);
         emit LogSetBurnBuffer(params_.burnBuffer);
     }
@@ -210,29 +218,33 @@ abstract contract ArrakisV2Storage is
     /// @param manager_ manager address.
     /// @dev only callable by owner.
     function setManager(address manager_) external onlyOwner {
-        emit LogSetManager(manager = manager_);
+        manager = manager_;
+        emit LogSetManager(manager_);
     }
 
     /// @notice set manager fee bps
     /// @param managerFeeBPS_ manager fee in basis points.
     /// @dev only callable by manager.
     function setManagerFeeBPS(uint16 managerFeeBPS_) external onlyManager {
-        emit LogSetManagerFeeBPS(managerFeeBPS = managerFeeBPS_);
+        managerFeeBPS = managerFeeBPS_;
+        emit LogSetManagerFeeBPS(managerFeeBPS_);
     }
 
     /// @notice set restricted minter
     /// @param minter_ address of restricted minter.
     /// @dev only callable by owner.
     function setRestrictedMint(address minter_) external onlyOwner {
-        emit LogRestrictedMint(restrictedMint = minter_);
+        restrictedMint = minter_;
+        emit LogRestrictedMint(minter_);
     }
 
     /// @notice set burn buffer
     /// @param newBurnBuffer_ buffer value.
     /// @dev only callable by owner.
     function setBurnBuffer(uint16 newBurnBuffer_) external onlyOwner {
-        require(newBurnBuffer_ < 5000, "MTMB");
-        emit LogSetBurnBuffer(_burnBuffer = newBurnBuffer_);
+        require(newBurnBuffer_ <= fiftyPercent, "MTMB");
+        _burnBuffer = newBurnBuffer_;
+        emit LogSetBurnBuffer(newBurnBuffer_);
     }
 
     // #endregion setter functions

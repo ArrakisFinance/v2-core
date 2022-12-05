@@ -29,6 +29,7 @@ import {
     SwapPayload
 } from "./structs/SArrakisV2.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import {hundredPercent} from "./constants/CArrakisV2.sol";
 
 /// @title ArrakisV2Resolver helpers that resolve / compute payloads for ArrakisV2 calls
 contract ArrakisV2Resolver is IArrakisV2Resolver {
@@ -67,11 +68,11 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
             );
             uint256 numberOfPosLiq;
 
-            for (uint256 i = 0; i < ranges.length; i++) {
+            for (uint256 i; i < ranges.length; i++) {
                 uint128 liquidity;
                 {
                     (liquidity, , , , ) = IUniswapV3Pool(
-                        vaultV2_.factory().getPool(
+                        factory.getPool(
                             token0Addr,
                             token1Addr,
                             ranges[i].feeTier
@@ -96,7 +97,7 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
             rebalanceParams.removes = new PositionLiquidity[](numberOfPosLiq);
             uint256 j;
 
-            for (uint256 i = 0; i < pl.length; i++) {
+            for (uint256 i; i < pl.length; i++) {
                 if (pl[i].liquidity > 0) {
                     rebalanceParams.removes[j] = pl[i];
                     j++;
@@ -110,10 +111,10 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
             rangeWeights_.length
         );
 
-        for (uint256 i = 0; i < rangeWeights_.length; i++) {
+        for (uint256 i; i < rangeWeights_.length; i++) {
             RangeWeight memory rangeWeight = rangeWeights_[i];
             (uint160 sqrtPriceX96, , , , , , ) = IUniswapV3Pool(
-                vaultV2_.factory().getPool(
+                factory.getPool(
                     token0Addr,
                     token1Addr,
                     rangeWeight.range.feeTier
@@ -124,8 +125,8 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
                 sqrtPriceX96,
                 TickMath.getSqrtRatioAtTick(rangeWeight.range.lowerTick),
                 TickMath.getSqrtRatioAtTick(rangeWeight.range.upperTick),
-                FullMath.mulDiv(amount0, rangeWeight.weight, 10000),
-                FullMath.mulDiv(amount1, rangeWeight.weight, 10000)
+                FullMath.mulDiv(amount0, rangeWeight.weight, hundredPercent),
+                FullMath.mulDiv(amount1, rangeWeight.weight, hundredPercent)
             );
 
             rebalanceParams.deposits[i] = PositionLiquidity({
@@ -196,11 +197,11 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
 
         burns = new BurnLiquidity[](ranges.length);
 
-        for (uint256 i = 0; i < ranges.length; i++) {
+        for (uint256 i; i < ranges.length; i++) {
             uint128 liquidity;
             {
                 (liquidity, , , , ) = IUniswapV3Pool(
-                    vaultV2_.factory().getPool(
+                    factory.getPool(
                         address(vaultV2_.token0()),
                         address(vaultV2_.token1()),
                         ranges[i].feeTier
@@ -276,7 +277,7 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
         int24 lowerTick_,
         int24 upperTick_,
         uint128 liquidity_
-    ) public pure returns (uint256 amount0, uint256 amount1) {
+    ) external pure returns (uint256 amount0, uint256 amount1) {
         return
             LiquidityAmounts.getAmountsForLiquidity(
                 TickMath.getSqrtRatioAtTick(currentTick_),
@@ -297,7 +298,7 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
             totalWeight += rangeWeights_[i].weight;
         }
 
-        require(totalWeight <= 10000, "total weight");
+        require(totalWeight <= hundredPercent, "total weight");
     }
 
     // #endregion view internal functions.
