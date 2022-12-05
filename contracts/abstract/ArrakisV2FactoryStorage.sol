@@ -47,14 +47,9 @@ abstract contract ArrakisV2FactoryStorage is
     /// @param vaults_ the list of vault.
     function upgradeVaults(address[] memory vaults_) external onlyOwner {
         address implementation = arrakisV2Beacon.implementation();
-        require(
-            implementation != address(0),
-            "implementation is address zero"
-        );
+        require(implementation != address(0), "implementation is address zero");
         for (uint256 i = 0; i < vaults_.length; i++) {
-            ITransparentUpgradeableProxy(vaults_[i]).upgradeTo(
-                implementation
-            );
+            ITransparentUpgradeableProxy(vaults_[i]).upgradeTo(implementation);
         }
     }
 

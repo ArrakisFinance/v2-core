@@ -78,7 +78,11 @@ abstract contract ArrakisV2Storage is
         uint256 amount1Out
     );
 
-    event LPBurned(address indexed user, uint256 burnAmount0, uint256 burnAmount1);
+    event LPBurned(
+        address indexed user,
+        uint256 burnAmount0,
+        uint256 burnAmount1
+    );
 
     event LogRebalance(Rebalance rebalanceParams);
 

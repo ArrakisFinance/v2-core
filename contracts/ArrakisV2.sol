@@ -176,16 +176,8 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
 
         {
             // the proportion of user balance.
-            amount0 = FullMath.mulDiv(
-                underlying.amount0,
-                burnAmount_,
-                ts
-            );
-            amount1 = FullMath.mulDiv(
-                underlying.amount1,
-                burnAmount_,
-                ts
-            );
+            amount0 = FullMath.mulDiv(underlying.amount0, burnAmount_, ts);
+            amount1 = FullMath.mulDiv(underlying.amount1, burnAmount_, ts);
         }
 
         if (
