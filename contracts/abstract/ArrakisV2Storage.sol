@@ -90,8 +90,6 @@ abstract contract ArrakisV2Storage is
     event LogUncollectedFees(uint256 fee0, uint256 fee1);
 
     event LogWithdrawManagerBalance(uint256 amount0, uint256 amount1);
-    event LogWithdrawArrakisBalance(uint256 amount0, uint256 amount1);
-
     // #region Setting events
 
     event LogSetInits(uint256 init0, uint256 init1);
@@ -199,7 +197,6 @@ abstract contract ArrakisV2Storage is
     /// @dev only callable by owner.
     function whitelistRouters(address[] calldata routers_) external onlyOwner {
         _whitelistRouters(routers_);
-        emit LogWhitelistRouters(routers_);
     }
 
     /// @notice blacklist routers
@@ -299,6 +296,8 @@ abstract contract ArrakisV2Storage is
             // explicit.
             _routers.add(routers_[i]);
         }
+
+        emit LogWhitelistRouters(routers_);
     }
 
     // #endregion internal functions

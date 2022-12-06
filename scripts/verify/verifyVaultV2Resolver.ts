@@ -9,14 +9,10 @@ async function main() {
     constructorArguments: [
       addresses.UniswapV3Factory,
       (await hre.ethers.getContract("ArrakisV2Helper")).address,
-      addresses.SwapRouter,
     ],
     // other args
     libraries: {
       Position: (await hre.ethers.getContract("Position")).address,
-      UniswapV3Amounts: (
-        await hre.ethers.getContract("UniswapV3Amounts")
-      ).address,
       Underlying: (await hre.ethers.getContract("Underlying")).address,
     },
   });
