@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.13;
+pragma solidity >=0.8.0;
 
 import {IArrakisV2Beacon} from "./IArrakisV2Beacon.sol";
 import {InitializePayload} from "../structs/SArrakisV2.sol";
