@@ -6,9 +6,6 @@ async function main() {
     // other args
     libraries: {
       Position: (await hre.ethers.getContract("Position")).address,
-      UniswapV3Amounts: (
-        await hre.ethers.getContract("UniswapV3Amounts")
-      ).address,
     },
   });
 }
