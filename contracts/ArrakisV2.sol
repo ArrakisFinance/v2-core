@@ -95,16 +95,12 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         // #region check amount0 is a multiple of current0.
 
         if (!isTotalSupplyGtZero) {
-            uint256 amount0Mint = FullMath.mulDiv(
-                amount0,
-                denominator,
-                current0
-            );
-            uint256 amount1Mint = FullMath.mulDiv(
-                amount1,
-                denominator,
-                current1
-            );
+            uint256 amount0Mint = current0 != 0
+                ? FullMath.mulDiv(amount0, denominator, current0)
+                : type(uint256).max;
+            uint256 amount1Mint = current1 != 0
+                ? FullMath.mulDiv(amount1, denominator, current1)
+                : type(uint256).max;
 
             require(
                 (amount0Mint < amount1Mint ? amount0Mint : amount1Mint) ==
