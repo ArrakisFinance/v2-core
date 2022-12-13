@@ -8,7 +8,8 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "typeRoots": ["./node_modules/@types"],
-    "outDir": "dist"
+    "outDir": "dist",
+    "declaration": true
   },
   "files": ["hardhat.config.ts"],
   "include": ["src", "deploy", "scripts", "test", "typechain"],

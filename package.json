@@ -1,5 +1,24 @@
 {
   "name": "@arrakisfi/v2-core",
+  "version": "0.1.4",
+  "description": "Arrakis V2 Automated Market Maker",
+  "license": "MIT",
+  "main": "dist/src/addresses.js",
+  "types": "dist/src/addresses.d.ts",
+  "files": [
+    "contracts/abstract",
+    "contracts/constants",
+    "contracts/functions",
+    "contracts/interfaces",
+    "contracts/libraries",
+    "contracts/structs",
+    "ArrakisV2.sol",
+    "ArrakisV2Beacon.sol",
+    "ArrakisV2Factory.sol",
+    "ArrakisV2Helper.sol",
+    "ArrakisV2Resolver.sol",
+    "src"
+  ],
   "scripts": {
     "build": "yarn compile && npx tsc",
     "compile": "npx hardhat compile --force",
@@ -92,8 +111,5 @@
   "bugs": {
     "url": "https://github.com/ArrakisFinance/v2-core/issues"
   },
-  "homepage": "https://github.com/ArrakisFinance/v2-core#readme",
-  "description": "Arrakis V2 Automated Market Maker",
-  "license": "MIT",
-  "version": "0.1.4"
+  "homepage": "https://github.com/ArrakisFinance/v2-core#readme"
 }
