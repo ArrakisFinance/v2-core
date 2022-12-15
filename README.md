@@ -9,6 +9,7 @@ Read the full developer documentation [here](https://docs.arrakis.fi/developer-d
 Create `.env` file and add `ALCHEMY_ID` (for all relevant environment variables, see `.env.example`)
 
 # Test
+
 ```
 yarn
 
