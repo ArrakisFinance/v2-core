@@ -17,7 +17,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   }
 
   const { deploy } = deployments;
-  const { deployer, owner } = await getNamedAccounts();
+  const { deployer, arrakisMultiSig } = await getNamedAccounts();
   if (hre.network.name == "hardhat")
     await deploy("ArrakisV2Beacon", {
       from: deployer,
@@ -27,7 +27,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   else
     await deploy("ArrakisV2Beacon", {
       from: deployer,
-      args: [(await ethers.getContract("ArrakisV2")).address, owner],
+      args: [(await ethers.getContract("ArrakisV2")).address, arrakisMultiSig],
       log: hre.network.name != "hardhat" ? true : false,
     });
 };
