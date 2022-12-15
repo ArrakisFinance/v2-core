@@ -10,13 +10,27 @@ Create `.env` file and add `ALCHEMY_ID` (for all relevant environment variables,
 
 ## Test
 
+install dependencies:
+
 ```
 yarn
+```
 
+compile contracts:
+
+```
 yarn compile
+```
 
+run tests:
+
+```
 yarn test
 ```
+
+## Audits
+
+Two security audits were recently performed- audit reports coming soon.
 
 ## Licensing
 
