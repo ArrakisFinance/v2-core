@@ -14,9 +14,13 @@ Arrakis V2 Core enables anyone to:
 
 - configure and control important vault setup parameters (manager, pools, swap routers, mint restrictions) via the vault `owner` account (or smart contract)
 
-`ArrakisV2.sol` is the ERC20 vault smart contract at the heart of this LP management system. A vault collects assets in a given token pair and delegates a manager smart contract to deploy vault capital in and out of an arbitrary collection of Uniswap V3 LP Positions for that token pair. Utilize the ERC20 tokenization of the position to aggregate liquidity from multiple shareholders, or create a "private" vault exclusively for a single depositor (see `restrictedMint` property).
+### ArrakisV2.sol
 
-`ArrakisV2Factory.sol` is the entry-point for deploying ArrakisV2 vault instances. Deploy vaults for any token pair and configure the owner, manager, and other initial parameters when calling `deployVault`
+The ERC20 vault smart contract at the heart of this LP management system. A vault collects assets in a given token pair and delegates a manager smart contract to deploy vault capital in and out of an arbitrary collection of Uniswap V3 LP Positions for that token pair. Utilize the ERC20 tokenization of the position to aggregate liquidity from multiple shareholders, or create a "private" vault exclusively for a single depositor (see `restrictedMint` property).
+
+### ArrakisV2Factory.sol
+
+The entry-point for deploying ArrakisV2 vault instances. Deploy vaults for any token pair and configure the owner, manager, and other initial parameters when calling `deployVault`
 
 **The Arrakis V2 Core contracts are thus neutral concentrated liquidity management infrastructure which anyone can deploy, configure and use freely- no added fees or haircut.** Anyone can build "Active Liquidity Management" products on Arrakis V2 infrastructure for both private and public use-cases, and implement their own custom fee fee models and manager systems. While vaults don't have any hardcoded protocol fees, the manager role may still optionally set a fee parameter to take some proportion (or all) of the fees earned by the vault's Uniswap LP positions.
 
