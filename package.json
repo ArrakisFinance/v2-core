@@ -2,7 +2,7 @@
   "name": "@arrakisfi/v2-core",
   "version": "0.1.4",
   "description": "Arrakis V2 Automated Market Maker",
-  "license": "MIT",
+  "license": "BUSL-1.1",
   "main": "dist/src/addresses.js",
   "types": "dist/src/addresses.d.ts",
   "files": [

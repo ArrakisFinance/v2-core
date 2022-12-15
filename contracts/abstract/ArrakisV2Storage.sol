@@ -223,6 +223,7 @@ abstract contract ArrakisV2Storage is
     /// @param managerFeeBPS_ manager fee in basis points.
     /// @dev only callable by manager.
     function setManagerFeeBPS(uint16 managerFeeBPS_) external onlyManager {
+        require(managerFeeBPS_ <= 10000, "MFO");
         managerFeeBPS = managerFeeBPS_;
         emit LogSetManagerFeeBPS(managerFeeBPS_);
     }
