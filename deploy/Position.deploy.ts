@@ -8,7 +8,8 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     hre.network.name === "mainnet" ||
     hre.network.name === "polygon" ||
     hre.network.name === "goerli" ||
-    hre.network.name === "optimism"
+    hre.network.name === "optimism" ||
+    hre.network.name === "arbitrum"
   ) {
     console.log(
       `Deploying Position to ${hre.network.name}. Hit ctrl + c to abort`
@@ -31,7 +32,8 @@ func.skip = async (hre: HardhatRuntimeEnvironment) => {
     hre.network.name === "mainnet" ||
     hre.network.name === "polygon" ||
     hre.network.name === "goerli" ||
-    hre.network.name === "optimism";
+    hre.network.name === "optimism" ||
+    hre.network.name === "arbitrum";
   return shouldSkip ? true : false;
 };
 func.tags = ["Position"];

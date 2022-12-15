@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 export interface Addresses {
-  Gelato: string;
   UniswapV3Factory: string;
   SwapRouter: string;
   TestPool: string;
@@ -13,7 +12,6 @@ export const getAddresses = (network: string): Addresses => {
   switch (network) {
     case "hardhat":
       return {
-        Gelato: "0x7598e84B2E114AB62CAB288CE5f7d5f6bad35BbA",
         UniswapV3Factory: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
         SwapRouter: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
         TestPool: "0x45dDa9cb7c25131DF268515131f647d726f50608",
@@ -23,7 +21,6 @@ export const getAddresses = (network: string): Addresses => {
       };
     case "mainnet":
       return {
-        Gelato: "0x3CACa7b48D0573D793d3b0279b5F0029180E83b6",
         UniswapV3Factory: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
         SwapRouter: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
         TestPool: "0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640",
@@ -33,7 +30,6 @@ export const getAddresses = (network: string): Addresses => {
       };
     case "polygon":
       return {
-        Gelato: "0x7598e84B2E114AB62CAB288CE5f7d5f6bad35BbA",
         UniswapV3Factory: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
         SwapRouter: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
         TestPool: "0x45dDa9cb7c25131DF268515131f647d726f50608",
@@ -43,17 +39,24 @@ export const getAddresses = (network: string): Addresses => {
       };
     case "optimism":
       return {
-        Gelato: "0x01051113D81D7d6DA508462F2ad6d7fD96cF42Ef",
         UniswapV3Factory: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
-        SwapRouter: "",
-        TestPool: "0x85149247691df622eaf1a8bd0cafd40bc45154a9",
-        WETH: "0x4200000000000000000000000000000000000006",
+        SwapRouter: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+        TestPool: "",
+        WETH: "",
         WMATIC: "",
-        USDC: "0x7F5c764cBc14f9669B88837ca1490cCa17c31607",
+        USDC: "",
+      };
+    case "arbitrum":
+      return {
+        UniswapV3Factory: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
+        SwapRouter: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+        TestPool: "",
+        WETH: "",
+        WMATIC: "",
+        USDC: "",
       };
     case "goerli":
       return {
-        Gelato: "0x683913B3A32ada4F8100458A3E1675425BdAa7DF",
         UniswapV3Factory: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
         SwapRouter: "",
         TestPool: "",
