@@ -141,7 +141,7 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
     /// @param vaultV2_ Arrakis V2 vault.
     /// @return burns list of ranges and liquidities to burn.
     /// function on Arrakis V2 contract.
-    // solhint-disable-next-line function-max-lines
+    // solhint-disable-next-line function-max-lines, code-complexity
     function standardBurnParams(uint256 amountToBurn_, IArrakisV2 vaultV2_)
         external
         view
@@ -195,8 +195,8 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
         }
         // #endregion get amount to burn.
 
-        burns = new BurnLiquidity[](ranges.length);
-
+        uint128[] memory liquidities = new uint128[](ranges.length);
+        uint256 len;
         for (uint256 i; i < ranges.length; i++) {
             uint128 liquidity;
             {
@@ -214,15 +214,26 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
                         )
                     );
             }
+            liquidities[i] = liquidity;
 
-            if (liquidity == 0) continue;
-
-            burns[i] = BurnLiquidity({
-                liquidity: SafeCast.toUint128(
-                    FullMath.mulDiv(liquidity, amountToBurn_, totalSupply)
-                ),
-                range: ranges[i]
-            });
+            if (liquidity != 0) ++len;
+        }
+        burns = new BurnLiquidity[](len);
+        uint256 idx;
+        for (uint256 j; j < ranges.length; j++) {
+            if (liquidities[j] > 0) {
+                burns[idx] = BurnLiquidity({
+                    liquidity: SafeCast.toUint128(
+                        FullMath.mulDiv(
+                            liquidities[j],
+                            amountToBurn_,
+                            totalSupply
+                        )
+                    ),
+                    range: ranges[j]
+                });
+                ++idx;
+            }
         }
     }
 
