@@ -8,7 +8,8 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     hre.network.name === "mainnet" ||
     hre.network.name === "polygon" ||
     hre.network.name === "goerli" ||
-    hre.network.name === "optimism"
+    hre.network.name === "optimism" ||
+    hre.network.name === "arbitrum"
   ) {
     console.log(
       `Deploying ArrakisV2Beacon to ${hre.network.name}. Hit ctrl + c to abort`
@@ -17,7 +18,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   }
 
   const { deploy } = deployments;
-  const { deployer, owner } = await getNamedAccounts();
+  const { deployer, arrakisMultiSig } = await getNamedAccounts();
   if (hre.network.name == "hardhat")
     await deploy("ArrakisV2Beacon", {
       from: deployer,
@@ -27,7 +28,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   else
     await deploy("ArrakisV2Beacon", {
       from: deployer,
-      args: [(await ethers.getContract("ArrakisV2")).address, owner],
+      args: [(await ethers.getContract("ArrakisV2")).address, arrakisMultiSig],
       log: hre.network.name != "hardhat" ? true : false,
     });
 };
@@ -39,7 +40,8 @@ func.skip = async (hre: HardhatRuntimeEnvironment) => {
     hre.network.name === "mainnet" ||
     hre.network.name === "polygon" ||
     hre.network.name === "goerli" ||
-    hre.network.name === "optimism";
+    hre.network.name === "optimism" ||
+    hre.network.name === "arbitrum";
   return shouldSkip ? true : false;
 };
 func.tags = ["ArrakisV2Beacon"];
