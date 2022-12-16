@@ -16,6 +16,8 @@ struct PositionLiquidity {
 struct BurnLiquidity {
     uint128 liquidity;
     Range range;
+    uint128 amount0Max;
+    uint128 amount1Max;
 }
 
 struct SwapPayload {
@@ -33,7 +35,7 @@ struct Range {
 }
 
 struct Rebalance {
-    PositionLiquidity[] removes;
+    BurnLiquidity[] removes;
     PositionLiquidity[] deposits;
     SwapPayload swap;
     uint256 minDeposit0;
