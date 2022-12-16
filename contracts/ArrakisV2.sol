@@ -332,7 +332,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
 
     /// @notice will send manager fees to manager
     /// @dev anyone can call this function
-    function withdrawManagerBalance() external {
+    function withdrawManagerBalance() external nonReentrant {
         uint256 amount0 = managerBalance0;
         uint256 amount1 = managerBalance1;
 
