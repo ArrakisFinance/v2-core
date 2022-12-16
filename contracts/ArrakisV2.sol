@@ -16,8 +16,6 @@ import {
     Rebalance,
     Range
 } from "./abstract/ArrakisV2Storage.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {FullMath} from "@arrakisfi/v3-lib-0.8/contracts/LiquidityAmounts.sol";
 import {
     Withdraw,

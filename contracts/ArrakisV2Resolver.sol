@@ -10,7 +10,6 @@ import {IArrakisV2} from "./interfaces/IArrakisV2.sol";
 import {
     IUniswapV3Pool
 } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
 import {Position as PositionHelper} from "./libraries/Position.sol";
 import {FullMath} from "@arrakisfi/v3-lib-0.8/contracts/FullMath.sol";
@@ -25,8 +24,7 @@ import {
     UnderlyingPayload,
     Range,
     RangeWeight,
-    Rebalance,
-    SwapPayload
+    Rebalance
 } from "./structs/SArrakisV2.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {hundredPercent} from "./constants/CArrakisV2.sol";
