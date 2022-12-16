@@ -62,10 +62,10 @@ contract ArrakisV2Helper is IArrakisV2Helper {
 
     /// @notice get total underlying, also returns uncollected fees separately.
     /// @param vault_ Arrakis V2 vault to get underlying info about.
-    /// @return amount0 amount of underlying of token 0.
-    /// @return amount1 amount of underlying of token 1.
-    /// @return fee0 amount of fee of token 0.
-    /// @return fee1 amount of fee of token 0.
+    /// @return amount0 amount of underlying of token 0 of LPs.
+    /// @return amount1 amount of underlying of token 1 of LPs.
+    /// @return fee0 amount of fee of token 0 of LPs.
+    /// @return fee1 amount of fee of token 0 of LPs.
     function totalUnderlyingWithFees(IArrakisV2 vault_)
         external
         view
@@ -90,8 +90,8 @@ contract ArrakisV2Helper is IArrakisV2Helper {
 
     /// @notice get underlying.
     /// @param vault_ Arrakis V2 vault to get underlying info about.
-    /// @return amount0 amount of underlying of token 0.
-    /// @return amount1 amount of underlying of token 1.
+    /// @return amount0 amount of underlying of token 0 of LPs.
+    /// @return amount1 amount of underlying of token 1 of LPs.
     function totalUnderlying(IArrakisV2 vault_)
         external
         view
@@ -117,8 +117,8 @@ contract ArrakisV2Helper is IArrakisV2Helper {
     /// @param token0_ address of first token.
     /// @param token1_ address of second token.
     /// @param vaultV2_ address of Arrakis V2 vault.
-    /// @return amount0s amounts of underlying of token 0.
-    /// @return amount1s amounts of underlying of token 1.
+    /// @return amount0s amounts of underlying of token 0 of LPs.
+    /// @return amount1s amounts of underlying of token 1 of LPs.
     function token0AndToken1ByRange(
         Range[] calldata ranges_,
         address token0_,
@@ -154,10 +154,10 @@ contract ArrakisV2Helper is IArrakisV2Helper {
     /// @param token0_ address of first token.
     /// @param token1_ address of second token.
     /// @param vaultV2_ address of Arrakis V2 vault.
-    /// @return amount0s amounts of underlying of token 1.
-    /// @return amount1s amounts of underlying of token 1.
-    /// @return fee0s amounts of fees of token 0.
-    /// @return fee1s amounts of fees of token 1.
+    /// @return amount0s amounts of underlying of token 1 of LPs.
+    /// @return amount1s amounts of underlying of token 1 of LPs.
+    /// @return fee0s amounts of fees of token 0 of LPs.
+    /// @return fee1s amounts of fees of token 1 of LPs.
     function token0AndToken1PlusFeesByRange(
         Range[] calldata ranges_,
         address token0_,
