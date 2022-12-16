@@ -63,10 +63,12 @@ abstract contract ArrakisV2FactoryStorage is
         address[] memory vaults_,
         bytes[] calldata datas_
     ) external onlyOwner {
+        address implementation = arrakisV2Beacon.implementation();
+        require(implementation != address(0), "implementation is address zero");
         require(vaults_.length == datas_.length, "mismatching array length");
         for (uint256 i = 0; i < vaults_.length; i++) {
             ITransparentUpgradeableProxy(vaults_[i]).upgradeToAndCall(
-                arrakisV2Beacon.implementation(),
+                implementation,
                 datas_[i]
             );
         }
