@@ -236,21 +236,39 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         }
 
         // intentional underflow revert if managerBalance > contract's token balance
-        uint256 leftover0 = token0.balanceOf(address(this)) - managerBalance0;
-        uint256 leftover1 = token1.balanceOf(address(this)) - managerBalance1;
+        {
+            uint256 leftover0 = token0.balanceOf(address(this)) -
+                managerBalance0;
+            uint256 leftover1 = token1.balanceOf(address(this)) -
+                managerBalance1;
+            uint256 fee0AfterManagerFee = (total.fee0 *
+                (hundredPercent - managerFeeBPS)) / hundredPercent;
+            uint256 fee1AfterManagerFee = (total.fee1 *
+                (hundredPercent - managerFeeBPS)) / hundredPercent;
 
-        require(
-            (leftover0 <= underlying.leftOver0) ||
-                ((leftover0 - underlying.leftOver0) <=
-                    FullMath.mulDiv(total.burn0, _burnBuffer, hundredPercent)),
-            "L0"
-        );
-        require(
-            (leftover1 <= underlying.leftOver1) ||
-                ((leftover1 - underlying.leftOver1) <=
-                    FullMath.mulDiv(total.burn1, _burnBuffer, hundredPercent)),
-            "L1"
-        );
+            require(
+                (fee0AfterManagerFee >= leftover0 ||
+                    leftover0 - fee0AfterManagerFee <= underlying.leftOver0) ||
+                    ((leftover0 - fee0AfterManagerFee - underlying.leftOver0) <=
+                        FullMath.mulDiv(
+                            total.burn0,
+                            _burnBuffer,
+                            hundredPercent
+                        )),
+                "L0"
+            );
+            require(
+                (fee1AfterManagerFee >= leftover1 ||
+                    leftover1 - fee1AfterManagerFee <= underlying.leftOver1) ||
+                    ((leftover1 - fee1AfterManagerFee - underlying.leftOver1) <=
+                        FullMath.mulDiv(
+                            total.burn1,
+                            _burnBuffer,
+                            hundredPercent
+                        )),
+                "L1"
+            );
+        }
 
         // For monitoring how much user burn LP token for getting their token back.
         emit LPBurned(msg.sender, total.burn0, total.burn1);
