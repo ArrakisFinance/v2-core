@@ -92,8 +92,6 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         amount0 = FullMath.mulDivRoundingUp(mintAmount_, current0, denominator);
         amount1 = FullMath.mulDivRoundingUp(mintAmount_, current1, denominator);
 
-        // #region check amount0 is a multiple of current0.
-
         if (!isTotalSupplyGtZero) {
             uint256 amount0Mint = current0 != 0
                 ? FullMath.mulDiv(amount0, denominator, current0)
@@ -108,8 +106,6 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                 "A0&A1"
             );
         }
-
-        // #endregion check amount0 is a multiple of current0.
 
         _mint(receiver_, mintAmount_);
 
