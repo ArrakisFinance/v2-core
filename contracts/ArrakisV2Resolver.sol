@@ -224,7 +224,7 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
             if (liquidities[j] > 0) {
                 burns[idx] = BurnLiquidity({
                     liquidity: SafeCast.toUint128(
-                        FullMath.mulDiv(
+                        FullMath.mulDivRoundingUp(
                             liquidities[j],
                             amountToBurn_,
                             totalSupply
