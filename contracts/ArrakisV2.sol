@@ -315,9 +315,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                 rangesToRemove_[i]
             );
 
-            for (uint256 j = index; j < ranges.length - 1; j++) {
-                ranges[j] = ranges[j + 1];
-            }
+            ranges[index] = ranges[ranges.length - 1];
             ranges.pop();
         }
     }
