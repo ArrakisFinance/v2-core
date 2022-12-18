@@ -7,10 +7,10 @@ import {
 } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {IArrakisV2Helper} from "./interfaces/IArrakisV2Helper.sol";
 import {IArrakisV2} from "./interfaces/IArrakisV2.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {
     IUniswapV3Pool
 } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
 import {Position as PositionHelper} from "./libraries/Position.sol";
 import {FullMath} from "@arrakisfi/v3-lib-0.8/contracts/FullMath.sol";
@@ -25,8 +25,7 @@ import {
     UnderlyingPayload,
     Range,
     RangeWeight,
-    Rebalance,
-    SwapPayload
+    Rebalance
 } from "./structs/SArrakisV2.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {hundredPercent} from "./constants/CArrakisV2.sol";
@@ -150,75 +149,84 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
         uint256 totalSupply = vaultV2_.totalSupply();
         require(totalSupply > 0, "total supply");
 
+        uint128[] memory liquidities;
         Range[] memory ranges = vaultV2_.getRanges();
-
         {
-            UnderlyingOutput memory underlying;
-            (
-                underlying.amount0,
-                underlying.amount1,
-                underlying.fee0,
-                underlying.fee1
-            ) = UnderlyingHelper.totalUnderlyingWithFees(
-                UnderlyingPayload({
-                    ranges: ranges,
-                    factory: factory,
-                    token0: address(vaultV2_.token0()),
-                    token1: address(vaultV2_.token1()),
-                    self: address(vaultV2_)
-                })
-            );
-            underlying.leftOver0 =
-                vaultV2_.token0().balanceOf(address(vaultV2_)) -
-                vaultV2_.managerBalance0();
-            underlying.leftOver1 =
-                vaultV2_.token1().balanceOf(address(vaultV2_)) -
-                vaultV2_.managerBalance1();
-
+            IERC20 token0 = vaultV2_.token0();
+            IERC20 token1 = vaultV2_.token1();
+            address token0Addr = address(token0);
+            address token1Addr = address(token1);
+            address vaultAddr = address(vaultV2_);
             {
-                uint256 amount0 = FullMath.mulDiv(
+                UnderlyingOutput memory underlying;
+                (
                     underlying.amount0,
-                    amountToBurn_,
-                    totalSupply
-                );
-                uint256 amount1 = FullMath.mulDiv(
                     underlying.amount1,
-                    amountToBurn_,
-                    totalSupply
+                    underlying.fee0,
+                    underlying.fee1
+                ) = UnderlyingHelper.totalUnderlyingWithFees(
+                    UnderlyingPayload({
+                        ranges: ranges,
+                        factory: factory,
+                        token0: token0Addr,
+                        token1: token1Addr,
+                        self: vaultAddr
+                    })
                 );
+                underlying.leftOver0 =
+                    token0.balanceOf(vaultAddr) -
+                    vaultV2_.managerBalance0();
+                underlying.leftOver1 =
+                    token1.balanceOf(vaultAddr) -
+                    vaultV2_.managerBalance1();
 
-                if (
-                    amount0 <= underlying.leftOver0 &&
-                    amount1 <= underlying.leftOver1
-                ) return burns;
-            }
-        }
-        // #endregion get amount to burn.
-
-        uint128[] memory liquidities = new uint128[](ranges.length);
-        uint256 len;
-        for (uint256 i; i < ranges.length; i++) {
-            uint128 liquidity;
-            {
-                (liquidity, , , , ) = IUniswapV3Pool(
-                    factory.getPool(
-                        address(vaultV2_.token0()),
-                        address(vaultV2_.token1()),
-                        ranges[i].feeTier
-                    )
-                ).positions(
-                        PositionHelper.getPositionId(
-                            address(vaultV2_),
-                            ranges[i].lowerTick,
-                            ranges[i].upperTick
-                        )
+                {
+                    uint256 amount0 = FullMath.mulDiv(
+                        underlying.amount0,
+                        amountToBurn_,
+                        totalSupply
                     );
-            }
-            liquidities[i] = liquidity;
+                    uint256 amount1 = FullMath.mulDiv(
+                        underlying.amount1,
+                        amountToBurn_,
+                        totalSupply
+                    );
 
-            if (liquidity != 0) ++len;
+                    if (
+                        amount0 <= underlying.leftOver0 &&
+                        amount1 <= underlying.leftOver1
+                    ) return burns;
+                }
+            }
+            // #endregion get amount to burn.
+
+            liquidities = new uint128[](ranges.length);
+            {
+                uint256 len;
+                for (uint256 i; i < ranges.length; i++) {
+                    uint128 liquidity;
+                    {
+                        (liquidity, , , , ) = IUniswapV3Pool(
+                            factory.getPool(
+                                token0Addr,
+                                token1Addr,
+                                ranges[i].feeTier
+                            )
+                        ).positions(
+                                PositionHelper.getPositionId(
+                                    vaultAddr,
+                                    ranges[i].lowerTick,
+                                    ranges[i].upperTick
+                                )
+                            );
+                    }
+                    liquidities[i] = liquidity;
+
+                    if (liquidity != 0) ++len;
+                }
+                burns = new BurnLiquidity[](len);
+            }
         }
-        burns = new BurnLiquidity[](len);
         uint256 idx;
         for (uint256 j; j < ranges.length; j++) {
             if (liquidities[j] > 0) {
