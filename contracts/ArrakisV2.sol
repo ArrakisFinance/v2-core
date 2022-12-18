@@ -206,7 +206,9 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                             burns_[i].range.feeTier
                         )
                     ),
-                    burns_[i]
+                    burns_[i].range.lowerTick,
+                    burns_[i].range.upperTick,
+                    burns_[i].liquidity
                 );
 
                 total.fee0 += withdraw.fee0;
@@ -361,7 +363,9 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
 
             Withdraw memory withdraw = _withdraw(
                 pool,
-                rebalanceParams_.removes[i]
+                rebalanceParams_.removes[i].range.lowerTick,
+                rebalanceParams_.removes[i].range.upperTick,
+                rebalanceParams_.removes[i].liquidity
             );
 
             aggregator0 += withdraw.fee0;
@@ -460,22 +464,24 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         emit LogRebalance(rebalanceParams_);
     }
 
-    function _withdraw(IUniswapV3Pool pool_, BurnLiquidity memory burn_)
-        internal
-        returns (Withdraw memory withdraw)
-    {
+    function _withdraw(
+        IUniswapV3Pool pool_,
+        int24 lowerTick_,
+        int24 upperTick_,
+        uint128 liquidity_
+    ) internal returns (Withdraw memory withdraw) {
         (withdraw.burn0, withdraw.burn1) = pool_.burn(
-            burn_.range.lowerTick,
-            burn_.range.upperTick,
-            burn_.liquidity
+            lowerTick_,
+            upperTick_,
+            liquidity_
         );
 
         (uint256 collect0, uint256 collect1) = pool_.collect(
             address(this),
-            burn_.range.lowerTick,
-            burn_.range.upperTick,
-            burn_.amount0Max,
-            burn_.amount1Max
+            lowerTick_,
+            upperTick_,
+            type(uint128).max,
+            type(uint128).max
         );
 
         withdraw.fee0 = collect0 - withdraw.burn0;
