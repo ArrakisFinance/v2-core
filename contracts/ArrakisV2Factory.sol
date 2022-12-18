@@ -10,8 +10,7 @@ import {
     TransparentUpgradeableProxy
 } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {
-    BeaconProxy,
-    ERC1967Upgrade
+    BeaconProxy
 } from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import {ArrakisV2FactoryStorage} from "./abstract/ArrakisV2FactoryStorage.sol";
 import {InitializePayload} from "./structs/SArrakisV2.sol";
