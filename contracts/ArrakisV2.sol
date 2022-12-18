@@ -483,7 +483,8 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
     }
 
     function _applyFees(uint256 fee0_, uint256 fee1_) internal {
-        managerBalance0 += (fee0_ * managerFeeBPS) / hundredPercent;
-        managerBalance1 += (fee1_ * managerFeeBPS) / hundredPercent;
+        uint16 mManagerFeeBPS = managerFeeBPS;
+        managerBalance0 += (fee0_ * mManagerFeeBPS) / hundredPercent;
+        managerBalance1 += (fee1_ * mManagerFeeBPS) / hundredPercent;
     }
 }
