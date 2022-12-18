@@ -16,8 +16,6 @@ import {
     Rebalance,
     Range
 } from "./abstract/ArrakisV2Storage.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {FullMath} from "@arrakisfi/v3-lib-0.8/contracts/LiquidityAmounts.sol";
 import {
     Withdraw,
@@ -92,8 +90,6 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         amount0 = FullMath.mulDivRoundingUp(mintAmount_, current0, denominator);
         amount1 = FullMath.mulDivRoundingUp(mintAmount_, current1, denominator);
 
-        // #region check amount0 is a multiple of current0.
-
         if (!isTotalSupplyGtZero) {
             uint256 amount0Mint = current0 != 0
                 ? FullMath.mulDiv(amount0, denominator, current0)
@@ -108,8 +104,6 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                 "A0&A1"
             );
         }
-
-        // #endregion check amount0 is a multiple of current0.
 
         _mint(receiver_, mintAmount_);
 
@@ -323,9 +317,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                 rangesToRemove_[i]
             );
 
-            for (uint256 j = index; j < ranges.length - 1; j++) {
-                ranges[j] = ranges[j + 1];
-            }
+            ranges[index] = ranges[ranges.length - 1];
             ranges.pop();
         }
     }
@@ -497,7 +489,8 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
     }
 
     function _applyFees(uint256 fee0_, uint256 fee1_) internal {
-        managerBalance0 += (fee0_ * managerFeeBPS) / hundredPercent;
-        managerBalance1 += (fee1_ * managerFeeBPS) / hundredPercent;
+        uint16 mManagerFeeBPS = managerFeeBPS;
+        managerBalance0 += (fee0_ * mManagerFeeBPS) / hundredPercent;
+        managerBalance1 += (fee1_ * mManagerFeeBPS) / hundredPercent;
     }
 }
