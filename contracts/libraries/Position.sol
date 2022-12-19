@@ -42,8 +42,10 @@ library Position {
                 range_.lowerTick == currentRanges_[i].lowerTick &&
                 range_.upperTick == currentRanges_[i].upperTick &&
                 range_.feeTier == currentRanges_[i].feeTier;
-            index = i;
-            if (ok) break;
+            if (ok) {
+                index = i;
+                break;
+            }
         }
     }
 }
