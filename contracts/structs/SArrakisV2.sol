@@ -38,6 +38,8 @@ struct Rebalance {
     BurnLiquidity[] removes;
     PositionLiquidity[] deposits;
     SwapPayload swap;
+    uint256 minBurn0;
+    uint256 minBurn1;
     uint256 minDeposit0;
     uint256 minDeposit1;
 }
