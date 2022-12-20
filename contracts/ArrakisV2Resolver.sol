@@ -63,7 +63,9 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
 
             (amount0, amount1) = helper.totalUnderlying(vaultV2_);
 
-            BurnLiquidity[] memory pl = new BurnLiquidity[](ranges.length);
+            PositionLiquidity[] memory pl = new PositionLiquidity[](
+                ranges.length
+            );
             uint256 numberOfPosLiq;
 
             for (uint256 i; i < ranges.length; i++) {
@@ -86,15 +88,13 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
 
                 if (liquidity > 0) numberOfPosLiq++;
 
-                pl[i] = BurnLiquidity({
+                pl[i] = PositionLiquidity({
                     liquidity: liquidity,
-                    range: ranges[i],
-                    amount0Max: type(uint128).max,
-                    amount1Max: type(uint128).max
+                    range: ranges[i]
                 });
             }
 
-            rebalanceParams.removes = new BurnLiquidity[](numberOfPosLiq);
+            rebalanceParams.removes = new PositionLiquidity[](numberOfPosLiq);
             uint256 j;
 
             for (uint256 i; i < pl.length; i++) {
@@ -230,9 +230,7 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
                             totalSupply
                         )
                     ),
-                    range: ranges[j],
-                    amount0Max: type(uint128).max,
-                    amount1Max: type(uint128).max
+                    range: ranges[j]
                 });
                 ++idx;
             }

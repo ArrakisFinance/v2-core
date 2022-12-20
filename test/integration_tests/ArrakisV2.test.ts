@@ -449,8 +449,6 @@ describe("Arrakis V2 integration test!!!", async function () {
           {
             range: { lowerTick, upperTick, feeTier: 500 },
             liquidity: (await liquidity)._liquidity,
-            amount0Max: ethers.utils.parseUnits("1", 27),
-            amount1Max: ethers.utils.parseUnits("1", 27),
           },
         ],
         swap: {
