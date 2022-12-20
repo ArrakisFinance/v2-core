@@ -235,10 +235,14 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                 managerBalance0;
             uint256 leftover1 = token1.balanceOf(address(this)) -
                 managerBalance1;
-            uint256 fee0AfterManagerFee = (total.fee0 *
-                (hundredPercent - managerFeeBPS)) / hundredPercent;
-            uint256 fee1AfterManagerFee = (total.fee1 *
-                (hundredPercent - managerFeeBPS)) / hundredPercent;
+            (
+                uint256 fee0AfterManagerFee,
+                uint256 fee1AfterManagerFee
+            ) = UnderlyingHelper.subtractAdminFees(
+                    total.fee0,
+                    total.fee1,
+                    managerFeeBPS
+                );
 
             require(
                 (fee0AfterManagerFee >= leftover0 ||
