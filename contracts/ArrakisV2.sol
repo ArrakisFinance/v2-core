@@ -352,34 +352,42 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         nonReentrant
     {
         // Burns.
-        uint256 aggregator0 = 0;
-        uint256 aggregator1 = 0;
         IUniswapV3Factory mFactory = factory;
         address mToken0Addr = address(token0);
         address mToken1Addr = address(token1);
-        for (uint256 i; i < rebalanceParams_.removes.length; i++) {
-            address poolAddr = mFactory.getPool(
-                mToken0Addr,
-                mToken1Addr,
-                rebalanceParams_.removes[i].range.feeTier
-            );
-            IUniswapV3Pool pool = IUniswapV3Pool(poolAddr);
 
-            Withdraw memory withdraw = _withdraw(
-                pool,
-                rebalanceParams_.removes[i].range.lowerTick,
-                rebalanceParams_.removes[i].range.upperTick,
-                rebalanceParams_.removes[i].liquidity
-            );
+        {
+            Withdraw memory aggregator;
+            for (uint256 i; i < rebalanceParams_.removes.length; i++) {
+                address poolAddr = mFactory.getPool(
+                    mToken0Addr,
+                    mToken1Addr,
+                    rebalanceParams_.removes[i].range.feeTier
+                );
+                IUniswapV3Pool pool = IUniswapV3Pool(poolAddr);
 
-            aggregator0 += withdraw.fee0;
-            aggregator1 += withdraw.fee1;
-        }
+                Withdraw memory withdraw = _withdraw(
+                    pool,
+                    rebalanceParams_.removes[i].range.lowerTick,
+                    rebalanceParams_.removes[i].range.upperTick,
+                    rebalanceParams_.removes[i].liquidity
+                );
 
-        if (aggregator0 > 0 || aggregator1 > 0) {
-            _applyFees(aggregator0, aggregator1);
+                aggregator.burn0 += withdraw.burn0;
+                aggregator.burn1 += withdraw.burn1;
 
-            emit LogCollectedFees(aggregator0, aggregator1);
+                aggregator.fee0 += withdraw.fee0;
+                aggregator.fee1 += withdraw.fee1;
+            }
+
+            require(aggregator.burn0 >= rebalanceParams_.minBurn0, "B0");
+            require(aggregator.burn1 >= rebalanceParams_.minBurn1, "B1");
+
+            if (aggregator.fee0 > 0 || aggregator.fee1 > 0) {
+                _applyFees(aggregator.fee0, aggregator.fee1);
+
+                emit LogCollectedFees(aggregator.fee0, aggregator.fee1);
+            }
         }
 
         // Swap.
@@ -435,8 +443,8 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         }
 
         // Mints.
-        aggregator0 = 0;
-        aggregator1 = 0;
+        uint256 aggregator0;
+        uint256 aggregator1;
         for (uint256 i; i < rebalanceParams_.deposits.length; i++) {
             IUniswapV3Pool pool = IUniswapV3Pool(
                 mFactory.getPool(

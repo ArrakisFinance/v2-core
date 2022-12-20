@@ -470,6 +470,8 @@ describe("Arrakis V2 integration test!!!", async function () {
           ]),
         },
         deposits: [],
+        minBurn0: ethers.constants.Zero,
+        minBurn1: ethers.constants.Zero,
         minDeposit0: ethers.constants.Zero,
         minDeposit1: ethers.constants.Zero,
       },
