@@ -1,5 +1,5 @@
 import hre from "hardhat";
-import { getAddresses } from "../../src/addresses";
+import { getAddresses } from "../../src";
 
 async function main() {
   const addresses = getAddresses(hre.network.name);

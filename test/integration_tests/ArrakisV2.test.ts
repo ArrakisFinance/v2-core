@@ -9,7 +9,7 @@ import {
   ArrakisV2Resolver,
   Position,
 } from "../../typechain";
-import { Addresses, getAddresses } from "../../src/addresses";
+import { Addresses, getAddresses } from "../../src";
 import { Signer } from "ethers";
 import { Contract } from "ethers";
 import { ManagerProxyMock } from "../../typechain/contracts/__mocks__/ManagerProxyMock";

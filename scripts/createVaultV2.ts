@@ -1,5 +1,5 @@
 import hre, { ethers } from "hardhat";
-import { getAddresses } from "../src/addresses";
+import { getAddresses } from "../src";
 import {
   IUniswapV3Factory,
   IUniswapV3Pool,
