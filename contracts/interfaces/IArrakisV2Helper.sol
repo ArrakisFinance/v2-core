@@ -39,4 +39,19 @@ interface IArrakisV2Helper {
         external
         view
         returns (Amount[] memory amount0s, Amount[] memory amount1s);
+
+    function token0AndToken1PlusFeesByRange(
+        Range[] calldata ranges_,
+        address token0_,
+        address token1_,
+        address vaultV2_
+    )
+        external
+        view
+        returns (
+            Amount[] memory amount0s,
+            Amount[] memory amount1s,
+            Amount[] memory fee0s,
+            Amount[] memory fee1s
+        );
 }
