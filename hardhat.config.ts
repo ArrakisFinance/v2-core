@@ -32,6 +32,7 @@ const config: HardhatUserConfig = {
       mainnet: "0xb9229ea965FC84f21b63791efC643b2c7ffB77Be",
       optimism: "0x283824e5A6378EaB2695Be7d3cb0919186e37D7C",
       arbitrum: "0x64520Dc190b5015E7d48E87273f6EE69197Cd798",
+      goerli: "0xB4fa2C382dAf08531F8BA4515F409A129beCFd02",
     },
     owner: {
       default: 2,
@@ -39,6 +40,7 @@ const config: HardhatUserConfig = {
       mainnet: "0x5108EF86cF493905BcD35A3736e4B46DeCD7de58",
       optimism: "0x8636600A864797Aa7ac8807A065C5d8BD9bA3Ccb",
       arbitrum: "0x77BADa8FC2A478f1bc1E1E4980916666187D0dF7",
+      goerli: "0xDb651b0C70C67181B1807B29d9097DD556b2eC4b",
     },
   },
 
@@ -79,7 +81,7 @@ const config: HardhatUserConfig = {
     goerli: {
       accounts: TEST_PK ? [TEST_PK] : [],
       chainId: 5,
-      url: `https://eth-goerli.alchemyapi.io/v2/${ALCHEMY_ID}`,
+      url: `https://eth-goerli.g.alchemy.com/v2/${ALCHEMY_ID}`,
     },
   },
 
