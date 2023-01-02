@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { Signer } from "ethers";
 import hre = require("hardhat");
 import { ArrakisV2, IUniswapV3Factory } from "../../typechain";
-import { Addresses, getAddresses } from "../../src/addresses";
+import { Addresses, getAddresses } from "../../src";
 const { ethers, deployments } = hre;
 
 describe("ArrakisV2 functions unit test", function () {

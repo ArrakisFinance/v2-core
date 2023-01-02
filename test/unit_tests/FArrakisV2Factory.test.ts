@@ -1,7 +1,6 @@
 import { expect } from "chai";
 import hre = require("hardhat");
 import { MockFArrakisV2Factory, IUniswapV3Pool } from "../../typechain";
-import { Addresses, getAddresses } from "../../src/addresses";
 import { Signer } from "ethers";
 
 const { ethers, deployments } = hre;
@@ -11,7 +10,6 @@ describe("Arrakis V2 Factory smart contract internal functions unit test", funct
 
   let user: Signer;
   let mockFArrakisV2Factory: MockFArrakisV2Factory;
-  let addresses: Addresses;
   let poolContract: IUniswapV3Pool;
 
   beforeEach("Setting up for Vault V2 functions unit test", async function () {
@@ -22,8 +20,6 @@ describe("Arrakis V2 Factory smart contract internal functions unit test", funct
 
     [user] = await ethers.getSigners();
 
-    addresses = getAddresses(hre.network.name);
-
     await deployments.fixture();
 
     mockFArrakisV2Factory = (await ethers.getContract(
@@ -32,7 +28,7 @@ describe("Arrakis V2 Factory smart contract internal functions unit test", funct
 
     poolContract = (await ethers.getContractAt(
       "IUniswapV3Pool",
-      addresses.TestPool,
+      "0x45dDa9cb7c25131DF268515131f647d726f50608",
       user
     )) as IUniswapV3Pool;
   });

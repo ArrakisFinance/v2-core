@@ -11,7 +11,7 @@ import {
   IUniswapV3Pool,
   ManagerProxyMock,
 } from "../../typechain";
-import { Addresses, getAddresses } from "../../src/addresses";
+import { Addresses, getAddresses } from "../../src";
 const { ethers, deployments } = hre;
 
 describe("ArrakisV2Helper functions unit test", function () {

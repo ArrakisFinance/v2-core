@@ -9,7 +9,7 @@ import {
   ArrakisV2Resolver,
   ArrakisV2Beacon,
 } from "../../typechain";
-import { Addresses, getAddresses } from "../../src/addresses";
+import { Addresses, getAddresses } from "../../src";
 const { ethers, deployments } = hre;
 
 describe("Factory function unit test", function () {
