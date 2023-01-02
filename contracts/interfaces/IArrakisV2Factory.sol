@@ -13,6 +13,15 @@ interface IArrakisV2Factory {
         external
         returns (address vault);
 
+    function upgradeVaults(address[] memory vaults_) external;
+
+    function upgradeVaultsAndCall(
+        address[] memory vaults_,
+        bytes[] calldata datas_
+    ) external;
+
+    function makeVaultsImmutable(address[] memory vaults_) external;
+
     // #region view functions
 
     function arrakisV2Beacon() external view returns (IArrakisV2Beacon);
@@ -30,6 +39,11 @@ interface IArrakisV2Factory {
         external
         view
         returns (address);
+
+    function getTokenName(address token0_, address token1_)
+        external
+        view
+        returns (string memory);
 
     // #endregion view functions
 }
