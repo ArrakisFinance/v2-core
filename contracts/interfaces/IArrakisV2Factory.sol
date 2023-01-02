@@ -9,8 +9,6 @@ interface IArrakisV2Factory {
 
     event InitFactory(address owner);
 
-    function initialize(address _owner_) external;
-
     function deployVault(InitializePayload calldata params_, bool isBeacon_)
         external
         returns (address vault);
