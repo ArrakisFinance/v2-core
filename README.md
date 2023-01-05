@@ -52,7 +52,7 @@ yarn test
 
 ## Audits
 
-Two security audits were recently performed- audit reports coming soon.
+Two security audits were performed on the smart contracts in this repository. The auditors were [WatchPug](https://www.watchpug.org/) and [Statemind](https://statemind.io/) and the comprehensive audit reports can be found in the `audit/` directory.
 
 ## Licensing
 
