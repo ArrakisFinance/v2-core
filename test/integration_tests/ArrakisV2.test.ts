@@ -150,6 +150,8 @@ describe("Arrakis V2 integration test!!!", async function () {
         manager: managerProxyMock.address,
         routers: [addresses.SwapRouter],
         burnBuffer: 1000,
+        maxTwapDeviation: 100,
+        twapDuration: 100,
       },
       true
     );

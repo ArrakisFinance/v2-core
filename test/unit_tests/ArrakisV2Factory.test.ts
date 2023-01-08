@@ -105,6 +105,8 @@ describe("Factory function unit test", function () {
         manager: userAddr,
         routers: [],
         burnBuffer: 1000,
+        maxTwapDeviation: 100,
+        twapDuration: 100,
       },
       true
     );
@@ -160,6 +162,8 @@ describe("Factory function unit test", function () {
         manager: userAddr,
         routers: [],
         burnBuffer: 1000,
+        maxTwapDeviation: 100,
+        twapDuration: 100,
       },
       true
     );
@@ -193,6 +197,8 @@ describe("Factory function unit test", function () {
         manager: userAddr,
         routers: [],
         burnBuffer: 1000,
+        maxTwapDeviation: 100,
+        twapDuration: 100,
       },
       true
     );
@@ -229,6 +235,8 @@ describe("Factory function unit test", function () {
         manager: userAddr,
         routers: [],
         burnBuffer: 1000,
+        maxTwapDeviation: 100,
+        twapDuration: 100,
       },
       false
     );
@@ -269,6 +277,8 @@ describe("Factory function unit test", function () {
         manager: userAddr,
         routers: [],
         burnBuffer: 1000,
+        maxTwapDeviation: 100,
+        twapDuration: 100,
       },
       false
     );
@@ -309,6 +319,8 @@ describe("Factory function unit test", function () {
         manager: userAddr,
         routers: [],
         burnBuffer: 1000,
+        maxTwapDeviation: 100,
+        twapDuration: 100,
       },
       false
     );
@@ -360,6 +372,8 @@ describe("Factory function unit test", function () {
         manager: userAddr,
         routers: [],
         burnBuffer: 1000,
+        maxTwapDeviation: 100,
+        twapDuration: 100,
       },
       false
     );
@@ -379,6 +393,7 @@ describe("Factory function unit test", function () {
       args: [userAddr],
       libraries: {
         Pool: (await ethers.getContract("Pool")).address,
+        Twap: (await ethers.getContract("Twap")).address,
         Position: (await ethers.getContract("Position")).address,
         Underlying: (await ethers.getContract("Underlying")).address,
       },
@@ -446,6 +461,8 @@ describe("Factory function unit test", function () {
         manager: userAddr,
         routers: [],
         burnBuffer: 1000,
+        maxTwapDeviation: 100,
+        twapDuration: 100,
       },
       false
     );
@@ -465,6 +482,7 @@ describe("Factory function unit test", function () {
       args: [userAddr],
       libraries: {
         Pool: (await ethers.getContract("Pool")).address,
+        Twap: (await ethers.getContract("Twap")).address,
         Position: (await ethers.getContract("Position")).address,
         Underlying: (await ethers.getContract("Underlying")).address,
       },

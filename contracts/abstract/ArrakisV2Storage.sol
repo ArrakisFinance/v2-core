@@ -62,6 +62,18 @@ abstract contract ArrakisV2Storage is
 
     // #endregion burn buffer
 
+    // #region burn twap maximum deviation.
+
+    int24 internal _maxTwapDeviation;
+
+    // #endregion burn twap maximum deviation.
+
+    // #region burn twap duration.
+
+    uint24 internal _twapDuration;
+
+    // #endregion burn twap duration.
+
     // #region events
 
     event LogMint(
@@ -101,6 +113,8 @@ abstract contract ArrakisV2Storage is
     event LogWhitelistRouters(address[] routers);
     event LogBlacklistRouters(address[] routers);
     event LogSetBurnBuffer(uint16 newBurnBuffer);
+    event LogSetMaxTwapDeviation(int24 newMaxTwapDeviation);
+    event LogSetTwapDuration(uint24 newTwapDuration);
     // #endregion Setting events
 
     // #endregion events
@@ -132,6 +146,7 @@ abstract contract ArrakisV2Storage is
         require(params_.manager != address(0), "MAZ");
         require(params_.burnBuffer <= fiftyPercent, "MTMB");
         require(params_.init0 > 0 || params_.init1 > 0, "I");
+        require(params_.twapDuration > 0, "TD");
 
         __ERC20_init(name_, symbol_);
         __ReentrancyGuard_init();
@@ -150,10 +165,15 @@ abstract contract ArrakisV2Storage is
         init0 = params_.init0;
         init1 = params_.init1;
 
+        _maxTwapDeviation = params_.maxTwapDeviation;
+        _twapDuration = params_.twapDuration;
+
         emit LogAddPools(params_.feeTiers);
         emit LogSetInits(params_.init0, params_.init1);
         emit LogSetManager(params_.manager);
         emit LogSetBurnBuffer(params_.burnBuffer);
+        emit LogSetMaxTwapDeviation(params_.maxTwapDeviation);
+        emit LogSetTwapDuration(params_.twapDuration);
     }
 
     // #region setter functions
@@ -243,6 +263,27 @@ abstract contract ArrakisV2Storage is
         require(newBurnBuffer_ <= fiftyPercent, "MTMB");
         _burnBuffer = newBurnBuffer_;
         emit LogSetBurnBuffer(newBurnBuffer_);
+    }
+
+    /// @notice set max twap deviation supported during burning.
+    /// @param newMaxTwapDeviation_ new value of max twap deviation.
+    /// @dev only callable by owner
+    function setMaxTwapDeviation(int24 newMaxTwapDeviation_)
+        external
+        onlyOwner
+    {
+        _maxTwapDeviation = newMaxTwapDeviation_;
+        emit LogSetMaxTwapDeviation(newMaxTwapDeviation_);
+    }
+
+    /// @notice set twap duration, for computing average price/tick
+    /// @param newTwapDuration_ new duration for computing average price
+    /// @dev only callable by owner
+    function setTwapDuration(uint24 newTwapDuration_) external onlyOwner {
+        require(newTwapDuration_ > 0, "TD");
+
+        _twapDuration = newTwapDuration_;
+        emit LogSetTwapDuration(newTwapDuration_);
     }
 
     // #endregion setter functions

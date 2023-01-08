@@ -119,6 +119,8 @@ describe("ArrakisV2Helper functions unit test", function () {
           manager: managerProxyMock.address,
           routers: [],
           burnBuffer: 1000,
+          maxTwapDeviation: 100,
+          twapDuration: 100,
         },
         true
       );

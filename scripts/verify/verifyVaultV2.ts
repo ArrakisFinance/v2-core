@@ -11,6 +11,7 @@ async function main() {
     libraries: {
       Underlying: (await hre.ethers.getContract("Underlying")).address,
       Pool: (await hre.ethers.getContract("Pool")).address,
+      Twap: (await hre.ethers.getContract("Twap")).address,
       Position: (await hre.ethers.getContract("Position")).address,
     },
   });

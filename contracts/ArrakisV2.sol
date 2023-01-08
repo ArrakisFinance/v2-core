@@ -25,6 +25,7 @@ import {
 } from "./structs/SArrakisV2.sol";
 import {Position} from "./libraries/Position.sol";
 import {Pool} from "./libraries/Pool.sol";
+import {Twap} from "./libraries/Twap.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
 import {hundredPercent} from "./constants/CArrakisV2.sol";
 
@@ -135,6 +136,12 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
 
         uint256 ts = totalSupply();
         require(ts > 0, "TS");
+
+        // #region twap deviation checks.
+
+        Twap.checkDeviations(_pools.values(), _twapDuration, _maxTwapDeviation);
+
+        // #endregion twap deviation checks.
 
         UnderlyingOutput memory underlying;
         (

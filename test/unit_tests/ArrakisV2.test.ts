@@ -47,6 +47,8 @@ describe("ArrakisV2 functions unit test", function () {
       manager: managerAddr,
       routers: [addresses.SwapRouter],
       burnBuffer: 1000,
+      maxTwapDeviation: 100,
+      twapDuration: 100,
     });
 
     expect(await arrakisV2.token0()).to.be.eq(addresses.USDC);

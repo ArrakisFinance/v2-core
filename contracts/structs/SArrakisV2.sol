@@ -57,6 +57,8 @@ struct InitializePayload {
     address manager;
     address[] routers;
     uint16 burnBuffer;
+    int24 maxTwapDeviation;
+    uint24 twapDuration;
 }
 
 // #region internal Structs
