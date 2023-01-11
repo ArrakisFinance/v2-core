@@ -149,7 +149,6 @@ describe("Arrakis V2 integration test!!!", async function () {
         init1: res.amount1,
         manager: managerProxyMock.address,
         routers: [addresses.SwapRouter],
-        burnBuffer: 1000,
       },
       true
     );
@@ -313,7 +312,7 @@ describe("Arrakis V2 integration test!!!", async function () {
     // #endregion mint arrakis token by Lp.
     // #region burn token to get back token to user.
 
-    await vaultV2.burn([], result.mintAmount, userAddr);
+    await vaultV2.burn(result.mintAmount, userAddr);
 
     balance = await vaultV2.balanceOf(userAddr);
 
@@ -480,11 +479,7 @@ describe("Arrakis V2 integration test!!!", async function () {
 
     // #endregion rebalance to do a swap.
 
-    const burnPayload = await arrakisV2Resolver.standardBurnParams(
-      result.mintAmount,
-      vaultV2.address
-    );
-    await vaultV2.burn(burnPayload, result.mintAmount, userAddr);
+    await vaultV2.burn(result.mintAmount, userAddr);
 
     balance = await vaultV2.balanceOf(userAddr);
 
@@ -625,11 +620,7 @@ describe("Arrakis V2 integration test!!!", async function () {
 
     // #endregion rebalance to do a swap.
 
-    const burnPayload = await arrakisV2Resolver.standardBurnParams(
-      result.mintAmount,
-      vaultV2.address
-    );
-    await vaultV2.burn(burnPayload, result.mintAmount, userAddr);
+    await vaultV2.burn(result.mintAmount, userAddr);
 
     balance = await vaultV2.balanceOf(userAddr);
 

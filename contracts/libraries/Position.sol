@@ -24,6 +24,17 @@ library Position {
         require(liquidity == 0, "LNZ");
     }
 
+    function getLiquidityByRange(
+        IUniswapV3Pool pool_,
+        address self_,
+        int24 lowerTick_,
+        int24 upperTick_
+    ) public view returns (uint128 liquidity) {
+        (liquidity, , , , ) = pool_.positions(
+            getPositionId(self_, lowerTick_, upperTick_)
+        );
+    }
+
     function getPositionId(
         address self_,
         int24 lowerTick_,

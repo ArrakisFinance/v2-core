@@ -21,7 +21,6 @@ import {
     EnumerableSet
 } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {Range, Rebalance, InitializePayload} from "../structs/SArrakisV2.sol";
-import {fiftyPercent} from "../constants/CArrakisV2.sol";
 
 /// @title ArrakisV2Storage base contract containing all ArrakisV2 storage variables.
 // solhint-disable-next-line max-states-count
@@ -58,6 +57,7 @@ abstract contract ArrakisV2Storage is
 
     // #region burn buffer
 
+    /// @dev legacy not used, can be used in the futur.
     uint16 internal _burnBuffer;
 
     // #endregion burn buffer
@@ -87,7 +87,6 @@ abstract contract ArrakisV2Storage is
     event LogRebalance(Rebalance rebalanceParams);
 
     event LogCollectedFees(uint256 fee0, uint256 fee1);
-    event LogUncollectedFees(uint256 fee0, uint256 fee1);
 
     event LogWithdrawManagerBalance(uint256 amount0, uint256 amount1);
     // #region Setting events
@@ -100,7 +99,6 @@ abstract contract ArrakisV2Storage is
     event LogRestrictedMint(address minter);
     event LogWhitelistRouters(address[] routers);
     event LogBlacklistRouters(address[] routers);
-    event LogSetBurnBuffer(uint16 newBurnBuffer);
     // #endregion Setting events
 
     // #endregion events
@@ -130,7 +128,6 @@ abstract contract ArrakisV2Storage is
         require(params_.token0 < params_.token1, "WTO");
         require(params_.owner != address(0), "OAZ");
         require(params_.manager != address(0), "MAZ");
-        require(params_.burnBuffer <= fiftyPercent, "MTMB");
         require(params_.init0 > 0 || params_.init1 > 0, "I");
 
         __ERC20_init(name_, symbol_);
@@ -146,14 +143,12 @@ abstract contract ArrakisV2Storage is
 
         manager = params_.manager;
 
-        _burnBuffer = params_.burnBuffer;
         init0 = params_.init0;
         init1 = params_.init1;
 
         emit LogAddPools(params_.feeTiers);
         emit LogSetInits(params_.init0, params_.init1);
         emit LogSetManager(params_.manager);
-        emit LogSetBurnBuffer(params_.burnBuffer);
     }
 
     // #region setter functions
@@ -234,15 +229,6 @@ abstract contract ArrakisV2Storage is
     function setRestrictedMint(address minter_) external onlyOwner {
         restrictedMint = minter_;
         emit LogRestrictedMint(minter_);
-    }
-
-    /// @notice set burn buffer
-    /// @param newBurnBuffer_ buffer value.
-    /// @dev only callable by owner.
-    function setBurnBuffer(uint16 newBurnBuffer_) external onlyOwner {
-        require(newBurnBuffer_ <= fiftyPercent, "MTMB");
-        _burnBuffer = newBurnBuffer_;
-        emit LogSetBurnBuffer(newBurnBuffer_);
     }
 
     // #endregion setter functions
