@@ -17,15 +17,11 @@ import {
     Range
 } from "./abstract/ArrakisV2Storage.sol";
 import {FullMath} from "@arrakisfi/v3-lib-0.8/contracts/LiquidityAmounts.sol";
-import {
-    Withdraw,
-    UnderlyingPayload,
-    BurnLiquidity,
-    UnderlyingOutput
-} from "./structs/SArrakisV2.sol";
+import {Withdraw, UnderlyingPayload} from "./structs/SArrakisV2.sol";
 import {Position} from "./libraries/Position.sol";
 import {Pool} from "./libraries/Pool.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {hundredPercent} from "./constants/CArrakisV2.sol";
 
 /// @title ArrakisV2 LP vault version 2
@@ -68,22 +64,17 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         address me = address(this);
         uint256 ts = totalSupply();
         bool isTotalSupplyGtZero = ts > 0;
-        (
-            uint256 current0,
-            uint256 current1,
-            uint256 fee0,
-            uint256 fee1
-        ) = isTotalSupplyGtZero
-                ? UnderlyingHelper.totalUnderlyingWithFees(
-                    UnderlyingPayload({
-                        ranges: ranges,
-                        factory: factory,
-                        token0: address(token0),
-                        token1: address(token1),
-                        self: me
-                    })
-                )
-                : (init0, init1, 0, 0);
+        (uint256 current0, uint256 current1, , ) = isTotalSupplyGtZero
+            ? UnderlyingHelper.totalUnderlyingWithFees(
+                UnderlyingPayload({
+                    ranges: ranges,
+                    factory: factory,
+                    token0: address(token0),
+                    token1: address(token1),
+                    self: me
+                })
+            )
+            : (init0, init1, 0, 0);
         uint256 denominator = isTotalSupplyGtZero ? ts : 1 ether;
 
         /// @dev current0 and current1 include fees and left over (but not manager balances)
@@ -115,111 +106,75 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
             token1.safeTransferFrom(msg.sender, me, amount1);
         }
 
-        emit LogUncollectedFees(fee0, fee1);
         emit LogMint(receiver_, mintAmount_, amount0, amount1);
     }
 
     /// @notice burn Arrakis V2 shares and withdraw underlying.
-    /// @param burns_ ranges to burn liquidity from and collect underlying.
     /// @param burnAmount_ amount of vault shares to burn.
     /// @param receiver_ address to receive underlying tokens withdrawn.
     /// @return amount0 amount of token0 sent to receiver
     /// @return amount1 amount of token1 sent to receiver
-    // solhint-disable-next-line function-max-lines, code-complexity
-    function burn(
-        BurnLiquidity[] calldata burns_,
-        uint256 burnAmount_,
-        address receiver_
-    ) external nonReentrant returns (uint256 amount0, uint256 amount1) {
+    // solhint-disable-next-line function-max-lines
+    function burn(uint256 burnAmount_, address receiver_)
+        external
+        nonReentrant
+        returns (uint256 amount0, uint256 amount1)
+    {
         require(burnAmount_ > 0, "BA");
 
         uint256 ts = totalSupply();
         require(ts > 0, "TS");
 
-        UnderlyingOutput memory underlying;
-        (
-            underlying.amount0,
-            underlying.amount1,
-            underlying.fee0,
-            underlying.fee1
-        ) = UnderlyingHelper.totalUnderlyingWithFees(
-            UnderlyingPayload({
-                ranges: ranges,
-                factory: factory,
-                token0: address(token0),
-                token1: address(token1),
-                self: address(this)
-            })
-        );
-        underlying.leftOver0 =
-            token0.balanceOf(address(this)) -
-            managerBalance0;
-        underlying.leftOver1 =
-            token1.balanceOf(address(this)) -
-            managerBalance1;
-
-        {
-            // the proportion of user balance.
-            amount0 = FullMath.mulDiv(underlying.amount0, burnAmount_, ts);
-            amount1 = FullMath.mulDiv(underlying.amount1, burnAmount_, ts);
-        }
-
-        if (
-            underlying.leftOver0 >= amount0 && underlying.leftOver1 >= amount1
-        ) {
-            _burn(msg.sender, burnAmount_);
-
-            if (amount0 > 0) {
-                token0.safeTransfer(receiver_, amount0);
-            }
-
-            if (amount1 > 0) {
-                token1.safeTransfer(receiver_, amount1);
-            }
-
-            emit LogBurn(receiver_, burnAmount_, amount0, amount1);
-            return (amount0, amount1);
-        }
-
-        // not at the begining of the function
-        require(burns_.length > 0, "B");
-
         _burn(msg.sender, burnAmount_);
 
         Withdraw memory total;
-        {
-            for (uint256 i; i < burns_.length; i++) {
-                require(burns_[i].liquidity != 0, "LZ");
-                {
-                    (bool exist, ) = Position.rangeExist(
-                        ranges,
-                        burns_[i].range
-                    );
-                    require(exist, "RRNE");
-                }
 
-                Withdraw memory withdraw = _withdraw(
-                    IUniswapV3Pool(
-                        factory.getPool(
-                            address(token0),
-                            address(token1),
-                            burns_[i].range.feeTier
-                        )
-                    ),
-                    burns_[i].range.lowerTick,
-                    burns_[i].range.upperTick,
-                    burns_[i].liquidity
-                );
+        for (uint256 i; i < ranges.length; i++) {
+            Range memory range = ranges[i];
+            IUniswapV3Pool pool = IUniswapV3Pool(
+                factory.getPool(address(token0), address(token1), range.feeTier)
+            );
+            uint128 liquidity = Position.getLiquidityByRange(
+                pool,
+                address(this),
+                range.lowerTick,
+                range.upperTick
+            );
+            if (liquidity == 0) continue;
 
-                total.fee0 += withdraw.fee0;
-                total.fee1 += withdraw.fee1;
+            liquidity = SafeCast.toUint128(
+                FullMath.mulDiv(liquidity, burnAmount_, ts)
+            );
 
-                total.burn0 += withdraw.burn0;
-                total.burn1 += withdraw.burn1;
-            }
+            Withdraw memory withdraw = _withdraw(
+                pool,
+                range.lowerTick,
+                range.upperTick,
+                liquidity
+            );
 
-            _applyFees(total.fee0, total.fee1);
+            total.fee0 += withdraw.fee0;
+            total.fee1 += withdraw.fee1;
+
+            total.burn0 += withdraw.burn0;
+            total.burn1 += withdraw.burn1;
         }
+
+        _applyFees(total.fee0, total.fee1);
+
+        uint256 leftOver0 = token0.balanceOf(address(this)) -
+            managerBalance0 -
+            total.burn0;
+        uint256 leftOver1 = token1.balanceOf(address(this)) -
+            managerBalance1 -
+            total.burn1;
+
+        // the proportion of user balance.
+        amount0 = FullMath.mulDiv(leftOver0, burnAmount_, ts);
+        amount1 = FullMath.mulDiv(leftOver1, burnAmount_, ts);
+
+        amount0 += total.burn0;
+        amount1 += total.burn1;
 
         if (amount0 > 0) {
             token0.safeTransfer(receiver_, amount0);
@@ -229,48 +184,8 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
             token1.safeTransfer(receiver_, amount1);
         }
 
-        // intentional underflow revert if managerBalance > contract's token balance
-        {
-            uint256 leftover0 = token0.balanceOf(address(this)) -
-                managerBalance0;
-            uint256 leftover1 = token1.balanceOf(address(this)) -
-                managerBalance1;
-            (
-                uint256 fee0AfterManagerFee,
-                uint256 fee1AfterManagerFee
-            ) = UnderlyingHelper.subtractAdminFees(
-                    total.fee0,
-                    total.fee1,
-                    managerFeeBPS
-                );
-
-            require(
-                (fee0AfterManagerFee >= leftover0 ||
-                    leftover0 - fee0AfterManagerFee <= underlying.leftOver0) ||
-                    ((leftover0 - fee0AfterManagerFee - underlying.leftOver0) <=
-                        FullMath.mulDiv(
-                            total.burn0,
-                            _burnBuffer,
-                            hundredPercent
-                        )),
-                "L0"
-            );
-            require(
-                (fee1AfterManagerFee >= leftover1 ||
-                    leftover1 - fee1AfterManagerFee <= underlying.leftOver1) ||
-                    ((leftover1 - fee1AfterManagerFee - underlying.leftOver1) <=
-                        FullMath.mulDiv(
-                            total.burn1,
-                            _burnBuffer,
-                            hundredPercent
-                        )),
-                "L1"
-            );
-        }
-
         // For monitoring how much user burn LP token for getting their token back.
         emit LPBurned(msg.sender, total.burn0, total.burn1);
-        emit LogUncollectedFees(underlying.fee0, underlying.fee1);
         emit LogCollectedFees(total.fee0, total.fee1);
         emit LogBurn(receiver_, burnAmount_, amount0, amount1);
     }

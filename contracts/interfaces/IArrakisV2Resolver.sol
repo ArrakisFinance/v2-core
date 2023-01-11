@@ -2,18 +2,13 @@
 pragma solidity >=0.8.0;
 
 import {IArrakisV2} from "./IArrakisV2.sol";
-import {RangeWeight, Rebalance, BurnLiquidity} from "../structs/SArrakisV2.sol";
+import {RangeWeight, Rebalance} from "../structs/SArrakisV2.sol";
 
 interface IArrakisV2Resolver {
     function standardRebalance(
         RangeWeight[] memory rangeWeights_,
         IArrakisV2 vaultV2_
     ) external view returns (Rebalance memory rebalanceParams);
-
-    function standardBurnParams(uint256 amountToBurn_, IArrakisV2 vaultV2_)
-        external
-        view
-        returns (BurnLiquidity[] memory burns);
 
     function getMintAmounts(
         IArrakisV2 vaultV2_,

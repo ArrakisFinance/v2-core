@@ -7,7 +7,6 @@ import {
 } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {IArrakisV2Helper} from "./interfaces/IArrakisV2Helper.sol";
 import {IArrakisV2} from "./interfaces/IArrakisV2.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {
     IUniswapV3Pool
 } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
@@ -19,15 +18,11 @@ import {
     LiquidityAmounts
 } from "@arrakisfi/v3-lib-0.8/contracts/LiquidityAmounts.sol";
 import {
-    BurnLiquidity,
     PositionLiquidity,
-    UnderlyingOutput,
-    UnderlyingPayload,
     Range,
     RangeWeight,
     Rebalance
 } from "./structs/SArrakisV2.sol";
-import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {hundredPercent} from "./constants/CArrakisV2.sol";
 
 /// @title ArrakisV2Resolver helpers that resolve / compute payloads for ArrakisV2 calls
@@ -132,116 +127,6 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
                 liquidity: liquidity,
                 range: rangeWeight.range
             });
-        }
-    }
-
-    /// @notice Standard Burn (proportional burn from all ranges).
-    /// @param amountToBurn_ amount of Arrakis V2 token to burn.
-    /// @param vaultV2_ Arrakis V2 vault.
-    /// @return burns list of ranges and liquidities to burn.
-    /// function on Arrakis V2 contract.
-    // solhint-disable-next-line function-max-lines, code-complexity
-    function standardBurnParams(uint256 amountToBurn_, IArrakisV2 vaultV2_)
-        external
-        view
-        returns (BurnLiquidity[] memory burns)
-    {
-        uint256 totalSupply = vaultV2_.totalSupply();
-        require(totalSupply > 0, "total supply");
-
-        uint128[] memory liquidities;
-        Range[] memory ranges = vaultV2_.getRanges();
-        {
-            IERC20 token0 = vaultV2_.token0();
-            IERC20 token1 = vaultV2_.token1();
-            address token0Addr = address(token0);
-            address token1Addr = address(token1);
-            address vaultAddr = address(vaultV2_);
-            {
-                UnderlyingOutput memory underlying;
-                (
-                    underlying.amount0,
-                    underlying.amount1,
-                    underlying.fee0,
-                    underlying.fee1
-                ) = UnderlyingHelper.totalUnderlyingWithFees(
-                    UnderlyingPayload({
-                        ranges: ranges,
-                        factory: factory,
-                        token0: token0Addr,
-                        token1: token1Addr,
-                        self: vaultAddr
-                    })
-                );
-                underlying.leftOver0 =
-                    token0.balanceOf(vaultAddr) -
-                    vaultV2_.managerBalance0();
-                underlying.leftOver1 =
-                    token1.balanceOf(vaultAddr) -
-                    vaultV2_.managerBalance1();
-
-                {
-                    uint256 amount0 = FullMath.mulDiv(
-                        underlying.amount0,
-                        amountToBurn_,
-                        totalSupply
-                    );
-                    uint256 amount1 = FullMath.mulDiv(
-                        underlying.amount1,
-                        amountToBurn_,
-                        totalSupply
-                    );
-
-                    if (
-                        amount0 <= underlying.leftOver0 &&
-                        amount1 <= underlying.leftOver1
-                    ) return burns;
-                }
-            }
-            // #endregion get amount to burn.
-
-            liquidities = new uint128[](ranges.length);
-            {
-                uint256 len;
-                for (uint256 i; i < ranges.length; i++) {
-                    uint128 liquidity;
-                    {
-                        (liquidity, , , , ) = IUniswapV3Pool(
-                            factory.getPool(
-                                token0Addr,
-                                token1Addr,
-                                ranges[i].feeTier
-                            )
-                        ).positions(
-                                PositionHelper.getPositionId(
-                                    vaultAddr,
-                                    ranges[i].lowerTick,
-                                    ranges[i].upperTick
-                                )
-                            );
-                    }
-                    liquidities[i] = liquidity;
-
-                    if (liquidity != 0) ++len;
-                }
-                burns = new BurnLiquidity[](len);
-            }
-        }
-        uint256 idx;
-        for (uint256 j; j < ranges.length; j++) {
-            if (liquidities[j] > 0) {
-                burns[idx] = BurnLiquidity({
-                    liquidity: SafeCast.toUint128(
-                        FullMath.mulDivRoundingUp(
-                            liquidities[j],
-                            amountToBurn_,
-                            totalSupply
-                        )
-                    ),
-                    range: ranges[j]
-                });
-                ++idx;
-            }
         }
     }
 

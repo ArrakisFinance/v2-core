@@ -6,7 +6,7 @@ import {
 } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {InitializePayload} from "../structs/SArrakisV2.sol";
-import {BurnLiquidity, Range, Rebalance} from "../structs/SArrakisV2.sol";
+import {Range, Rebalance} from "../structs/SArrakisV2.sol";
 
 interface IArrakisV2 is IERC20 {
     function initialize(
@@ -21,11 +21,9 @@ interface IArrakisV2 is IERC20 {
         external
         returns (uint256 amount0, uint256 amount1);
 
-    function burn(
-        BurnLiquidity[] calldata burns_,
-        uint256 burnAmount_,
-        address receiver_
-    ) external returns (uint256 amount0, uint256 amount1);
+    function burn(uint256 burnAmount_, address receiver_)
+        external
+        returns (uint256 amount0, uint256 amount1);
 
     function rebalance(
         Range[] calldata rangesToAdd_,
@@ -48,8 +46,6 @@ interface IArrakisV2 is IERC20 {
     function setManager(address manager_) external;
 
     function setRestrictedMint(address minter_) external;
-
-    function setBurnBuffer(uint16 newBurnBuffer_) external;
 
     function setManagerFeeBPS(uint16 managerFeeBPS_) external;
 

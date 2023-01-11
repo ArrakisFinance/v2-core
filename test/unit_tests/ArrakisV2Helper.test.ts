@@ -118,7 +118,6 @@ describe("ArrakisV2Helper functions unit test", function () {
           init1: res.amount1,
           manager: managerProxyMock.address,
           routers: [],
-          burnBuffer: 1000,
         },
         true
       );
