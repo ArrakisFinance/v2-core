@@ -112,10 +112,16 @@ contract ArrakisV2Factory is ArrakisV2FactoryStorage {
             params_
         );
 
+        bytes32 salt = keccak256(
+            abi.encodePacked(tx.origin, block.number, data)
+        );
+
         vault = isBeacon_
-            ? address(new BeaconProxy(address(arrakisV2Beacon), data))
+            ? address(
+                new BeaconProxy{salt: salt}(address(arrakisV2Beacon), data)
+            )
             : address(
-                new TransparentUpgradeableProxy(
+                new TransparentUpgradeableProxy{salt: salt}(
                     arrakisV2Beacon.implementation(),
                     address(this),
                     data
