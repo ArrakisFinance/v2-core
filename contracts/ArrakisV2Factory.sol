@@ -82,6 +82,88 @@ contract ArrakisV2Factory is ArrakisV2FactoryStorage {
     }
 
     /// @notice numVaults counts the total number of vaults in existence
+    /// @param creator_ address of the vault creator == tx.origin,
+    /// @dev creator_ != msg.sender, caller can be a common smart contract like PALMTerms.
+    /// @param params_ InitializePayload struct that will be used for vault deployment.
+    /// @param isBeacon_ boolean, if true the instance will be BeaconProxy or TransparentProxy.
+    /// @return vault computed vault address
+    // solhint-disable-next-line function-max-lines
+    function getVaultAddress(
+        address creator_,
+        InitializePayload calldata params_,
+        bool isBeacon_
+    ) external view returns (address vault) {
+        require(bytes(params_.salt).length > 0, "random vault address");
+
+        bytes32 salt = keccak256(abi.encodePacked(creator_, params_.salt));
+
+        (address token0, address token1) = _getTokenOrder(
+            params_.token0,
+            params_.token1
+        );
+        string memory name = "Arrakis Vault V2";
+        try this.getTokenName(token0, token1) returns (string memory result) {
+            name = result;
+        } catch {} // solhint-disable-line no-empty-blocks
+        bytes memory data = abi.encodeWithSelector(
+            IArrakisV2.initialize.selector,
+            name,
+            string(abi.encodePacked("RAKISv2-", params_.salt)),
+            params_
+        );
+
+        if (isBeacon_) {
+            vault = address(
+                uint160(
+                    uint256(
+                        keccak256(
+                            abi.encodePacked(
+                                bytes1(0xff),
+                                address(this),
+                                salt,
+                                keccak256(
+                                    abi.encodePacked(
+                                        type(BeaconProxy).creationCode,
+                                        abi.encode(
+                                            address(arrakisV2Beacon),
+                                            data
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            );
+        } else {
+            vault = address(
+                uint160(
+                    uint256(
+                        keccak256(
+                            abi.encodePacked(
+                                bytes1(0xff),
+                                address(this),
+                                salt,
+                                keccak256(
+                                    abi.encodePacked(
+                                        type(TransparentUpgradeableProxy)
+                                            .creationCode,
+                                        abi.encode(
+                                            arrakisV2Beacon.implementation(),
+                                            address(this),
+                                            data
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            );
+        }
+    }
+
+    /// @notice numVaults counts the total number of vaults in existence
     /// @return result total number of vaults deployed
     function numVaults() public view returns (uint256 result) {
         return _vaults.length();
@@ -91,10 +173,30 @@ contract ArrakisV2Factory is ArrakisV2FactoryStorage {
 
     // #region internal functions
 
+    // solhint-disable-next-line function-max-lines
     function _preDeploy(InitializePayload calldata params_, bool isBeacon_)
         internal
         returns (address vault)
     {
+        // #region salt computation.
+
+        bytes32 salt;
+        string memory symbol;
+
+        if (bytes(params_.salt).length > 0) {
+            salt = keccak256(abi.encodePacked(tx.origin, params_.salt));
+            symbol = string(abi.encodePacked("RAKISv2-", params_.salt));
+        } else {
+            //// @dev the vault creator don't want to have a specific address.
+            // solhint-disable-next-line not-rely-on-time
+            salt = keccak256(abi.encodePacked(tx.origin, block.timestamp));
+            symbol = string(
+                abi.encodePacked("RAKISv2-", _uint2str(_vaults.length() + 1))
+            );
+        }
+
+        // #endregion salt computation.
+
         (address token0, address token1) = _getTokenOrder(
             params_.token0,
             params_.token1
@@ -108,14 +210,16 @@ contract ArrakisV2Factory is ArrakisV2FactoryStorage {
         bytes memory data = abi.encodeWithSelector(
             IArrakisV2.initialize.selector,
             name,
-            string(abi.encodePacked("RAKISv2-", _uint2str(numVaults() + 1))),
+            symbol,
             params_
         );
 
         vault = isBeacon_
-            ? address(new BeaconProxy(address(arrakisV2Beacon), data))
+            ? address(
+                new BeaconProxy{salt: salt}(address(arrakisV2Beacon), data)
+            )
             : address(
-                new TransparentUpgradeableProxy(
+                new TransparentUpgradeableProxy{salt: salt}(
                     arrakisV2Beacon.implementation(),
                     address(this),
                     data

@@ -149,6 +149,7 @@ describe("Arrakis V2 integration test!!!", async function () {
         init1: res.amount1,
         manager: managerProxyMock.address,
         routers: [addresses.SwapRouter],
+        salt: "",
       },
       true
     );

@@ -104,6 +104,7 @@ describe("Factory function unit test", function () {
         init1: res.amount1,
         manager: userAddr,
         routers: [],
+        salt: "",
       },
       true
     );
@@ -123,17 +124,121 @@ describe("Factory function unit test", function () {
     expect(await vaultV2.symbol()).to.be.eq("RAKISv2-1");
   });
 
-  it("#1: unit test get token name", async () => {
+  it("#1: unit test create deterministic beacon vault v2", async () => {
+    const slot0 = await uniswapV3Pool.slot0();
+    const tickSpacing = await uniswapV3Pool.tickSpacing();
+
+    const lowerTick = slot0.tick - (slot0.tick % tickSpacing) - tickSpacing;
+    const upperTick = slot0.tick - (slot0.tick % tickSpacing) + 2 * tickSpacing;
+
+    // For initialization.
+    const res = await arrakisV2Resolver.getAmountsForLiquidity(
+      slot0.tick,
+      lowerTick,
+      upperTick,
+      ethers.utils.parseUnits("1", 18)
+    );
+
+    const params = {
+      feeTiers: [500],
+      token0: addresses.USDC,
+      token1: addresses.WETH,
+      owner: userAddr,
+      init0: res.amount0,
+      init1: res.amount1,
+      manager: userAddr,
+      routers: [],
+      salt: "Vault-1",
+    };
+    const isBeacon = true;
+
+    const vaultAddr = await arrakisV2Factory.getVaultAddress(
+      userAddr,
+      params,
+      isBeacon
+    );
+
+    const tx = await arrakisV2Factory.deployVault(params, isBeacon);
+
+    const rc = await tx.wait();
+    const event = rc?.events?.find((event) => event.event === "VaultCreated");
+    // eslint-disable-next-line no-unsafe-optional-chaining
+    const result = event?.args;
+
+    const vaultV2 = (await ethers.getContractAt(
+      "ArrakisV2",
+      result?.vault,
+      user
+    )) as ArrakisV2;
+
+    expect(vaultV2.address).to.be.eq(vaultAddr);
+    expect(await vaultV2.name()).to.be.eq("Arrakis Vault V2 USDC/WETH");
+    expect(await vaultV2.symbol()).to.be.eq("RAKISv2-Vault-1");
+  });
+
+  it("#1 bis: unit test create deterministic transparent proxy vault v2", async () => {
+    const slot0 = await uniswapV3Pool.slot0();
+    const tickSpacing = await uniswapV3Pool.tickSpacing();
+
+    const lowerTick = slot0.tick - (slot0.tick % tickSpacing) - tickSpacing;
+    const upperTick = slot0.tick - (slot0.tick % tickSpacing) + 2 * tickSpacing;
+
+    // For initialization.
+    const res = await arrakisV2Resolver.getAmountsForLiquidity(
+      slot0.tick,
+      lowerTick,
+      upperTick,
+      ethers.utils.parseUnits("1", 18)
+    );
+
+    const params = {
+      feeTiers: [500],
+      token0: addresses.USDC,
+      token1: addresses.WETH,
+      owner: userAddr,
+      init0: res.amount0,
+      init1: res.amount1,
+      manager: userAddr,
+      routers: [],
+      salt: "Vault-1",
+    };
+    const isBeacon = false;
+
+    const vaultAddr = await arrakisV2Factory.getVaultAddress(
+      userAddr,
+      params,
+      isBeacon
+    );
+
+    const tx = await arrakisV2Factory.deployVault(params, isBeacon);
+
+    const rc = await tx.wait();
+    const event = rc?.events?.find((event) => event.event === "VaultCreated");
+    // eslint-disable-next-line no-unsafe-optional-chaining
+    const result = event?.args;
+
+    const vaultV2 = (await ethers.getContractAt(
+      "ArrakisV2",
+      result?.vault,
+      user
+    )) as ArrakisV2;
+
+    expect(vaultV2.address).to.be.eq(vaultAddr);
+    expect(await vaultV2.name()).to.be.eq("Arrakis Vault V2 USDC/WETH");
+    expect(await vaultV2.symbol()).to.be.eq("RAKISv2-Vault-1");
+  });
+
+  it("#2: unit test get token name", async () => {
     expect(
       await arrakisV2Factory.getTokenName(addresses.USDC, addresses.WETH)
     ).to.be.eq("Arrakis Vault V2 USDC/WETH");
   });
 
-  it("#2: unit test get num vaults", async () => {
+  it("#3: unit test get num vaults", async () => {
     expect(await arrakisV2Factory.numVaults()).to.be.eq(0);
   });
 
-  it("#3: unit test get num vaults", async () => {
+  it("#4: unit test get num vaults", async () => {
     const slot0 = await uniswapV3Pool.slot0();
     const tickSpacing = await uniswapV3Pool.tickSpacing();
 
@@ -158,6 +263,7 @@ describe("Factory function unit test", function () {
         init1: res.amount1,
         manager: userAddr,
         routers: [],
+        salt: "",
       },
       true
     );
@@ -190,6 +296,7 @@ describe("Factory function unit test", function () {
         init1: res.amount1,
         manager: userAddr,
         routers: [],
+        salt: "",
       },
       true
     );
@@ -225,6 +332,7 @@ describe("Factory function unit test", function () {
         init1: res.amount1,
         manager: userAddr,
         routers: [],
+        salt: "",
       },
       false
     );
@@ -264,6 +372,7 @@ describe("Factory function unit test", function () {
         init1: res.amount1,
         manager: userAddr,
         routers: [],
+        salt: "",
       },
       false
     );
@@ -303,6 +412,7 @@ describe("Factory function unit test", function () {
         init1: res.amount1,
         manager: userAddr,
         routers: [],
+        salt: "",
       },
       false
     );
@@ -353,6 +463,7 @@ describe("Factory function unit test", function () {
         init1: res.amount1,
         manager: userAddr,
         routers: [],
+        salt: "",
       },
       false
     );
@@ -438,6 +549,7 @@ describe("Factory function unit test", function () {
         init1: res.amount1,
         manager: userAddr,
         routers: [],
+        salt: "",
       },
       false
     );
