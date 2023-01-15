@@ -121,8 +121,6 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         }
 
         if (isTotalSupplyGtZero) {
-            uint256 deposit0;
-            uint256 deposit1;
             for (uint256 i; i < ranges.length; i++) {
                 Range memory range = ranges[i];
                 IUniswapV3Pool pool = IUniswapV3Pool(
@@ -144,20 +142,8 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                     FullMath.mulDiv(liquidity, mintAmount_, ts)
                 );
 
-                (uint256 amt0, uint256 amt1) = pool.mint(
-                    me,
-                    range.lowerTick,
-                    range.upperTick,
-                    liquidity,
-                    ""
-                );
-                deposit0 += amt0;
-                deposit1 += amt1;
+                pool.mint(me, range.lowerTick, range.upperTick, liquidity, "");
             }
-
-            /// TODO: this check may be provably unnecessary.
-            require(deposit0 <= amount0, "D0");
-            require(deposit1 <= amount1, "D1");
         }
 
         emit LogMint(receiver_, mintAmount_, amount0, amount1);
@@ -322,18 +308,19 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
     {
         // Burns.
         IUniswapV3Factory mFactory = factory;
-        address mToken0Addr = address(token0);
-        address mToken1Addr = address(token1);
+        IERC20 mToken0 = token0;
+        IERC20 mToken1 = token1;
 
         {
             Withdraw memory aggregator;
             for (uint256 i; i < rebalanceParams_.removes.length; i++) {
-                address poolAddr = mFactory.getPool(
-                    mToken0Addr,
-                    mToken1Addr,
-                    rebalanceParams_.removes[i].range.feeTier
+                IUniswapV3Pool pool = IUniswapV3Pool(
+                    mFactory.getPool(
+                        address(mToken0),
+                        address(mToken1),
+                        rebalanceParams_.removes[i].range.feeTier
+                    )
                 );
-                IUniswapV3Pool pool = IUniswapV3Pool(poolAddr);
 
                 Withdraw memory withdraw = _withdraw(
                     pool,
@@ -364,17 +351,17 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
             {
                 require(_routers.contains(rebalanceParams_.swap.router), "NR");
 
-                uint256 balance0Before = token0.balanceOf(address(this));
-                uint256 balance1Before = token1.balanceOf(address(this));
+                uint256 balance0Before = mToken0.balanceOf(address(this));
+                uint256 balance1Before = mToken1.balanceOf(address(this));
 
-                token0.safeApprove(address(rebalanceParams_.swap.router), 0);
-                token1.safeApprove(address(rebalanceParams_.swap.router), 0);
+                mToken0.safeApprove(address(rebalanceParams_.swap.router), 0);
+                mToken1.safeApprove(address(rebalanceParams_.swap.router), 0);
 
-                token0.safeApprove(
+                mToken0.safeApprove(
                     address(rebalanceParams_.swap.router),
                     balance0Before
                 );
-                token1.safeApprove(
+                mToken1.safeApprove(
                     address(rebalanceParams_.swap.router),
                     balance1Before
                 );
@@ -384,8 +371,8 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                 );
                 require(success, "SC");
 
-                uint256 balance0After = token0.balanceOf(address(this));
-                uint256 balance1After = token1.balanceOf(address(this));
+                uint256 balance0After = mToken0.balanceOf(address(this));
+                uint256 balance1After = mToken1.balanceOf(address(this));
 
                 if (rebalanceParams_.swap.zeroForOne) {
                     require(
@@ -417,8 +404,8 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         for (uint256 i; i < rebalanceParams_.deposits.length; i++) {
             IUniswapV3Pool pool = IUniswapV3Pool(
                 mFactory.getPool(
-                    mToken0Addr,
-                    mToken1Addr,
+                    address(mToken0),
+                    address(mToken1),
                     rebalanceParams_.deposits[i].range.feeTier
                 )
             );
