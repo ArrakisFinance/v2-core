@@ -322,11 +322,23 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                     )
                 );
 
+                uint128 liquidity = Position.getLiquidityByRange(
+                    pool,
+                    address(this),
+                    rebalanceParams_.removes[i].range.lowerTick,
+                    rebalanceParams_.removes[i].range.upperTick
+                );
+
+                if (liquidity == 0) continue;
+
+                if (rebalanceParams_.removes[i].liquidity != type(uint128).max)
+                    liquidity = rebalanceParams_.removes[i].liquidity;
+
                 Withdraw memory withdraw = _withdraw(
                     pool,
                     rebalanceParams_.removes[i].range.lowerTick,
                     rebalanceParams_.removes[i].range.upperTick,
-                    rebalanceParams_.removes[i].liquidity
+                    liquidity
                 );
 
                 aggregator.burn0 += withdraw.burn0;
