@@ -50,7 +50,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
     /// @param receiver_ address that will receive Arrakis V2 shares.
     /// @return amount0 amount of token0 needed to mint mintAmount_ of shares.
     /// @return amount1 amount of token1 needed to mint mintAmount_ of shares.
-    // solhint-disable-next-line function-max-lines
+    // solhint-disable-next-line function-max-lines, code-complexity
     function mint(uint256 mintAmount_, address receiver_)
         external
         nonReentrant
@@ -64,29 +64,43 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         address me = address(this);
         uint256 ts = totalSupply();
         bool isTotalSupplyGtZero = ts > 0;
-        (uint256 current0, uint256 current1, , ) = isTotalSupplyGtZero
-            ? UnderlyingHelper.totalUnderlyingWithFees(
-                UnderlyingPayload({
-                    ranges: ranges,
-                    factory: factory,
-                    token0: address(token0),
-                    token1: address(token1),
-                    self: me
-                })
-            )
-            : (init0, init1, 0, 0);
-        uint256 denominator = isTotalSupplyGtZero ? ts : 1 ether;
+        if (isTotalSupplyGtZero) {
+            (uint256 current0, uint256 current1, , ) = UnderlyingHelper
+                .totalUnderlyingWithFees(
+                    UnderlyingPayload({
+                        ranges: ranges,
+                        factory: factory,
+                        token0: address(token0),
+                        token1: address(token1),
+                        self: me
+                    })
+                );
 
-        /// @dev current0 and current1 include fees and left over (but not manager balances)
-        amount0 = FullMath.mulDivRoundingUp(mintAmount_, current0, denominator);
-        amount1 = FullMath.mulDivRoundingUp(mintAmount_, current1, denominator);
+            /// @dev current0 and current1 include fees and leftover (but not manager balances)
+            amount0 = FullMath.mulDivRoundingUp(mintAmount_, current0, ts);
+            amount1 = FullMath.mulDivRoundingUp(mintAmount_, current1, ts);
+        } else {
+            uint256 denominator = 1 ether;
+            uint256 init0M = init0;
+            uint256 init1M = init1;
 
-        if (!isTotalSupplyGtZero) {
-            uint256 amount0Mint = current0 != 0
-                ? FullMath.mulDiv(amount0, denominator, current0)
+            amount0 = FullMath.mulDivRoundingUp(
+                mintAmount_,
+                init0M,
+                denominator
+            );
+            amount1 = FullMath.mulDivRoundingUp(
+                mintAmount_,
+                init1M,
+                denominator
+            );
+
+            /// @dev check ratio against precision attacks (small values that skew init ratio)
+            uint256 amount0Mint = init0M != 0
+                ? FullMath.mulDiv(amount0, denominator, init0M)
                 : type(uint256).max;
-            uint256 amount1Mint = current1 != 0
-                ? FullMath.mulDiv(amount1, denominator, current1)
+            uint256 amount1Mint = init1M != 0
+                ? FullMath.mulDiv(amount1, denominator, init1M)
                 : type(uint256).max;
 
             require(
@@ -104,6 +118,32 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         }
         if (amount1 > 0) {
             token1.safeTransferFrom(msg.sender, me, amount1);
+        }
+
+        if (isTotalSupplyGtZero) {
+            for (uint256 i; i < ranges.length; i++) {
+                Range memory range = ranges[i];
+                IUniswapV3Pool pool = IUniswapV3Pool(
+                    factory.getPool(
+                        address(token0),
+                        address(token1),
+                        range.feeTier
+                    )
+                );
+                uint128 liquidity = Position.getLiquidityByRange(
+                    pool,
+                    me,
+                    range.lowerTick,
+                    range.upperTick
+                );
+                if (liquidity == 0) continue;
+
+                liquidity = SafeCast.toUint128(
+                    FullMath.mulDiv(liquidity, mintAmount_, ts)
+                );
+
+                pool.mint(me, range.lowerTick, range.upperTick, liquidity, "");
+            }
         }
 
         emit LogMint(receiver_, mintAmount_, amount0, amount1);
@@ -268,18 +308,19 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
     {
         // Burns.
         IUniswapV3Factory mFactory = factory;
-        address mToken0Addr = address(token0);
-        address mToken1Addr = address(token1);
+        IERC20 mToken0 = token0;
+        IERC20 mToken1 = token1;
 
         {
             Withdraw memory aggregator;
             for (uint256 i; i < rebalanceParams_.removes.length; i++) {
-                address poolAddr = mFactory.getPool(
-                    mToken0Addr,
-                    mToken1Addr,
-                    rebalanceParams_.removes[i].range.feeTier
+                IUniswapV3Pool pool = IUniswapV3Pool(
+                    mFactory.getPool(
+                        address(mToken0),
+                        address(mToken1),
+                        rebalanceParams_.removes[i].range.feeTier
+                    )
                 );
-                IUniswapV3Pool pool = IUniswapV3Pool(poolAddr);
 
                 Withdraw memory withdraw = _withdraw(
                     pool,
@@ -310,17 +351,17 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
             {
                 require(_routers.contains(rebalanceParams_.swap.router), "NR");
 
-                uint256 balance0Before = token0.balanceOf(address(this));
-                uint256 balance1Before = token1.balanceOf(address(this));
+                uint256 balance0Before = mToken0.balanceOf(address(this));
+                uint256 balance1Before = mToken1.balanceOf(address(this));
 
-                token0.safeApprove(address(rebalanceParams_.swap.router), 0);
-                token1.safeApprove(address(rebalanceParams_.swap.router), 0);
+                mToken0.safeApprove(address(rebalanceParams_.swap.router), 0);
+                mToken1.safeApprove(address(rebalanceParams_.swap.router), 0);
 
-                token0.safeApprove(
+                mToken0.safeApprove(
                     address(rebalanceParams_.swap.router),
                     balance0Before
                 );
-                token1.safeApprove(
+                mToken1.safeApprove(
                     address(rebalanceParams_.swap.router),
                     balance1Before
                 );
@@ -330,8 +371,8 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                 );
                 require(success, "SC");
 
-                uint256 balance0After = token0.balanceOf(address(this));
-                uint256 balance1After = token1.balanceOf(address(this));
+                uint256 balance0After = mToken0.balanceOf(address(this));
+                uint256 balance1After = mToken1.balanceOf(address(this));
 
                 if (rebalanceParams_.swap.zeroForOne) {
                     require(
@@ -363,8 +404,8 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         for (uint256 i; i < rebalanceParams_.deposits.length; i++) {
             IUniswapV3Pool pool = IUniswapV3Pool(
                 mFactory.getPool(
-                    mToken0Addr,
-                    mToken1Addr,
+                    address(mToken0),
+                    address(mToken1),
                     rebalanceParams_.deposits[i].range.feeTier
                 )
             );

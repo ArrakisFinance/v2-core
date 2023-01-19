@@ -55,13 +55,6 @@ abstract contract ArrakisV2Storage is
     EnumerableSet.AddressSet internal _pools;
     EnumerableSet.AddressSet internal _routers;
 
-    // #region burn buffer
-
-    /// @dev legacy not used, can be used in the futur.
-    uint16 internal _burnBuffer;
-
-    // #endregion burn buffer
-
     // #region events
 
     event LogMint(
