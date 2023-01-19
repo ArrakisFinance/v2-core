@@ -25,11 +25,7 @@ interface IArrakisV2 is IERC20 {
         external
         returns (uint256 amount0, uint256 amount1);
 
-    function rebalance(
-        Range[] calldata rangesToAdd_,
-        Rebalance calldata rebalanceParams_,
-        Range[] calldata rangesToRemove_
-    ) external;
+    function rebalance(Rebalance calldata rebalanceParams_) external;
 
     function withdrawManagerBalance() external;
 

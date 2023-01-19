@@ -361,12 +361,7 @@ describe("Arrakis V2 integration test!!!", async function () {
       vaultV2.address
     );
 
-    await managerProxyMock.rebalance(
-      vaultV2.address,
-      [{ lowerTick, upperTick, feeTier: 500 }],
-      rebalanceParams,
-      []
-    );
+    await managerProxyMock.rebalance(vaultV2.address, rebalanceParams);
 
     // #region do a swap to generate fees.
 
@@ -443,42 +438,37 @@ describe("Arrakis V2 integration test!!!", async function () {
       position.getPositionId(vaultV2.address, lowerTick, upperTick)
     );
 
-    await managerProxyMock.rebalance(
-      vaultV2.address,
-      [],
-      {
-        removes: [
-          {
-            range: { lowerTick, upperTick, feeTier: 500 },
-            liquidity: (await liquidity)._liquidity,
-          },
-        ],
-        swap: {
-          amountIn: ethers.utils.parseEther("0.001"),
-          expectedMinReturn: 2626887,
-          router: swapR.address,
-          zeroForOne: false,
-          payload: swapR.interface.encodeFunctionData("exactInputSingle", [
-            {
-              tokenIn: wEth.address,
-              tokenOut: usdc.address,
-              fee: 500,
-              recipient: vaultV2.address,
-              deadline: ethers.constants.MaxUint256,
-              amountIn: ethers.utils.parseEther("0.001"),
-              amountOutMinimum: ethers.constants.Zero,
-              sqrtPriceLimitX96: 0,
-            },
-          ]),
+    await managerProxyMock.rebalance(vaultV2.address, {
+      removes: [
+        {
+          range: { lowerTick, upperTick, feeTier: 500 },
+          liquidity: (await liquidity)._liquidity,
         },
-        deposits: [],
-        minBurn0: ethers.constants.Zero,
-        minBurn1: ethers.constants.Zero,
-        minDeposit0: ethers.constants.Zero,
-        minDeposit1: ethers.constants.Zero,
+      ],
+      swap: {
+        amountIn: ethers.utils.parseEther("0.001"),
+        expectedMinReturn: 2626887,
+        router: swapR.address,
+        zeroForOne: false,
+        payload: swapR.interface.encodeFunctionData("exactInputSingle", [
+          {
+            tokenIn: wEth.address,
+            tokenOut: usdc.address,
+            fee: 500,
+            recipient: vaultV2.address,
+            deadline: ethers.constants.MaxUint256,
+            amountIn: ethers.utils.parseEther("0.001"),
+            amountOutMinimum: ethers.constants.Zero,
+            sqrtPriceLimitX96: 0,
+          },
+        ]),
       },
-      []
-    );
+      deposits: [],
+      minBurn0: ethers.constants.Zero,
+      minBurn1: ethers.constants.Zero,
+      minDeposit0: ethers.constants.Zero,
+      minDeposit1: ethers.constants.Zero,
+    });
 
     // #endregion rebalance to do a swap.
 
@@ -494,9 +484,7 @@ describe("Arrakis V2 integration test!!!", async function () {
 
     await managerProxyMock.rebalance(
       vaultV2.address,
-      [],
-      await arrakisV2Resolver.standardRebalance([], vaultV2.address),
-      [{ lowerTick, upperTick, feeTier: 500 }]
+      await arrakisV2Resolver.standardRebalance([], vaultV2.address)
     );
 
     // #endregion rebalance to remove the range.
@@ -572,12 +560,7 @@ describe("Arrakis V2 integration test!!!", async function () {
       vaultV2.address
     );
 
-    await managerProxyMock.rebalance(
-      vaultV2.address,
-      [{ lowerTick, upperTick, feeTier: 500 }],
-      rebalanceParams,
-      []
-    );
+    await managerProxyMock.rebalance(vaultV2.address, rebalanceParams);
 
     // #region do a swap to generate fees.
 
@@ -635,9 +618,7 @@ describe("Arrakis V2 integration test!!!", async function () {
 
     await managerProxyMock.rebalance(
       vaultV2.address,
-      [],
-      await arrakisV2Resolver.standardRebalance([], vaultV2.address),
-      [{ lowerTick, upperTick, feeTier: 500 }]
+      await arrakisV2Resolver.standardRebalance([], vaultV2.address)
     );
 
     // #endregion rebalance to remove the range.
@@ -713,12 +694,7 @@ describe("Arrakis V2 integration test!!!", async function () {
       vaultV2.address
     );
 
-    await managerProxyMock.rebalance(
-      vaultV2.address,
-      [{ lowerTick, upperTick, feeTier: 500 }],
-      rebalanceParams,
-      []
-    );
+    await managerProxyMock.rebalance(vaultV2.address, rebalanceParams);
 
     // #region do a swap to generate fees.
 
@@ -786,9 +762,7 @@ describe("Arrakis V2 integration test!!!", async function () {
 
     await managerProxyMock.rebalance(
       vaultV2.address,
-      [],
-      await arrakisV2Resolver.standardRebalance([], vaultV2.address),
-      [{ lowerTick, upperTick, feeTier: 500 }]
+      await arrakisV2Resolver.standardRebalance([], vaultV2.address)
     );
 
     // #endregion rebalance to remove the range.
