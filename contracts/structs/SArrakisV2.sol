@@ -28,8 +28,8 @@ struct Range {
 }
 
 struct Rebalance {
-    PositionLiquidity[] removes;
-    PositionLiquidity[] deposits;
+    PositionLiquidity[] burns;
+    PositionLiquidity[] mints;
     SwapPayload swap;
     uint256 minBurn0;
     uint256 minBurn1;

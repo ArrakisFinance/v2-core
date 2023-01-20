@@ -439,7 +439,7 @@ describe("Arrakis V2 integration test!!!", async function () {
     );
 
     await managerProxyMock.rebalance(vaultV2.address, {
-      removes: [
+      burns: [
         {
           range: { lowerTick, upperTick, feeTier: 500 },
           liquidity: (await liquidity)._liquidity,
@@ -463,7 +463,7 @@ describe("Arrakis V2 integration test!!!", async function () {
           },
         ]),
       },
-      deposits: [],
+      mints: [],
       minBurn0: ethers.constants.Zero,
       minBurn1: ethers.constants.Zero,
       minDeposit0: ethers.constants.Zero,

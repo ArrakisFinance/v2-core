@@ -249,44 +249,48 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
 
         {
             Withdraw memory aggregator;
-            for (uint256 i; i < rebalanceParams_.removes.length; i++) {
+            for (uint256 i; i < rebalanceParams_.burns.length; i++) {
                 IUniswapV3Pool pool = IUniswapV3Pool(
                     mFactory.getPool(
                         address(mToken0),
                         address(mToken1),
-                        rebalanceParams_.removes[i].range.feeTier
+                        rebalanceParams_.burns[i].range.feeTier
                     )
                 );
 
                 uint128 liquidity = Position.getLiquidityByRange(
                     pool,
                     address(this),
-                    rebalanceParams_.removes[i].range.lowerTick,
-                    rebalanceParams_.removes[i].range.upperTick
+                    rebalanceParams_.burns[i].range.lowerTick,
+                    rebalanceParams_.burns[i].range.upperTick
                 );
 
                 if (liquidity == 0) continue;
 
                 uint128 liquidityToWithdraw;
 
-                if (rebalanceParams_.removes[i].liquidity == type(uint128).max)
-                    liquidityToWithdraw = liquidity;
-                else
-                    liquidityToWithdraw = rebalanceParams_.removes[i].liquidity;
+                if (rebalanceParams_.burns[i].liquidity == type(uint128).max)
+                    liquidityToWithdraw = Position.getLiquidityByRange(
+                        pool,
+                        address(this),
+                        rebalanceParams_.burns[i].range.lowerTick,
+                        rebalanceParams_.burns[i].range.upperTick
+                    );
+                else liquidityToWithdraw = rebalanceParams_.burns[i].liquidity;
 
                 Withdraw memory withdraw = _withdraw(
                     pool,
-                    rebalanceParams_.removes[i].range.lowerTick,
-                    rebalanceParams_.removes[i].range.upperTick,
+                    rebalanceParams_.burns[i].range.lowerTick,
+                    rebalanceParams_.burns[i].range.upperTick,
                     liquidityToWithdraw
                 );
 
                 if (liquidityToWithdraw == liquidity) {
-                    (bool exist, uint256 index) = Position.rangeExist(
+                    (bool exists, uint256 index) = Position.rangeExists(
                         ranges,
-                        rebalanceParams_.removes[i].range
+                        rebalanceParams_.burns[i].range
                     );
-                    require(exist, "RRNE");
+                    require(exists, "RRNE");
 
                     ranges[index] = ranges[ranges.length - 1];
                     ranges.pop();
@@ -364,37 +368,37 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         // Mints.
         uint256 aggregator0;
         uint256 aggregator1;
-        for (uint256 i; i < rebalanceParams_.deposits.length; i++) {
-            (bool exist, ) = Position.rangeExist(
+        for (uint256 i; i < rebalanceParams_.mints.length; i++) {
+            (bool exists, ) = Position.rangeExists(
                 ranges,
-                rebalanceParams_.deposits[i].range
+                rebalanceParams_.mints[i].range
             );
             address pool = factory.getPool(
                 address(token0),
                 address(token1),
-                rebalanceParams_.deposits[i].range.feeTier
+                rebalanceParams_.mints[i].range.feeTier
             );
-            if (!exist) {
-                // check that the pool exist on Uniswap V3.
+            if (!exists) {
+                // check that the pool exists on Uniswap V3.
 
                 require(pool != address(0), "NUP");
                 require(_pools.contains(pool), "P");
                 require(
                     Pool.validateTickSpacing(
                         pool,
-                        rebalanceParams_.deposits[i].range
+                        rebalanceParams_.mints[i].range
                     ),
                     "RTS"
                 );
 
-                ranges.push(rebalanceParams_.deposits[i].range);
+                ranges.push(rebalanceParams_.mints[i].range);
             }
 
             (uint256 amt0, uint256 amt1) = IUniswapV3Pool(pool).mint(
                 address(this),
-                rebalanceParams_.deposits[i].range.lowerTick,
-                rebalanceParams_.deposits[i].range.upperTick,
-                rebalanceParams_.deposits[i].liquidity,
+                rebalanceParams_.mints[i].range.lowerTick,
+                rebalanceParams_.mints[i].range.upperTick,
+                rebalanceParams_.mints[i].liquidity,
                 ""
             );
             aggregator0 += amt0;
