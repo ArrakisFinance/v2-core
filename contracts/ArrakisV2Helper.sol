@@ -11,7 +11,9 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IArrakisV2Helper} from "./interfaces/IArrakisV2Helper.sol";
 import {IArrakisV2} from "./interfaces/IArrakisV2.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
+import {Position as PositionHelper} from "./libraries/Position.sol";
 import {
+    PositionLiquidity,
     UnderlyingPayload,
     UnderlyingOutput,
     Range,
@@ -108,6 +110,37 @@ contract ArrakisV2Helper is IArrakisV2Helper {
         (amount0, amount1, , ) = UnderlyingHelper.totalUnderlyingWithFees(
             underlyingPayload
         );
+    }
+
+    /// @notice get liquidity in all uniswap v3 ranges
+    /// @param vault_ Arrakis V2 vault to get liquidity in ranges for
+    /// @return liquidities list of ranges and amount of liquidity in each
+    function totalLiquidity(IArrakisV2 vault_)
+        external
+        view
+        returns (PositionLiquidity[] memory liquidities)
+    {
+        Range[] memory ranges = vault_.getRanges();
+        liquidities = new PositionLiquidity[](ranges.length);
+        for (uint256 i; i < ranges.length; i++) {
+            IUniswapV3Pool pool = IUniswapV3Pool(
+                factory.getPool(
+                    address(vault_.token0()),
+                    address(vault_.token1()),
+                    ranges[i].feeTier
+                )
+            );
+            uint128 liquidity = PositionHelper.getLiquidityByRange(
+                pool,
+                address(vault_),
+                ranges[i].lowerTick,
+                ranges[i].upperTick
+            );
+            liquidities[i] = PositionLiquidity({
+                liquidity: liquidity,
+                range: ranges[i]
+            });
+        }
     }
 
     // #region Rebalance helper functions
