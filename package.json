@@ -3,8 +3,8 @@
   "version": "1.0.2",
   "description": "Arrakis V2 Automated Market Maker",
   "license": "BUSL-1.1",
-  "main": "dist/src/addresses.js",
-  "types": "dist/src/addresses.d.ts",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
   "files": [
     "contracts",
     "!contracts/__mocks__"
