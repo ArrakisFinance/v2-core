@@ -10,20 +10,6 @@ import {
 import {Range} from "../structs/SArrakisV2.sol";
 
 library Position {
-    function requireNotActiveRange(
-        IUniswapV3Factory factory_,
-        address self_,
-        address token0_,
-        address token1_,
-        Range memory range_
-    ) public view {
-        (uint128 liquidity, , , , ) = IUniswapV3Pool(
-            factory_.getPool(token0_, token1_, range_.feeTier)
-        ).positions(getPositionId(self_, range_.lowerTick, range_.upperTick));
-
-        require(liquidity == 0, "LNZ");
-    }
-
     function getLiquidityByRange(
         IUniswapV3Pool pool_,
         address self_,
@@ -43,7 +29,7 @@ library Position {
         return keccak256(abi.encodePacked(self_, lowerTick_, upperTick_));
     }
 
-    function rangeExist(Range[] memory currentRanges_, Range memory range_)
+    function rangeExists(Range[] memory currentRanges_, Range memory range_)
         public
         pure
         returns (bool ok, uint256 index)
