@@ -270,12 +270,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                 uint128 liquidityToWithdraw;
 
                 if (rebalanceParams_.burns[i].liquidity == type(uint128).max)
-                    liquidityToWithdraw = Position.getLiquidityByRange(
-                        pool,
-                        address(this),
-                        rebalanceParams_.burns[i].range.lowerTick,
-                        rebalanceParams_.burns[i].range.upperTick
-                    );
+                    liquidityToWithdraw = liquidity;
                 else liquidityToWithdraw = rebalanceParams_.burns[i].liquidity;
 
                 Withdraw memory withdraw = _withdraw(
