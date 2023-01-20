@@ -7,8 +7,7 @@
   "types": "dist/src/addresses.d.ts",
   "files": [
     "contracts",
-    "!contracts/__mocks__",
-    "src"
+    "!contracts/__mocks__"
   ],
   "scripts": {
     "build": "yarn compile && npx tsc",
