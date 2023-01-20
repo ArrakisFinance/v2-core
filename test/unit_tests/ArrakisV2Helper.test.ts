@@ -221,12 +221,7 @@ describe("ArrakisV2Helper functions unit test", function () {
         arrakisV2.address
       );
 
-      await managerProxyMock.rebalance(
-        arrakisV2.address,
-        [{ lowerTick, upperTick, feeTier: 500 }],
-        rebalanceParams,
-        []
-      );
+      await managerProxyMock.rebalance(arrakisV2.address, rebalanceParams);
 
       // #region do a swap to generate fees.
 

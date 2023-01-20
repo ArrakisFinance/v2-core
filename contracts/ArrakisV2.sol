@@ -231,79 +231,15 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
     }
 
     /// @notice rebalance ArrakisV2 vault's UniswapV3 positions
-    /// @param rangesToAdd_ list of new ranges to initialize (add to ranges array).
     /// @param rebalanceParams_ rebalance params, containing ranges where
     /// we need to collect tokens and ranges where we need to mint tokens.
     /// Also contain swap payload to changes token0/token1 proportion.
-    /// @param rangesToRemove_ list of ranges to remove from ranges array (only when liquidity==0)
     /// @dev only Manager contract can call this contract.
     // solhint-disable-next-line function-max-lines
-    function rebalance(
-        Range[] calldata rangesToAdd_,
-        Rebalance calldata rebalanceParams_,
-        Range[] calldata rangesToRemove_
-    ) external onlyManager {
-        for (uint256 i; i < rangesToAdd_.length; i++) {
-            (bool exist, ) = Position.rangeExist(ranges, rangesToAdd_[i]);
-            require(!exist, "NRRE");
-            // check that the pool exist on Uniswap V3.
-            address pool = factory.getPool(
-                address(token0),
-                address(token1),
-                rangesToAdd_[i].feeTier
-            );
-            require(pool != address(0), "NUP");
-            require(_pools.contains(pool), "P");
-            require(Pool.validateTickSpacing(pool, rangesToAdd_[i]), "RTS");
-
-            ranges.push(rangesToAdd_[i]);
-        }
-        _rebalance(rebalanceParams_);
-        require(token0.balanceOf(address(this)) >= managerBalance0, "MB0");
-        require(token1.balanceOf(address(this)) >= managerBalance1, "MB1");
-        for (uint256 i; i < rangesToRemove_.length; i++) {
-            (bool exist, uint256 index) = Position.rangeExist(
-                ranges,
-                rangesToRemove_[i]
-            );
-            require(exist, "RRNE");
-
-            Position.requireNotActiveRange(
-                factory,
-                address(this),
-                address(token0),
-                address(token1),
-                rangesToRemove_[i]
-            );
-
-            ranges[index] = ranges[ranges.length - 1];
-            ranges.pop();
-        }
-    }
-
-    /// @notice will send manager fees to manager
-    /// @dev anyone can call this function
-    function withdrawManagerBalance() external nonReentrant {
-        uint256 amount0 = managerBalance0;
-        uint256 amount1 = managerBalance1;
-
-        managerBalance0 = 0;
-        managerBalance1 = 0;
-
-        if (amount0 > 0) {
-            token0.safeTransfer(manager, amount0);
-        }
-
-        if (amount1 > 0) {
-            token1.safeTransfer(manager, amount1);
-        }
-
-        emit LogWithdrawManagerBalance(amount0, amount1);
-    }
-
     // solhint-disable-next-line function-max-lines, code-complexity
-    function _rebalance(Rebalance calldata rebalanceParams_)
-        internal
+    function rebalance(Rebalance calldata rebalanceParams_)
+        external
+        onlyManager
         nonReentrant
     {
         // Burns.
@@ -313,33 +249,47 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
 
         {
             Withdraw memory aggregator;
-            for (uint256 i; i < rebalanceParams_.removes.length; i++) {
+            for (uint256 i; i < rebalanceParams_.burns.length; i++) {
                 IUniswapV3Pool pool = IUniswapV3Pool(
                     mFactory.getPool(
                         address(mToken0),
                         address(mToken1),
-                        rebalanceParams_.removes[i].range.feeTier
+                        rebalanceParams_.burns[i].range.feeTier
                     )
                 );
 
                 uint128 liquidity = Position.getLiquidityByRange(
                     pool,
                     address(this),
-                    rebalanceParams_.removes[i].range.lowerTick,
-                    rebalanceParams_.removes[i].range.upperTick
+                    rebalanceParams_.burns[i].range.lowerTick,
+                    rebalanceParams_.burns[i].range.upperTick
                 );
 
                 if (liquidity == 0) continue;
 
-                if (rebalanceParams_.removes[i].liquidity != type(uint128).max)
-                    liquidity = rebalanceParams_.removes[i].liquidity;
+                uint128 liquidityToWithdraw;
+
+                if (rebalanceParams_.burns[i].liquidity == type(uint128).max)
+                    liquidityToWithdraw = liquidity;
+                else liquidityToWithdraw = rebalanceParams_.burns[i].liquidity;
 
                 Withdraw memory withdraw = _withdraw(
                     pool,
-                    rebalanceParams_.removes[i].range.lowerTick,
-                    rebalanceParams_.removes[i].range.upperTick,
-                    liquidity
+                    rebalanceParams_.burns[i].range.lowerTick,
+                    rebalanceParams_.burns[i].range.upperTick,
+                    liquidityToWithdraw
                 );
+
+                if (liquidityToWithdraw == liquidity) {
+                    (bool exists, uint256 index) = Position.rangeExists(
+                        ranges,
+                        rebalanceParams_.burns[i].range
+                    );
+                    require(exists, "RRNE");
+
+                    ranges[index] = ranges[ranges.length - 1];
+                    ranges.pop();
+                }
 
                 aggregator.burn0 += withdraw.burn0;
                 aggregator.burn1 += withdraw.burn1;
@@ -413,26 +363,37 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         // Mints.
         uint256 aggregator0;
         uint256 aggregator1;
-        for (uint256 i; i < rebalanceParams_.deposits.length; i++) {
-            IUniswapV3Pool pool = IUniswapV3Pool(
-                mFactory.getPool(
-                    address(mToken0),
-                    address(mToken1),
-                    rebalanceParams_.deposits[i].range.feeTier
-                )
-            );
-
-            (bool exist, ) = Position.rangeExist(
+        for (uint256 i; i < rebalanceParams_.mints.length; i++) {
+            (bool exists, ) = Position.rangeExists(
                 ranges,
-                rebalanceParams_.deposits[i].range
+                rebalanceParams_.mints[i].range
             );
-            require(exist, "DRE");
+            address pool = factory.getPool(
+                address(token0),
+                address(token1),
+                rebalanceParams_.mints[i].range.feeTier
+            );
+            if (!exists) {
+                // check that the pool exists on Uniswap V3.
 
-            (uint256 amt0, uint256 amt1) = pool.mint(
+                require(pool != address(0), "NUP");
+                require(_pools.contains(pool), "P");
+                require(
+                    Pool.validateTickSpacing(
+                        pool,
+                        rebalanceParams_.mints[i].range
+                    ),
+                    "RTS"
+                );
+
+                ranges.push(rebalanceParams_.mints[i].range);
+            }
+
+            (uint256 amt0, uint256 amt1) = IUniswapV3Pool(pool).mint(
                 address(this),
-                rebalanceParams_.deposits[i].range.lowerTick,
-                rebalanceParams_.deposits[i].range.upperTick,
-                rebalanceParams_.deposits[i].liquidity,
+                rebalanceParams_.mints[i].range.lowerTick,
+                rebalanceParams_.mints[i].range.upperTick,
+                rebalanceParams_.mints[i].liquidity,
                 ""
             );
             aggregator0 += amt0;
@@ -441,7 +402,30 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         require(aggregator0 >= rebalanceParams_.minDeposit0, "D0");
         require(aggregator1 >= rebalanceParams_.minDeposit1, "D1");
 
+        require(token0.balanceOf(address(this)) >= managerBalance0, "MB0");
+        require(token1.balanceOf(address(this)) >= managerBalance1, "MB1");
+
         emit LogRebalance(rebalanceParams_);
+    }
+
+    /// @notice will send manager fees to manager
+    /// @dev anyone can call this function
+    function withdrawManagerBalance() external nonReentrant {
+        uint256 amount0 = managerBalance0;
+        uint256 amount1 = managerBalance1;
+
+        managerBalance0 = 0;
+        managerBalance1 = 0;
+
+        if (amount0 > 0) {
+            token0.safeTransfer(manager, amount0);
+        }
+
+        if (amount1 > 0) {
+            token1.safeTransfer(manager, amount1);
+        }
+
+        emit LogWithdrawManagerBalance(amount0, amount1);
     }
 
     function _withdraw(
