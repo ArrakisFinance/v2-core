@@ -88,12 +88,12 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
                 });
             }
 
-            rebalanceParams.removes = new PositionLiquidity[](numberOfPosLiq);
+            rebalanceParams.burns = new PositionLiquidity[](numberOfPosLiq);
             uint256 j;
 
             for (uint256 i; i < pl.length; i++) {
                 if (pl[i].liquidity > 0) {
-                    rebalanceParams.removes[j] = pl[i];
+                    rebalanceParams.burns[j] = pl[i];
                     j++;
                 }
             }
@@ -101,9 +101,7 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
 
         _requireWeightUnder100(rangeWeights_);
 
-        rebalanceParams.deposits = new PositionLiquidity[](
-            rangeWeights_.length
-        );
+        rebalanceParams.mints = new PositionLiquidity[](rangeWeights_.length);
 
         for (uint256 i; i < rangeWeights_.length; i++) {
             RangeWeight memory rangeWeight = rangeWeights_[i];
@@ -123,7 +121,7 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
                 FullMath.mulDiv(amount1, rangeWeight.weight, hundredPercent)
             );
 
-            rebalanceParams.deposits[i] = PositionLiquidity({
+            rebalanceParams.mints[i] = PositionLiquidity({
                 liquidity: liquidity,
                 range: rangeWeight.range
             });
@@ -189,6 +187,16 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
                 TickMath.getSqrtRatioAtTick(upperTick_),
                 liquidity_
             );
+    }
+
+    /// @notice Expose getPositionId helper function for uniswap positionIds
+    /// returns bytes32 positionId
+    function getPositionId(
+        address addr_,
+        int24 lowerTick_,
+        int24 upperTick_
+    ) external pure returns (bytes32 positionId) {
+        return PositionHelper.getPositionId(addr_, lowerTick_, upperTick_);
     }
 
     // #region view internal functions.
