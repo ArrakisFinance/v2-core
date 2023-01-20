@@ -129,6 +129,91 @@ contract ArrakisV2Helper is IArrakisV2Helper {
         view
         returns (Amount[] memory amount0s, Amount[] memory amount1s)
     {
+        return _token0AndToken1ByRange(ranges_, token0_, token1_, vaultV2_);
+    }
+
+    /// @notice get underlyings of token0 and token1 in two lists.
+    /// @param vaultV2_ Arrakis V2 vault.
+    /// @return amount0s amounts of underlying of token 1 of LPs.
+    /// @return amount1s amounts of underlying of token 1 of LPs.
+    function token0AndToken1AllRanges(IArrakisV2 vaultV2_)
+        external
+        view
+        returns (Amount[] memory amount0s, Amount[] memory amount1s)
+    {
+        Range[] memory ranges = vaultV2_.getRanges();
+        address token0 = address(vaultV2_.token0());
+        address token1 = address(vaultV2_.token1());
+
+        return
+            _token0AndToken1ByRange(ranges, token0, token1, address(vaultV2_));
+    }
+
+    /// @notice get underlyings and fees of token0 and token1 in four lists.
+    /// @param ranges_ list of range to get underlying info about.
+    /// @param token0_ address of first token.
+    /// @param token1_ address of second token.
+    /// @param vaultV2_ address of Arrakis V2 vault.
+    /// @return amount0s amounts of underlying of token 1 of LPs.
+    /// @return amount1s amounts of underlying of token 1 of LPs.
+    /// @return fee0s amounts of fees of token 0 of LPs.
+    /// @return fee1s amounts of fees of token 1 of LPs.
+    function token0AndToken1PlusFeesByRange(
+        Range[] calldata ranges_,
+        address token0_,
+        address token1_,
+        address vaultV2_
+    )
+        external
+        view
+        returns (
+            Amount[] memory amount0s,
+            Amount[] memory amount1s,
+            Amount[] memory fee0s,
+            Amount[] memory fee1s
+        )
+    {
+        return _token0AndToken1PlusFees(ranges_, token0_, token1_, vaultV2_);
+    }
+
+    /// @notice get underlyings and fees of token0 and token1 in four lists.
+    /// @param vaultV2_ Arrakis V2 vault.
+    /// @return amount0s amounts of underlying of token 1 of LPs.
+    /// @return amount1s amounts of underlying of token 1 of LPs.
+    /// @return fee0s amounts of fees of token 0 of LPs.
+    /// @return fee1s amounts of fees of token 1 of LPs.
+    function token0AndToken1PlusFeesAllRanges(IArrakisV2 vaultV2_)
+        external
+        view
+        returns (
+            Amount[] memory amount0s,
+            Amount[] memory amount1s,
+            Amount[] memory fee0s,
+            Amount[] memory fee1s
+        )
+    {
+        Range[] memory ranges = vaultV2_.getRanges();
+        address token0 = address(vaultV2_.token0());
+        address token1 = address(vaultV2_.token1());
+
+        return
+            _token0AndToken1PlusFees(ranges, token0, token1, address(vaultV2_));
+    }
+
+    // #endregion Rebalance helper functions
+
+    // #region internal functions
+
+    function _token0AndToken1ByRange(
+        Range[] memory ranges_,
+        address token0_,
+        address token1_,
+        address vaultV2_
+    )
+        internal
+        view
+        returns (Amount[] memory amount0s, Amount[] memory amount1s)
+    {
         amount0s = new Amount[](ranges_.length);
         amount1s = new Amount[](ranges_.length);
         for (uint256 i = 0; i < ranges_.length; i++) {
@@ -149,22 +234,13 @@ contract ArrakisV2Helper is IArrakisV2Helper {
         }
     }
 
-    /// @notice get underlyings and fees of token0 and token1 in two lists.
-    /// @param ranges_ list of range to get underlying info about.
-    /// @param token0_ address of first token.
-    /// @param token1_ address of second token.
-    /// @param vaultV2_ address of Arrakis V2 vault.
-    /// @return amount0s amounts of underlying of token 1 of LPs.
-    /// @return amount1s amounts of underlying of token 1 of LPs.
-    /// @return fee0s amounts of fees of token 0 of LPs.
-    /// @return fee1s amounts of fees of token 1 of LPs.
-    function token0AndToken1PlusFeesByRange(
-        Range[] calldata ranges_,
+    function _token0AndToken1PlusFees(
+        Range[] memory ranges_,
         address token0_,
         address token1_,
         address vaultV2_
     )
-        external
+        internal
         view
         returns (
             Amount[] memory amount0s,
@@ -196,14 +272,10 @@ contract ArrakisV2Helper is IArrakisV2Helper {
         }
     }
 
-    // #endregion Rebalance helper functions
-
-    // #region internal functions
-
     function _getAmountsAndFeesFromLiquidity(
         address token0_,
         address token1_,
-        Range calldata range_,
+        Range memory range_,
         address vaultV2_
     )
         internal
