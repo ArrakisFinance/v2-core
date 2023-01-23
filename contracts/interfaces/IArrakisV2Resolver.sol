@@ -29,4 +29,10 @@ interface IArrakisV2Resolver {
         int24 upperTick_,
         uint128 liquidity_
     ) external pure returns (uint256 amount0, uint256 amount1);
+
+    function getPositionId(
+        address addr_,
+        int24 lowerTick_,
+        int24 upperTick_
+    ) external pure returns (bytes32 positionId);
 }
