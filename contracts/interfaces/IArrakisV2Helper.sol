@@ -3,6 +3,7 @@ pragma solidity >=0.8.0;
 
 import {IArrakisV2} from "./IArrakisV2.sol";
 import {
+    PositionLiquidity,
     UnderlyingPayload,
     UnderlyingOutput,
     Range
@@ -29,6 +30,11 @@ interface IArrakisV2Helper {
         external
         view
         returns (uint256 amount0, uint256 amount1);
+
+    function totalLiquidity(IArrakisV2 vault_)
+        external
+        view
+        returns (PositionLiquidity[] memory liquidities);
 
     function token0AndToken1ByRange(
         Range[] calldata ranges_,
