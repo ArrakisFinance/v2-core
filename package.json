@@ -1,6 +1,6 @@
 {
   "name": "@arrakisfi/v2-core",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Arrakis V2 Automated Market Maker",
   "license": "BUSL-1.1",
   "main": "dist/src/index.js",
