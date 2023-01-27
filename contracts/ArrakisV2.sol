@@ -68,7 +68,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
             (uint256 current0, uint256 current1, , ) = UnderlyingHelper
                 .totalUnderlyingWithFees(
                     UnderlyingPayload({
-                        ranges: ranges,
+                        ranges: _ranges,
                         factory: factory,
                         token0: address(token0),
                         token1: address(token1),
@@ -121,8 +121,8 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         }
 
         if (isTotalSupplyGtZero) {
-            for (uint256 i; i < ranges.length; i++) {
-                Range memory range = ranges[i];
+            for (uint256 i; i < _ranges.length; i++) {
+                Range memory range = _ranges[i];
                 IUniswapV3Pool pool = IUniswapV3Pool(
                     factory.getPool(
                         address(token0),
@@ -169,8 +169,8 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
 
         Withdraw memory total;
 
-        for (uint256 i; i < ranges.length; i++) {
-            Range memory range = ranges[i];
+        for (uint256 i; i < _ranges.length; i++) {
+            Range memory range = _ranges[i];
             IUniswapV3Pool pool = IUniswapV3Pool(
                 factory.getPool(address(token0), address(token1), range.feeTier)
             );
@@ -282,13 +282,13 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
 
                 if (liquidityToWithdraw == liquidity) {
                     (bool exists, uint256 index) = Position.rangeExists(
-                        ranges,
+                        _ranges,
                         rebalanceParams_.burns[i].range
                     );
                     require(exists, "RRNE");
 
-                    ranges[index] = ranges[ranges.length - 1];
-                    ranges.pop();
+                    _ranges[index] = _ranges[_ranges.length - 1];
+                    _ranges.pop();
                 }
 
                 aggregator.burn0 += withdraw.burn0;
@@ -365,7 +365,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         uint256 aggregator1;
         for (uint256 i; i < rebalanceParams_.mints.length; i++) {
             (bool exists, ) = Position.rangeExists(
-                ranges,
+                _ranges,
                 rebalanceParams_.mints[i].range
             );
             address pool = factory.getPool(
@@ -386,7 +386,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                     "RTS"
                 );
 
-                ranges.push(rebalanceParams_.mints[i].range);
+                _ranges.push(rebalanceParams_.mints[i].range);
             }
 
             (uint256 amt0, uint256 amt1) = IUniswapV3Pool(pool).mint(

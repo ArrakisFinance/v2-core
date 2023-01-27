@@ -75,6 +75,10 @@ interface IArrakisV2 is IERC20 {
 
     function getRanges() external view returns (Range[] memory);
 
+    function getPools() external view returns (address[] memory);
+
+    function getRouters() external view returns (address[] memory);
+
     function owner() external view returns (address);
 
     function name() external view returns (string memory);
