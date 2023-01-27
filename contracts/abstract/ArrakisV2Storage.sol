@@ -40,8 +40,6 @@ abstract contract ArrakisV2Storage is
     uint256 public init0;
     uint256 public init1;
 
-    Range[] public ranges;
-
     // #region manager data
 
     uint16 public managerFeeBPS;
@@ -51,6 +49,8 @@ abstract contract ArrakisV2Storage is
     address public restrictedMint;
 
     // #endregion manager data
+
+    Range[] internal _ranges;
 
     EnumerableSet.AddressSet internal _pools;
     EnumerableSet.AddressSet internal _routers;
@@ -231,7 +231,27 @@ abstract contract ArrakisV2Storage is
     /// @notice get full list of ranges, guaranteed to contain all active vault LP Positions.
     /// @return ranges list of ranges
     function getRanges() external view returns (Range[] memory) {
-        return ranges;
+        return _ranges;
+    }
+
+    function getPools() external view returns (address[] memory) {
+        uint256 len = _pools.length();
+        address[] memory output = new address[](len);
+        for (uint256 i; i < len; i++) {
+            output[i] = _pools.at(i);
+        }
+
+        return output;
+    }
+
+    function getRouters() external view returns (address[] memory) {
+        uint256 len = _routers.length();
+        address[] memory output = new address[](len);
+        for (uint256 i; i < len; i++) {
+            output[i] = _routers.at(i);
+        }
+
+        return output;
     }
 
     // #endregion getter functions
