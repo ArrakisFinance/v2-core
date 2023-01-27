@@ -20,7 +20,7 @@ import {
 import {
     EnumerableSet
 } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {Range, Rebalance, InitializePayload} from "../structs/SArrakisV2.sol";
+import {Range, InitializePayload} from "../structs/SArrakisV2.sol";
 
 /// @title ArrakisV2Storage base contract containing all ArrakisV2 storage variables.
 // solhint-disable-next-line max-states-count
@@ -77,7 +77,7 @@ abstract contract ArrakisV2Storage is
         uint256 burnAmount1
     );
 
-    event LogRebalance(Rebalance rebalanceParams);
+    event LogRebalance(uint256 swapReturn);
 
     event LogCollectedFees(uint256 fee0, uint256 fee1);
 

@@ -13,11 +13,10 @@ import {
     IERC20,
     SafeERC20,
     EnumerableSet,
-    Rebalance,
     Range
 } from "./abstract/ArrakisV2Storage.sol";
 import {FullMath} from "@arrakisfi/v3-lib-0.8/contracts/LiquidityAmounts.sol";
-import {Withdraw, UnderlyingPayload} from "./structs/SArrakisV2.sol";
+import {Withdraw, Rebalance, UnderlyingPayload} from "./structs/SArrakisV2.sol";
 import {Position} from "./libraries/Position.sol";
 import {Pool} from "./libraries/Pool.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
@@ -346,6 +345,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                                     rebalanceParams_.swap.amountIn),
                         "SF"
                     );
+                    emit LogRebalance(balance1After - balance1Before);
                 } else {
                     require(
                         (balance0After >=
@@ -356,8 +356,11 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                                     rebalanceParams_.swap.amountIn),
                         "SF"
                     );
+                    emit LogRebalance(balance0After - balance0Before);
                 }
             }
+        } else {
+            emit LogRebalance(0);
         }
 
         // Mints.
@@ -404,8 +407,6 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
 
         require(token0.balanceOf(address(this)) >= managerBalance0, "MB0");
         require(token1.balanceOf(address(this)) >= managerBalance1, "MB1");
-
-        emit LogRebalance(rebalanceParams_);
     }
 
     /// @notice will send manager fees to manager
