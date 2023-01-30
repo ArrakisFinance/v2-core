@@ -61,8 +61,6 @@ interface IArrakisV2 is IERC20 {
 
     function init1() external view returns (uint256);
 
-    function ranges(uint256 index) external view returns (Range memory);
-
     function manager() external view returns (address);
 
     function managerFeeBPS() external view returns (uint16);
