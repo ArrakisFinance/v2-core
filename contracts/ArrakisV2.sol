@@ -13,8 +13,8 @@ import {
     IERC20,
     SafeERC20,
     EnumerableSet,
-    Rebalance,
-    Range
+    Range,
+    Rebalance
 } from "./abstract/ArrakisV2Storage.sol";
 import {FullMath} from "@arrakisfi/v3-lib-0.8/contracts/LiquidityAmounts.sol";
 import {Withdraw, UnderlyingPayload} from "./structs/SArrakisV2.sol";
@@ -310,54 +310,56 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
 
         // Swap.
         if (rebalanceParams_.swap.amountIn > 0) {
-            {
-                require(_routers.contains(rebalanceParams_.swap.router), "NR");
+            require(_routers.contains(rebalanceParams_.swap.router), "NR");
 
-                uint256 balance0Before = mToken0.balanceOf(address(this));
-                uint256 balance1Before = mToken1.balanceOf(address(this));
+            uint256 balance0Before = mToken0.balanceOf(address(this));
+            uint256 balance1Before = mToken1.balanceOf(address(this));
 
-                mToken0.safeApprove(address(rebalanceParams_.swap.router), 0);
-                mToken1.safeApprove(address(rebalanceParams_.swap.router), 0);
+            mToken0.safeApprove(address(rebalanceParams_.swap.router), 0);
+            mToken1.safeApprove(address(rebalanceParams_.swap.router), 0);
 
-                mToken0.safeApprove(
-                    address(rebalanceParams_.swap.router),
-                    balance0Before
-                );
-                mToken1.safeApprove(
-                    address(rebalanceParams_.swap.router),
-                    balance1Before
-                );
+            mToken0.safeApprove(
+                address(rebalanceParams_.swap.router),
+                balance0Before
+            );
+            mToken1.safeApprove(
+                address(rebalanceParams_.swap.router),
+                balance1Before
+            );
 
-                (bool success, ) = rebalanceParams_.swap.router.call(
-                    rebalanceParams_.swap.payload
-                );
-                require(success, "SC");
+            (bool success, ) = rebalanceParams_.swap.router.call(
+                rebalanceParams_.swap.payload
+            );
+            require(success, "SC");
 
-                uint256 balance0After = mToken0.balanceOf(address(this));
-                uint256 balance1After = mToken1.balanceOf(address(this));
-
-                if (rebalanceParams_.swap.zeroForOne) {
-                    require(
-                        (balance1After >=
-                            balance1Before +
-                                rebalanceParams_.swap.expectedMinReturn) &&
-                            (balance0After >=
-                                balance0Before -
-                                    rebalanceParams_.swap.amountIn),
-                        "SF"
-                    );
-                } else {
-                    require(
+            uint256 balance0After = mToken0.balanceOf(address(this));
+            uint256 balance1After = mToken1.balanceOf(address(this));
+            if (rebalanceParams_.swap.zeroForOne) {
+                require(
+                    (balance1After >=
+                        balance1Before +
+                            rebalanceParams_.swap.expectedMinReturn) &&
                         (balance0After >=
-                            balance0Before +
-                                rebalanceParams_.swap.expectedMinReturn) &&
-                            (balance1After >=
-                                balance1Before -
-                                    rebalanceParams_.swap.amountIn),
-                        "SF"
-                    );
-                }
+                            balance0Before - rebalanceParams_.swap.amountIn),
+                    "SF"
+                );
+                balance0After = balance0Before - balance0After;
+                balance1After = balance1After - balance1Before;
+            } else {
+                require(
+                    (balance0After >=
+                        balance0Before +
+                            rebalanceParams_.swap.expectedMinReturn) &&
+                        (balance1After >=
+                            balance1Before - rebalanceParams_.swap.amountIn),
+                    "SF"
+                );
+                balance0After = balance0After - balance0Before;
+                balance1After = balance1Before - balance1After;
             }
+            emit LogRebalance(rebalanceParams_, balance0After, balance1After);
+        } else {
+            emit LogRebalance(rebalanceParams_, 0, 0);
         }
 
         // Mints.
@@ -404,8 +406,6 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
 
         require(token0.balanceOf(address(this)) >= managerBalance0, "MB0");
         require(token1.balanceOf(address(this)) >= managerBalance1, "MB1");
-
-        emit LogRebalance(rebalanceParams_);
     }
 
     /// @notice will send manager fees to manager

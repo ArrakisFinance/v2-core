@@ -77,7 +77,11 @@ abstract contract ArrakisV2Storage is
         uint256 burnAmount1
     );
 
-    event LogRebalance(Rebalance rebalanceParams);
+    event LogRebalance(
+        Rebalance rebalanceParams,
+        uint256 swapDelta0,
+        uint256 swapDelta1
+    );
 
     event LogCollectedFees(uint256 fee0, uint256 fee1);
 
