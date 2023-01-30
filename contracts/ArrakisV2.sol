@@ -13,11 +13,10 @@ import {
     IERC20,
     SafeERC20,
     EnumerableSet,
-    Range,
-    Rebalance
+    Range
 } from "./abstract/ArrakisV2Storage.sol";
 import {FullMath} from "@arrakisfi/v3-lib-0.8/contracts/LiquidityAmounts.sol";
-import {Withdraw, UnderlyingPayload} from "./structs/SArrakisV2.sol";
+import {Rebalance, Withdraw, UnderlyingPayload} from "./structs/SArrakisV2.sol";
 import {Position} from "./libraries/Position.sol";
 import {Pool} from "./libraries/Pool.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
@@ -232,7 +231,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
 
     /// @notice rebalance ArrakisV2 vault's UniswapV3 positions
     /// @param rebalanceParams_ rebalance params, containing ranges where
-    /// we need to collect tokens and ranges where we need to mint tokens.
+    /// we need to collect tokens and ranges where we need to mint or burn liquidity.
     /// Also contain swap payload to changes token0/token1 proportion.
     /// @dev only Manager contract can call this contract.
     // solhint-disable-next-line function-max-lines
@@ -357,9 +356,9 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                 balance0After = balance0After - balance0Before;
                 balance1After = balance1Before - balance1After;
             }
-            emit LogRebalance(rebalanceParams_, balance0After, balance1After);
+            emit LogRebalance(balance0After, balance1After);
         } else {
-            emit LogRebalance(rebalanceParams_, 0, 0);
+            emit LogRebalance(0, 0);
         }
 
         // Mints.
