@@ -232,10 +232,9 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
 
     /// @notice rebalance ArrakisV2 vault's UniswapV3 positions
     /// @param rebalanceParams_ rebalance params, containing ranges where
-    /// we need to collect tokens and ranges where we need to mint tokens.
+    /// we need to collect tokens and ranges where we need to mint liquidity.
     /// Also contain swap payload to changes token0/token1 proportion.
-    /// @dev only Manager contract can call this contract.
-    // solhint-disable-next-line function-max-lines
+    /// @dev only Manager contract can call this function.
     // solhint-disable-next-line function-max-lines, code-complexity
     function rebalance(Rebalance calldata rebalanceParams_)
         external
