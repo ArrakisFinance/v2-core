@@ -4,9 +4,6 @@ pragma solidity 0.8.13;
 import {
     IUniswapV3Pool
 } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {
-    IUniswapV3Factory
-} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {Range} from "../structs/SArrakisV2.sol";
 
 library Position {
