@@ -410,21 +410,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
     /// @notice will send manager fees to manager
     /// @dev anyone can call this function
     function withdrawManagerBalance() external nonReentrant {
-        uint256 amount0 = managerBalance0;
-        uint256 amount1 = managerBalance1;
-
-        managerBalance0 = 0;
-        managerBalance1 = 0;
-
-        if (amount0 > 0) {
-            token0.safeTransfer(manager, amount0);
-        }
-
-        if (amount1 > 0) {
-            token1.safeTransfer(manager, amount1);
-        }
-
-        emit LogWithdrawManagerBalance(amount0, amount1);
+        _withdrawManagerBalance();
     }
 
     function _withdraw(
