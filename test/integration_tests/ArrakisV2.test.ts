@@ -9,7 +9,7 @@ import {
   ArrakisV2Resolver,
   Position,
 } from "../../typechain";
-import { getAddresses } from "../../src";
+import { getAddresses, Addresses } from "../../src/addresses";
 import { Signer } from "ethers";
 import { Contract } from "ethers";
 import { ManagerProxyMock } from "../../typechain/contracts/__mocks__/ManagerProxyMock";
@@ -33,7 +33,7 @@ describe("Arrakis V2 integration test!!!", async function () {
   let wMatic: Contract;
   let wEth: Contract;
   let usdc: Contract;
-  let addresses: any;
+  let addresses: Addresses;
   let lowerTick: number;
   let upperTick: number;
 
