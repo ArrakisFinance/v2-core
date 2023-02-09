@@ -1,8 +1,8 @@
 import hre from "hardhat";
-import { getAddresses } from "../../src";
+import { getAddresses, Addresses } from "../../src/addresses";
 
 async function main() {
-  const addresses = getAddresses(hre.network.name);
+  const addresses: Addresses = getAddresses(hre.network.name);
 
   await hre.run("verify:verify", {
     address: (await hre.ethers.getContract("ArrakisV2")).address,

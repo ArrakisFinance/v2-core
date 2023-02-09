@@ -1,10 +1,10 @@
 {
   "name": "@arrakisfi/v2-core",
-  "version": "1.1.6",
+  "version": "1.1.8",
   "description": "Arrakis V2 Automated Market Maker",
   "license": "BUSL-1.1",
-  "main": "dist/src/index.js",
-  "types": "dist/src/index.d.ts",
+  "main": "dist/src/addresses.js",
+  "types": "dist/src/addresses.d.ts",
   "files": [
     "contracts",
     "!contracts/__mocks__",
@@ -30,11 +30,6 @@
     "verify-vault-v2-helper": "npx hardhat run ./scripts/verify/verifyVaultV2Helper.ts",
     "verify-vault-v2-resolver": "npx hardhat run ./scripts/verify/verifyVaultV2Resolver.ts"
   },
-  "dependencies": {
-    "@uniswap/v3-sdk": "3.8.3",
-    "ethers": "5.6.9",
-    "jsbi": "^4.3.0"
-  },
   "devDependencies": {
     "@arrakisfi/v3-lib-0.8": "0.1.3",
     "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers",
@@ -52,16 +47,19 @@
     "@typescript-eslint/parser": "5.28.0",
     "@uniswap/v3-core": "1.0.1",
     "@uniswap/v3-periphery": "1.4.1",
+    "@uniswap/v3-sdk": "3.8.3",
     "chai": "4.3.6",
     "dotenv": "16.0.1",
     "eslint": "8.18.0",
     "eslint-config-prettier": "8.3.0",
     "eslint-plugin-prettier": "4.0.0",
     "ethereum-waffle": "3.4.4",
+    "ethers": "5.6.9",
     "hardhat": "2.9.9",
     "hardhat-deploy": "0.11.10",
     "hardhat-gas-reporter": "^1.0.9",
     "husky": "8.0.1",
+    "jsbi": "^4.3.0",
     "lint-staged": "13.0.2",
     "node-fetch": "3.2.6",
     "pinst": "^3.0.0",
