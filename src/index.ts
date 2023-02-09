@@ -1,4 +1,4 @@
-import { getAddresses, Addresses } from "./addresses";
+import { getAddresses } from "./addresses";
 import { sqrt, getNearestTick } from "./utils/index";
 
-export { getAddresses, Addresses, sqrt, getNearestTick };
+export { getAddresses, sqrt, getNearestTick };

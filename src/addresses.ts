@@ -1,18 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-export interface Addresses {
-  UniswapV3Factory: string;
-  SwapRouter: string;
-  WETH: string;
-  WMATIC: string;
-  USDC: string;
-  ArrakisV2Implementation: string;
-  ArrakisV2Beacon: string;
-  ArrakisV2Factory: string;
-  ArrakisV2Helper: string;
-  ArrakisV2Resolver: string;
-}
-
-export const getAddresses = (network: string): Addresses => {
+export const getAddresses = (network: string): any => {
   switch (network) {
     case "hardhat":
       return {

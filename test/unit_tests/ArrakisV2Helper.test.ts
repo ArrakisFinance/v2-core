@@ -11,7 +11,7 @@ import {
   IUniswapV3Pool,
   ManagerProxyMock,
 } from "../../typechain";
-import { Addresses, getAddresses } from "../../src";
+import { getAddresses } from "../../src";
 const { ethers, deployments } = hre;
 
 describe("ArrakisV2Helper functions unit test", function () {
@@ -27,7 +27,7 @@ describe("ArrakisV2Helper functions unit test", function () {
   let managerProxyMock: ManagerProxyMock;
   let arrakisV2Resolver: ArrakisV2Resolver;
   let swapRouter: ISwapRouter;
-  let addresses: Addresses;
+  let addresses: any;
   let wEth: Contract;
   let usdc: Contract;
   let wMatic: Contract;

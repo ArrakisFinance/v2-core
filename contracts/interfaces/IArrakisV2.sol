@@ -50,10 +50,11 @@ interface IArrakisV2 is IERC20 {
     event LogRestrictedMint(address minter);
     event LogWhitelistRouters(address[] routers);
     event LogBlacklistRouters(address[] routers);
+
     // #endregion Setting events
 
     // #endregion events
-    
+
     function initialize(
         string calldata name_,
         string calldata symbol_,
