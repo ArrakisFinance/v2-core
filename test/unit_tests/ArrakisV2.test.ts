@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { Signer } from "ethers";
 import hre = require("hardhat");
 import { ArrakisV2, IUniswapV3Factory } from "../../typechain";
-import { getAddresses } from "../../src";
+import { getAddresses, Addresses } from "../../src/addresses";
 const { ethers, deployments } = hre;
 
 describe("ArrakisV2 functions unit test", function () {
@@ -15,7 +15,7 @@ describe("ArrakisV2 functions unit test", function () {
   let manager: Signer;
   let managerAddr: string;
   let arrakisV2: ArrakisV2;
-  let addresses: any;
+  let addresses: Addresses;
 
   before("Setting up for ArrakisV2 function test", async function () {
     if (hre.network.name !== "hardhat") {

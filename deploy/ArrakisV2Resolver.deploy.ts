@@ -1,7 +1,7 @@
 import { deployments, getNamedAccounts, ethers } from "hardhat";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
-import { getAddresses } from "../src";
+import { getAddresses, Addresses } from "../src/addresses";
 import { sleep } from "../src/utils";
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
@@ -18,7 +18,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     await sleep(10000);
   }
 
-  const addresses = getAddresses(hre.network.name);
+  const addresses: Addresses = getAddresses(hre.network.name);
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
   await deploy("ArrakisV2Resolver", {

@@ -9,7 +9,7 @@ import {
   ArrakisV2Resolver,
   ArrakisV2Beacon,
 } from "../../typechain";
-import { getAddresses } from "../../src";
+import { getAddresses, Addresses } from "../../src/addresses";
 const { ethers, deployments } = hre;
 
 describe("Factory function unit test", function () {
@@ -21,7 +21,7 @@ describe("Factory function unit test", function () {
   let arrakisV2Factory: ArrakisV2Factory;
   let uniswapV3Pool: IUniswapV3Pool;
   let arrakisV2Resolver: ArrakisV2Resolver;
-  let addresses: any;
+  let addresses: Addresses;
   let owner: Signer;
 
   beforeEach("Setting up for Factory view function test", async function () {
