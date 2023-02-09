@@ -1,13 +1,14 @@
 {
   "name": "@arrakisfi/v2-core",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "description": "Arrakis V2 Automated Market Maker",
   "license": "BUSL-1.1",
-  "main": "dist/src/index.js",
-  "types": "dist/src/index.d.ts",
+  "main": "dist/src/index",
+  "types": "dist/src/index",
   "files": [
     "contracts",
-    "!contracts/__mocks__"
+    "!contracts/__mocks__",
+    "src"
   ],
   "scripts": {
     "build": "yarn compile && npx tsc",
