@@ -23,7 +23,8 @@ import {Position} from "./Position.sol";
 library Underlying {
     // solhint-disable-next-line function-max-lines
     function totalUnderlyingWithFees(
-        UnderlyingPayload memory underlyingPayload_
+        UnderlyingPayload memory underlyingPayload_,
+        bool roundUp
     )
         public
         view
@@ -48,7 +49,8 @@ library Underlying {
                         self: underlyingPayload_.self,
                         range: underlyingPayload_.ranges[i],
                         pool: pool
-                    })
+                    }),
+                    roundUp
                 );
                 amount0 += a0;
                 amount1 += a1;
@@ -79,7 +81,7 @@ library Underlying {
             arrakisV2.managerBalance1();
     }
 
-    function underlying(RangeData memory underlying_)
+    function underlying(RangeData memory underlying_, bool roundUp)
         public
         view
         returns (
@@ -104,13 +106,15 @@ library Underlying {
             pool: underlying_.pool
         });
         (amount0, amount1, fee0, fee1) = getUnderlyingBalances(
-            positionUnderlying
+            positionUnderlying,
+            roundUp
         );
     }
 
     // solhint-disable-next-line function-max-lines
     function getUnderlyingBalances(
-        PositionUnderlying memory positionUnderlying_
+        PositionUnderlying memory positionUnderlying_,
+        bool roundUp
     )
         public
         view
@@ -150,6 +154,9 @@ library Underlying {
                 TickMath.getSqrtRatioAtTick(positionUnderlying_.upperTick),
                 liquidity
             );
+
+        if (roundUp && amount0Current > 0) amount0Current++;
+        if (roundUp && amount1Current > 0) amount1Current++;
 
         fee0 += uint256(tokensOwed0);
         fee1 += uint256(tokensOwed1);

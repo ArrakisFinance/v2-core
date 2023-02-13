@@ -52,7 +52,7 @@ contract ArrakisV2Helper is IArrakisV2Helper {
             underlying.amount1,
             underlying.fee0,
             underlying.fee1
-        ) = UnderlyingHelper.totalUnderlyingWithFees(underlyingPayload);
+        ) = UnderlyingHelper.totalUnderlyingWithFees(underlyingPayload, false);
 
         underlying.leftOver0 =
             IERC20(underlyingPayload.token0).balanceOf(underlyingPayload.self) -
@@ -87,7 +87,7 @@ contract ArrakisV2Helper is IArrakisV2Helper {
         });
 
         (amount0, amount1, fee0, fee1) = UnderlyingHelper
-            .totalUnderlyingWithFees(underlyingPayload);
+            .totalUnderlyingWithFees(underlyingPayload, false);
     }
 
     /// @notice get underlying.
@@ -108,7 +108,8 @@ contract ArrakisV2Helper is IArrakisV2Helper {
         });
 
         (amount0, amount1, , ) = UnderlyingHelper.totalUnderlyingWithFees(
-            underlyingPayload
+            underlyingPayload,
+            false
         );
     }
 
@@ -257,7 +258,8 @@ contract ArrakisV2Helper is IArrakisV2Helper {
         );
 
         (amount0, amount1, fee0, fee1) = UnderlyingHelper.underlying(
-            RangeData({self: vaultV2_, range: range_, pool: pool})
+            RangeData({self: vaultV2_, range: range_, pool: pool}),
+            false
         );
 
         amount0 += fee0;

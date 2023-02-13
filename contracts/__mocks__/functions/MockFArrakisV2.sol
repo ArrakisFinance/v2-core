@@ -31,7 +31,8 @@ contract MockFArrakisV2 {
             uint256 fee1
         )
     {
-        return UnderlyingHelper.getUnderlyingBalances(positionUnderlying_);
+        return
+            UnderlyingHelper.getUnderlyingBalances(positionUnderlying_, false);
     }
 
     function totalUnderlyingWithFees(
@@ -46,7 +47,8 @@ contract MockFArrakisV2 {
             uint256 fee1
         )
     {
-        return UnderlyingHelper.totalUnderlyingWithFees(underlyingPayload_);
+        return
+            UnderlyingHelper.totalUnderlyingWithFees(underlyingPayload_, false);
     }
 
     function validateTickSpacing(address pool_, Range memory range_)

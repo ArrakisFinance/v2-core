@@ -21,18 +21,17 @@ import {
     PositionLiquidity,
     Range,
     RangeWeight,
-    Rebalance
+    Rebalance,
+    UnderlyingPayload
 } from "./structs/SArrakisV2.sol";
 import {hundredPercent} from "./constants/CArrakisV2.sol";
 
 /// @title ArrakisV2Resolver helpers that resolve / compute payloads for ArrakisV2 calls
 contract ArrakisV2Resolver is IArrakisV2Resolver {
     IUniswapV3Factory public immutable factory;
-    IArrakisV2Helper public immutable helper;
 
-    constructor(IUniswapV3Factory factory_, IArrakisV2Helper helper_) {
+    constructor(IUniswapV3Factory factory_) {
         factory = factory_;
-        helper = helper_;
     }
 
     /// @notice Standard rebalance (without swapping)
@@ -55,7 +54,16 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
             token0Addr = address(vaultV2_.token0());
             token1Addr = address(vaultV2_.token1());
 
-            (amount0, amount1) = helper.totalUnderlying(vaultV2_);
+            (amount0, amount1, , ) = UnderlyingHelper.totalUnderlyingWithFees(
+                UnderlyingPayload({
+                    ranges: ranges,
+                    factory: factory,
+                    token0: token0Addr,
+                    token1: token1Addr,
+                    self: address(vaultV2_)
+                }),
+                false
+            );
 
             PositionLiquidity[] memory pl = new PositionLiquidity[](
                 ranges.length
@@ -149,7 +157,17 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
             uint256 mintAmount
         )
     {
-        (uint256 current0, uint256 current1) = helper.totalUnderlying(vaultV2_);
+        (uint256 current0, uint256 current1, , ) = UnderlyingHelper
+            .totalUnderlyingWithFees(
+                UnderlyingPayload({
+                    ranges: vaultV2_.getRanges(),
+                    factory: factory,
+                    token0: address(vaultV2_.token0()),
+                    token1: address(vaultV2_.token1()),
+                    self: address(vaultV2_)
+                }),
+                true
+            );
 
         uint256 totalSupply = vaultV2_.totalSupply();
         if (totalSupply > 0) {
@@ -175,14 +193,14 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
     /// @notice Exposes Uniswap's getAmountsForLiquidity helper function,
     /// returns amount0 and amount1 for a given amount of liquidity.
     function getAmountsForLiquidity(
-        int24 currentTick_,
+        uint160 sqrtRatioX96_,
         int24 lowerTick_,
         int24 upperTick_,
         uint128 liquidity_
     ) external pure returns (uint256 amount0, uint256 amount1) {
         return
             LiquidityAmounts.getAmountsForLiquidity(
-                TickMath.getSqrtRatioAtTick(currentTick_),
+                sqrtRatioX96_,
                 TickMath.getSqrtRatioAtTick(lowerTick_),
                 TickMath.getSqrtRatioAtTick(upperTick_),
                 liquidity_
