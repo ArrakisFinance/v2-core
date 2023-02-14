@@ -26,6 +26,11 @@ interface IArrakisV2Helper {
             uint256 fee1
         );
 
+    function totalUnderlyingAtPrice(IArrakisV2 vault_, uint160 sqrtPriceX96_)
+        external
+        view
+        returns (uint256 amount0, uint256 amount1);
+
     function totalUnderlying(IArrakisV2 vault_)
         external
         view

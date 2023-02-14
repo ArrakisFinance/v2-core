@@ -21,10 +21,9 @@ import {
 import {Position} from "./Position.sol";
 
 library Underlying {
-    // solhint-disable-next-line function-max-lines
     function totalUnderlyingWithFees(
         UnderlyingPayload memory underlyingPayload_,
-        bool roundUp
+        bool roundUp_
     )
         public
         view
@@ -35,53 +34,36 @@ library Underlying {
             uint256 fee1
         )
     {
-        for (uint256 i; i < underlyingPayload_.ranges.length; i++) {
-            {
-                IUniswapV3Pool pool = IUniswapV3Pool(
-                    underlyingPayload_.factory.getPool(
-                        underlyingPayload_.token0,
-                        underlyingPayload_.token1,
-                        underlyingPayload_.ranges[i].feeTier
-                    )
-                );
-                (uint256 a0, uint256 a1, uint256 f0, uint256 f1) = underlying(
-                    RangeData({
-                        self: underlyingPayload_.self,
-                        range: underlyingPayload_.ranges[i],
-                        pool: pool
-                    }),
-                    roundUp
-                );
-                amount0 += a0;
-                amount1 += a1;
-                fee0 += f0;
-                fee1 += f1;
-            }
-        }
-
-        IArrakisV2 arrakisV2 = IArrakisV2(underlyingPayload_.self);
-
-        (uint256 fee0After, uint256 fee1After) = subtractAdminFees(
-            fee0,
-            fee1,
-            arrakisV2.managerFeeBPS()
-        );
-
-        amount0 +=
-            fee0After +
-            IERC20(underlyingPayload_.token0).balanceOf(
-                underlyingPayload_.self
-            ) -
-            arrakisV2.managerBalance0();
-        amount1 +=
-            fee1After +
-            IERC20(underlyingPayload_.token1).balanceOf(
-                underlyingPayload_.self
-            ) -
-            arrakisV2.managerBalance1();
+        return _totalUnderlyingWithFees(underlyingPayload_, roundUp_, 0);
     }
 
-    function underlying(RangeData memory underlying_, bool roundUp)
+    function totalUnderlyingAtPriceWithFees(
+        UnderlyingPayload memory underlyingPayload_,
+        bool roundUp_,
+        uint160 sqrtPriceX96_
+    )
+        public
+        view
+        returns (
+            uint256 amount0,
+            uint256 amount1,
+            uint256 fee0,
+            uint256 fee1
+        )
+    {
+        return
+            _totalUnderlyingWithFees(
+                underlyingPayload_,
+                roundUp_,
+                sqrtPriceX96_
+            );
+    }
+
+    function underlying(
+        RangeData memory underlying_,
+        bool roundUp_,
+        uint160 sqrtPriceX96_
+    )
         public
         view
         returns (
@@ -99,7 +81,7 @@ library Underlying {
         );
         PositionUnderlying memory positionUnderlying = PositionUnderlying({
             positionId: positionId,
-            sqrtPriceX96: sqrtPriceX96,
+            sqrtPriceX96: sqrtPriceX96_ > 0 ? sqrtPriceX96_ : sqrtPriceX96,
             tick: tick,
             lowerTick: underlying_.range.lowerTick,
             upperTick: underlying_.range.upperTick,
@@ -107,7 +89,7 @@ library Underlying {
         });
         (amount0, amount1, fee0, fee1) = getUnderlyingBalances(
             positionUnderlying,
-            roundUp
+            roundUp_
         );
     }
 
@@ -224,6 +206,68 @@ library Underlying {
             current1_,
             totalSupply_
         );
+    }
+
+    // solhint-disable-next-line function-max-lines
+    function _totalUnderlyingWithFees(
+        UnderlyingPayload memory underlyingPayload_,
+        bool roundUp_,
+        uint160 sqrtPriceX96_
+    )
+        private
+        view
+        returns (
+            uint256 amount0,
+            uint256 amount1,
+            uint256 fee0,
+            uint256 fee1
+        )
+    {
+        for (uint256 i; i < underlyingPayload_.ranges.length; i++) {
+            {
+                IUniswapV3Pool pool = IUniswapV3Pool(
+                    underlyingPayload_.factory.getPool(
+                        underlyingPayload_.token0,
+                        underlyingPayload_.token1,
+                        underlyingPayload_.ranges[i].feeTier
+                    )
+                );
+                (uint256 a0, uint256 a1, uint256 f0, uint256 f1) = underlying(
+                    RangeData({
+                        self: underlyingPayload_.self,
+                        range: underlyingPayload_.ranges[i],
+                        pool: pool
+                    }),
+                    roundUp_,
+                    sqrtPriceX96_
+                );
+                amount0 += a0;
+                amount1 += a1;
+                fee0 += f0;
+                fee1 += f1;
+            }
+        }
+
+        IArrakisV2 arrakisV2 = IArrakisV2(underlyingPayload_.self);
+
+        (uint256 fee0After, uint256 fee1After) = subtractAdminFees(
+            fee0,
+            fee1,
+            arrakisV2.managerFeeBPS()
+        );
+
+        amount0 +=
+            fee0After +
+            IERC20(underlyingPayload_.token0).balanceOf(
+                underlyingPayload_.self
+            ) -
+            arrakisV2.managerBalance0();
+        amount1 +=
+            fee1After +
+            IERC20(underlyingPayload_.token1).balanceOf(
+                underlyingPayload_.self
+            ) -
+            arrakisV2.managerBalance1();
     }
 
     // solhint-disable-next-line function-max-lines
