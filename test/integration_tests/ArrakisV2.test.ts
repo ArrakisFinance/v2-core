@@ -136,7 +136,7 @@ describe("Arrakis V2 integration test!!!", async function () {
 
     // For initialization.
     const res = await arrakisV2Resolver.getAmountsForLiquidity(
-      slot0.tick,
+      slot0.sqrtPriceX96,
       lowerTick,
       upperTick,
       ethers.utils.parseUnits("1", 18)

@@ -175,14 +175,14 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
     /// @notice Exposes Uniswap's getAmountsForLiquidity helper function,
     /// returns amount0 and amount1 for a given amount of liquidity.
     function getAmountsForLiquidity(
-        int24 currentTick_,
+        uint160 sqrtPriceX96_,
         int24 lowerTick_,
         int24 upperTick_,
         uint128 liquidity_
     ) external pure returns (uint256 amount0, uint256 amount1) {
         return
             LiquidityAmounts.getAmountsForLiquidity(
-                TickMath.getSqrtRatioAtTick(currentTick_),
+                sqrtPriceX96_,
                 TickMath.getSqrtRatioAtTick(lowerTick_),
                 TickMath.getSqrtRatioAtTick(upperTick_),
                 liquidity_

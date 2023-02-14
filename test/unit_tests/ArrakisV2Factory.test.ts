@@ -88,7 +88,7 @@ describe("Factory function unit test", function () {
 
     // For initialization.
     const res = await arrakisV2Resolver.getAmountsForLiquidity(
-      slot0.tick,
+      slot0.sqrtPriceX96,
       lowerTick,
       upperTick,
       ethers.utils.parseUnits("1", 18)
@@ -142,7 +142,7 @@ describe("Factory function unit test", function () {
 
     // For initialization.
     const res = await arrakisV2Resolver.getAmountsForLiquidity(
-      slot0.tick,
+      slot0.sqrtPriceX96,
       lowerTick,
       upperTick,
       ethers.utils.parseUnits("1", 18)
@@ -174,7 +174,7 @@ describe("Factory function unit test", function () {
 
     // For initialization.
     const res = await arrakisV2Resolver.getAmountsForLiquidity(
-      slot0.tick,
+      slot0.sqrtPriceX96,
       lowerTick,
       upperTick,
       ethers.utils.parseUnits("1", 18)
@@ -209,7 +209,7 @@ describe("Factory function unit test", function () {
 
     // For initialization.
     const res = await arrakisV2Resolver.getAmountsForLiquidity(
-      slot0.tick,
+      slot0.sqrtPriceX96,
       lowerTick,
       upperTick,
       ethers.utils.parseUnits("1", 18)
@@ -248,7 +248,7 @@ describe("Factory function unit test", function () {
 
     // For initialization.
     const res = await arrakisV2Resolver.getAmountsForLiquidity(
-      slot0.tick,
+      slot0.sqrtPriceX96,
       lowerTick,
       upperTick,
       ethers.utils.parseUnits("1", 18)
@@ -287,7 +287,7 @@ describe("Factory function unit test", function () {
 
     // For initialization.
     const res = await arrakisV2Resolver.getAmountsForLiquidity(
-      slot0.tick,
+      slot0.sqrtPriceX96,
       lowerTick,
       upperTick,
       ethers.utils.parseUnits("1", 18)
@@ -337,7 +337,7 @@ describe("Factory function unit test", function () {
 
     // For initialization.
     const res = await arrakisV2Resolver.getAmountsForLiquidity(
-      slot0.tick,
+      slot0.sqrtPriceX96,
       lowerTick,
       upperTick,
       ethers.utils.parseUnits("1", 18)
@@ -422,7 +422,7 @@ describe("Factory function unit test", function () {
 
     // For initialization.
     const res = await arrakisV2Resolver.getAmountsForLiquidity(
-      slot0.tick,
+      slot0.sqrtPriceX96,
       lowerTick,
       upperTick,
       ethers.utils.parseUnits("1", 18)

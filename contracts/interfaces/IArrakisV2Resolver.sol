@@ -24,7 +24,7 @@ interface IArrakisV2Resolver {
         );
 
     function getAmountsForLiquidity(
-        int24 currentTick_,
+        uint160 sqrtPriceX96_,
         int24 lowerTick_,
         int24 upperTick_,
         uint128 liquidity_
