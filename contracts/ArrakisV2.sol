@@ -76,6 +76,9 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                     })
                 );
 
+            if (current0 > 0) current0 += _ranges.length;
+            if (current1 > 0) current1 += _ranges.length;
+
             /// @dev current0 and current1 include fees and leftover (but not manager balances)
             amount0 = FullMath.mulDivRoundingUp(mintAmount_, current0, ts);
             amount1 = FullMath.mulDivRoundingUp(mintAmount_, current1, ts);

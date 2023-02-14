@@ -150,6 +150,9 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
         )
     {
         (uint256 current0, uint256 current1) = helper.totalUnderlying(vaultV2_);
+        uint256 length = (vaultV2_.getRanges()).length;
+        if (current0 > 0) current0 += length;
+        if (current1 > 0) current1 += length;
 
         uint256 totalSupply = vaultV2_.totalSupply();
         if (totalSupply > 0) {
