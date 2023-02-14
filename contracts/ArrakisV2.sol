@@ -73,7 +73,8 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                         token0: address(token0),
                         token1: address(token1),
                         self: me
-                    })
+                    }),
+                    true
                 );
 
             /// @dev current0 and current1 include fees and leftover (but not manager balances)
