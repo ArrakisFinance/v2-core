@@ -65,20 +65,17 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         uint256 ts = totalSupply();
         bool isTotalSupplyGtZero = ts > 0;
         if (isTotalSupplyGtZero) {
-            (uint256 current0, uint256 current1, , ) = UnderlyingHelper
-                .totalUnderlyingWithFees(
-                    UnderlyingPayload({
-                        ranges: _ranges,
-                        factory: factory,
-                        token0: address(token0),
-                        token1: address(token1),
-                        self: me
-                    })
-                );
-
-            /// @dev current0 and current1 include fees and leftover (but not manager balances)
-            amount0 = FullMath.mulDivRoundingUp(mintAmount_, current0, ts);
-            amount1 = FullMath.mulDivRoundingUp(mintAmount_, current1, ts);
+            (amount0, amount1) = UnderlyingHelper.totalUnderlyingForMint(
+                UnderlyingPayload({
+                    ranges: _ranges,
+                    factory: factory,
+                    token0: address(token0),
+                    token1: address(token1),
+                    self: me
+                }),
+                mintAmount_,
+                ts
+            );
         } else {
             uint256 denominator = 1 ether;
             uint256 init0M = init0;

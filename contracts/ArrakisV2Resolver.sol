@@ -21,7 +21,8 @@ import {
     PositionLiquidity,
     Range,
     RangeWeight,
-    Rebalance
+    Rebalance,
+    UnderlyingPayload
 } from "./structs/SArrakisV2.sol";
 import {hundredPercent} from "./constants/CArrakisV2.sol";
 
@@ -149,27 +150,39 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
             uint256 mintAmount
         )
     {
-        (uint256 current0, uint256 current1) = helper.totalUnderlying(vaultV2_);
-
         uint256 totalSupply = vaultV2_.totalSupply();
         if (totalSupply > 0) {
-            (amount0, amount1, mintAmount) = UnderlyingHelper
-                .computeMintAmounts(
-                    current0,
-                    current1,
-                    totalSupply,
-                    amount0Max_,
-                    amount1Max_
-                );
+            (uint256 current0, uint256 current1) = helper.totalUnderlying(
+                vaultV2_
+            );
+
+            mintAmount = UnderlyingHelper.computeMintAmounts(
+                current0,
+                current1,
+                totalSupply,
+                amount0Max_,
+                amount1Max_
+            );
         } else
-            (amount0, amount1, mintAmount) = UnderlyingHelper
-                .computeMintAmounts(
-                    vaultV2_.init0(),
-                    vaultV2_.init1(),
-                    1 ether,
-                    amount0Max_,
-                    amount1Max_
-                );
+            mintAmount = UnderlyingHelper.computeMintAmounts(
+                vaultV2_.init0(),
+                vaultV2_.init1(),
+                1 ether,
+                amount0Max_,
+                amount1Max_
+            );
+
+        (amount0, amount1) = UnderlyingHelper.totalUnderlyingForMint(
+            UnderlyingPayload({
+                ranges: vaultV2_.getRanges(),
+                factory: factory,
+                token0: address(vaultV2_.token0()),
+                token1: address(vaultV2_.token1()),
+                self: address(vaultV2_)
+            }),
+            mintAmount,
+            totalSupply > 0 ? totalSupply : 1 ether
+        );
     }
 
     /// @notice Exposes Uniswap's getAmountsForLiquidity helper function,
