@@ -151,10 +151,20 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
         )
     {
         uint256 totalSupply = vaultV2_.totalSupply();
+        UnderlyingPayload memory underlyingPayload = UnderlyingPayload({
+            ranges: vaultV2_.getRanges(),
+            factory: factory,
+            token0: address(vaultV2_.token0()),
+            token1: address(vaultV2_.token1()),
+            self: address(vaultV2_)
+        });
         if (totalSupply > 0) {
-            (uint256 current0, uint256 current1) = helper.totalUnderlying(
-                vaultV2_
-            );
+            (uint256 current0, uint256 current1) = UnderlyingHelper
+                .totalUnderlyingForMint(
+                    underlyingPayload,
+                    totalSupply,
+                    totalSupply
+                );
 
             mintAmount = UnderlyingHelper.computeMintAmounts(
                 current0,
@@ -173,13 +183,7 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
             );
 
         (amount0, amount1) = UnderlyingHelper.totalUnderlyingForMint(
-            UnderlyingPayload({
-                ranges: vaultV2_.getRanges(),
-                factory: factory,
-                token0: address(vaultV2_.token0()),
-                token1: address(vaultV2_.token1()),
-                self: address(vaultV2_)
-            }),
+            underlyingPayload,
             mintAmount,
             totalSupply > 0 ? totalSupply : 1 ether
         );
@@ -191,10 +195,10 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
         uint160 sqrtPriceX96_,
         int24 lowerTick_,
         int24 upperTick_,
-        uint128 liquidity_
+        int128 liquidity_
     ) external pure returns (uint256 amount0, uint256 amount1) {
         return
-            LiquidityAmounts.getAmountsForLiquidity(
+            UnderlyingHelper.getAmountsForDelta(
                 sqrtPriceX96_,
                 TickMath.getSqrtRatioAtTick(lowerTick_),
                 TickMath.getSqrtRatioAtTick(upperTick_),
