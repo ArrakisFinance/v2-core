@@ -27,7 +27,7 @@ interface IArrakisV2Resolver {
         uint160 sqrtPriceX96_,
         int24 lowerTick_,
         int24 upperTick_,
-        uint128 liquidity_
+        int128 liquidity_
     ) external pure returns (uint256 amount0, uint256 amount1);
 
     function getPositionId(

@@ -8,6 +8,7 @@ import {
   IUniswapV3Pool,
   ArrakisV2Resolver,
   ArrakisV2Helper,
+  Underlying,
 } from "../../typechain";
 import { getAddresses, Addresses } from "../../src/addresses";
 import { Signer } from "ethers";
@@ -26,6 +27,7 @@ describe("Rounding integration test", async function () {
   let uniswapV3Factory: IUniswapV3Factory;
   let uniswapV3Pool: IUniswapV3Pool;
   let arrakisV2Resolver: ArrakisV2Resolver;
+  let underlying: Underlying;
   let helper: ArrakisV2Helper;
   let wEth: Contract;
   let usdc: Contract;
@@ -39,7 +41,9 @@ describe("Rounding integration test", async function () {
   let swapRouter: ISwapRouter;
   let wMatic: Contract;
 
-  before("Setting up for V2 functions integration test", async function () {
+  let slot0: any;
+
+  beforeEach("Setting up for V2 functions integration test", async function () {
     if (hre.network.name !== "hardhat") {
       console.error("Test Suite is meant to be run on hardhat only");
       process.exit(1);
@@ -59,6 +63,8 @@ describe("Rounding integration test", async function () {
     arrakisV2Resolver = (await ethers.getContract(
       "ArrakisV2Resolver"
     )) as ArrakisV2Resolver;
+
+    underlying = (await ethers.getContract("Underlying")) as Underlying;
 
     helper = (await ethers.getContract("ArrakisV2Helper")) as ArrakisV2Helper;
 
@@ -159,7 +165,7 @@ describe("Rounding integration test", async function () {
       sqrtPriceLimitX96: 0,
     });
 
-    const slot0 = await uniswapV3Pool.slot0();
+    slot0 = await uniswapV3Pool.slot0();
     const tickSpacing = await uniswapV3Pool.tickSpacing();
 
     lowerTick = slot0.tick - (slot0.tick % tickSpacing) - tickSpacing;
@@ -204,15 +210,6 @@ describe("Rounding integration test", async function () {
 
     await vaultV2.mint(ethers.utils.parseEther("1"), userAddr);
 
-    // let balance0 = await usdc.balanceOf(vaultV2.address);
-    // let balance1 = await wEth.balanceOf(vaultV2.address);
-
-    // const init0 = await vaultV2.init0();
-    // const init1 = await vaultV2.init1();
-
-    // expect(balance0).to.be.eq(init0);
-    // expect(balance1).to.be.eq(init1);
-
     await expect(
       managerProxyMock.rebalance(vaultV2.address, {
         mints: [
@@ -229,52 +226,28 @@ describe("Rounding integration test", async function () {
         minDeposit1: 0,
       })
     ).to.not.be.reverted;
-
-    // await vaultV2.burn(ethers.utils.parseEther("1"), userAddr);
-
-    // balance0 = await usdc.balanceOf(vaultV2.address);
-    // balance1 = await wEth.balanceOf(vaultV2.address);
-
-    // expect(balance0).to.be.eq(0);
-    // expect(balance1).to.be.eq(0);
-
-    // await vaultV2.setInits(init0.add(1), init1.add(1));
-
-    // await vaultV2.mint(ethers.utils.parseEther("1"), userAddr);
-
-    // balance0 = await usdc.balanceOf(vaultV2.address);
-    // balance1 = await wEth.balanceOf(vaultV2.address);
-
-    // expect(balance0).to.be.eq(init0.add(1));
-    // expect(balance1).to.be.eq(init1.add(1));
-
-    // const ranges = await vaultV2.getRanges();
-    // expect(ranges.length).to.be.eq(0);
-
-    // await managerProxyMock.rebalance(vaultV2.address, {
-    //   mints: [
-    //     {
-    //       liquidity: ethers.utils.parseUnits("1", 12),
-    //       range: { lowerTick: lowerTick, upperTick: upperTick, feeTier: 500 },
-    //     },
-    //   ],
-    //   burns: [],
-    //   swap: nullSwap,
-    //   minBurn0: 0,
-    //   minBurn1: 0,
-    //   minDeposit0: 0,
-    //   minDeposit1: 0,
-    // });
-
-    // const rangesAfter = await vaultV2.getRanges();
-    // expect(rangesAfter.length).to.be.eq(1);
-    // balance0 = await usdc.balanceOf(vaultV2.address);
-    // balance1 = await wEth.balanceOf(vaultV2.address);
-
-    // expect(balance0).to.be.eq(0);
-    // expect(balance1).to.be.eq(0);
   });
+
   it("1: mint and burn work properly", async () => {
+    await wEth.approve(vaultV2.address, ethers.constants.MaxUint256);
+    await usdc.approve(vaultV2.address, ethers.constants.MaxUint256);
+
+    await vaultV2.mint(ethers.utils.parseEther("1"), userAddr);
+
+    await managerProxyMock.rebalance(vaultV2.address, {
+      mints: [
+        {
+          liquidity: ethers.utils.parseUnits("1", 12),
+          range: { lowerTick: lowerTick, upperTick: upperTick, feeTier: 500 },
+        },
+      ],
+      burns: [],
+      swap: nullSwap,
+      minBurn0: 0,
+      minBurn1: 0,
+      minDeposit0: 0,
+      minDeposit1: 0,
+    });
     // #region approve weth and usdc token to vault.
 
     await wEth.approve(vaultV2.address, ethers.constants.MaxUint256);
@@ -334,5 +307,116 @@ describe("Rounding integration test", async function () {
 
     expect(balance0).to.be.eq(0);
     expect(balance1).to.be.eq(0);
+  });
+
+  it("2: mint should fail for rounding down on current amount computation for mint", async () => {
+    await wEth.approve(vaultV2.address, ethers.constants.MaxUint256);
+    await usdc.approve(vaultV2.address, ethers.constants.MaxUint256);
+
+    await vaultV2.mint(ethers.utils.parseEther("1"), userAddr);
+
+    await managerProxyMock.rebalance(vaultV2.address, {
+      mints: [
+        {
+          liquidity: ethers.utils.parseUnits("1", 12),
+          range: { lowerTick: lowerTick, upperTick: upperTick, feeTier: 500 },
+        },
+      ],
+      burns: [],
+      swap: nullSwap,
+      minBurn0: 0,
+      minBurn1: 0,
+      minDeposit0: 0,
+      minDeposit1: 0,
+    });
+    // #region approve weth and usdc token to vault.
+
+    await wEth.approve(vaultV2.address, ethers.constants.MaxUint256);
+    await usdc.approve(vaultV2.address, ethers.constants.MaxUint256);
+
+    // #endregion approve weth and usdc token to vault.
+
+    // #region user balance of weth and usdc.
+
+    const wethBalance = await wEth.balanceOf(userAddr);
+    const usdcBalance = await usdc.balanceOf(userAddr);
+
+    // #endregion user balance of weth and usdc.
+
+    // #region rouding down on current amounts computation for mint amount computation.
+
+    const totalSupply = await vaultV2.totalSupply();
+
+    const [current0, current1] = await helper.totalUnderlying(vaultV2.address);
+
+    const mintAmount = await underlying.computeMintAmounts(
+      current0,
+      current1,
+      totalSupply,
+      usdcBalance,
+      wethBalance
+    );
+
+    await expect(vaultV2.mint(mintAmount, userAddr)).to.be.reverted;
+
+    // #endregion rouding down on current amounts computation for mint amount computation.
+  });
+
+  it("3: mint should fail for take share of total current0 and current1 amounts", async () => {
+    await wEth.approve(vaultV2.address, ethers.constants.MaxUint256);
+    await usdc.approve(vaultV2.address, ethers.constants.MaxUint256);
+
+    await vaultV2.mint(ethers.utils.parseEther("1"), userAddr);
+
+    await managerProxyMock.rebalance(vaultV2.address, {
+      mints: [
+        {
+          liquidity: ethers.utils.parseUnits("1", 12),
+          range: { lowerTick: lowerTick, upperTick: upperTick, feeTier: 500 },
+        },
+      ],
+      burns: [],
+      swap: nullSwap,
+      minBurn0: 0,
+      minBurn1: 0,
+      minDeposit0: 0,
+      minDeposit1: 0,
+    });
+
+    // #region user balance of weth and usdc.
+
+    const wethBalance = await wEth.balanceOf(userAddr);
+    const usdcBalance = await usdc.balanceOf(userAddr);
+
+    // #endregion user balance of weth and usdc.
+
+    // #region rouding down on current amounts computation for mint amount computation.
+
+    const totalSupply = await vaultV2.totalSupply();
+
+    const [current0, current1] = await helper.totalUnderlying(vaultV2.address);
+
+    const result = await arrakisV2Resolver.getMintAmounts(
+      vaultV2.address,
+      usdcBalance,
+      wethBalance
+    );
+
+    // #region approve weth and usdc token to vault.
+
+    await wEth.approve(
+      vaultV2.address,
+      current0.mul(result.mintAmount).div(totalSupply)
+    );
+    await usdc.approve(
+      vaultV2.address,
+      current1.mul(result.mintAmount).div(totalSupply)
+    );
+
+    // #endregion approve weth and usdc token to vault.
+
+    await expect(vaultV2.mint(result.mintAmount, userAddr)).to.be.reverted;
+
+    // #endregion rouding down on current amounts computation for mint amount computation.
   });
 });
