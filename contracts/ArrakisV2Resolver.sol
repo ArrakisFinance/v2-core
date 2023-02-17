@@ -5,7 +5,6 @@ import {IArrakisV2Resolver} from "./interfaces/IArrakisV2Resolver.sol";
 import {
     IUniswapV3Factory
 } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
-import {IArrakisV2Helper} from "./interfaces/IArrakisV2Helper.sol";
 import {IArrakisV2} from "./interfaces/IArrakisV2.sol";
 import {
     IUniswapV3Pool
@@ -29,11 +28,9 @@ import {hundredPercent} from "./constants/CArrakisV2.sol";
 /// @title ArrakisV2Resolver helpers that resolve / compute payloads for ArrakisV2 calls
 contract ArrakisV2Resolver is IArrakisV2Resolver {
     IUniswapV3Factory public immutable factory;
-    IArrakisV2Helper public immutable helper;
 
-    constructor(IUniswapV3Factory factory_, IArrakisV2Helper helper_) {
+    constructor(IUniswapV3Factory factory_) {
         factory = factory_;
-        helper = helper_;
     }
 
     /// @notice Standard rebalance (without swapping)
@@ -56,7 +53,15 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
             token0Addr = address(vaultV2_.token0());
             token1Addr = address(vaultV2_.token1());
 
-            (amount0, amount1) = helper.totalUnderlying(vaultV2_);
+            (amount0, amount1, , ) = UnderlyingHelper.totalUnderlyingWithFees(
+                UnderlyingPayload({
+                    ranges: vaultV2_.getRanges(),
+                    factory: factory,
+                    token0: address(vaultV2_.token0()),
+                    token1: address(vaultV2_.token1()),
+                    self: address(vaultV2_)
+                })
+            );
 
             PositionLiquidity[] memory pl = new PositionLiquidity[](
                 ranges.length
