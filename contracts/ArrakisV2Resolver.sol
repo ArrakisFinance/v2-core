@@ -178,7 +178,12 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
                 amount0Max_,
                 amount1Max_
             );
-        } else
+            (amount0, amount1) = UnderlyingHelper.totalUnderlyingForMint(
+                underlyingPayload,
+                mintAmount,
+                totalSupply
+            );
+        } else {
             mintAmount = UnderlyingHelper.computeMintAmounts(
                 vaultV2_.init0(),
                 vaultV2_.init1(),
@@ -187,11 +192,18 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
                 amount1Max_
             );
 
-        (amount0, amount1) = UnderlyingHelper.totalUnderlyingForMint(
-            underlyingPayload,
-            mintAmount,
-            totalSupply > 0 ? totalSupply : 1 ether
-        );
+            // compute amounts owed to contract
+            amount0 = FullMath.mulDivRoundingUp(
+                mintAmount,
+                vaultV2_.init0(),
+                1 ether
+            );
+            amount1 = FullMath.mulDivRoundingUp(
+                mintAmount,
+                vaultV2_.init1(),
+                1 ether
+            );
+        }
     }
 
     /// @notice Exposes Uniswap's getAmountsForLiquidity helper function,
