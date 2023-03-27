@@ -198,6 +198,31 @@ describe("Factory function unit test", function () {
       (await arrakisV2Factory.vaults(0, await arrakisV2Factory.numVaults()))
         .length
     ).to.be.eq(1);
+
+    await arrakisV2Factory.connect(user2).deployVault(
+      {
+        feeTiers: [3000],
+        token0: addresses.USDC,
+        token1: addresses.WETH,
+        owner: userAddr,
+        init0: res.amount0,
+        init1: res.amount1,
+        manager: userAddr,
+        routers: [],
+      },
+      true
+    );
+
+    expect(
+      (await arrakisV2Factory.vaults(0, await arrakisV2Factory.numVaults()))
+        .length
+    ).to.be.eq(2);
+
+    // get a slice that starts at non-zero index, fails unless we make change
+    expect(
+      (await arrakisV2Factory.vaults(1, await arrakisV2Factory.numVaults()))
+        .length
+    ).to.be.eq(1);
   });
 
   it("#6: get implementation", async () => {
