@@ -75,7 +75,7 @@ contract ArrakisV2Factory is ArrakisV2FactoryStorage {
         );
         address[] memory vs = new address[](endIndex_ - startIndex_);
         for (uint256 i = startIndex_; i < endIndex_; i++) {
-            vs[i] = _vaults.at(i);
+            vs[i - startIndex_] = _vaults.at(i);
         }
 
         return vs;
