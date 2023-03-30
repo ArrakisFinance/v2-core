@@ -116,4 +116,30 @@ describe("Arrakis V2 smart contract internal functions unit test", function () {
     expect(result.amount1).to.be.equal(expectedAmount1);
     expect(result.amount0).to.be.equal(expectedAmount0);
   });
+  it("#4: Test mulDiv edge cases", async () => {
+    const oneEth = ethers.utils.parseEther("1");
+    const result1 = await mockFArrakisV2.checkMulDiv(
+      oneEth.mul(10),
+      oneEth.sub(1),
+      oneEth
+    );
+    expect(result1).to.be.lt(oneEth.mul(10));
+    expect(result1).to.be.gt(oneEth.mul(9));
+
+    const fivek = ethers.BigNumber.from("5000");
+    const result2 = await mockFArrakisV2.checkMulDiv(
+      fivek,
+      oneEth.sub(1),
+      oneEth
+    );
+    expect(result2).to.be.lt(fivek);
+    expect(result2).to.be.eq(ethers.BigNumber.from("4999"));
+
+    const result3 = await mockFArrakisV2.checkMulDiv(
+      ethers.constants.One,
+      oneEth.mul(100).sub(1),
+      oneEth.mul(100)
+    );
+    expect(result3).to.be.eq(ethers.constants.Zero);
+  });
 });

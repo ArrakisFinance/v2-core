@@ -307,6 +307,10 @@ describe("Rounding integration test", async function () {
 
     expect(balance0).to.be.eq(0);
     expect(balance1).to.be.eq(0);
+
+    // check ranges get deleted on burn totalSupply
+    const rangesEnd = await vaultV2.getRanges();
+    expect(rangesEnd.length).to.be.eq(0);
   });
 
   it("2: mint should fail for rounding down on current amount computation for mint", async () => {
