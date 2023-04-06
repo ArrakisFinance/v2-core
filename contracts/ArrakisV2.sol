@@ -151,7 +151,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
     /// @param receiver_ address to receive underlying tokens withdrawn.
     /// @return amount0 amount of token0 sent to receiver
     /// @return amount1 amount of token1 sent to receiver
-    // solhint-disable-next-line function-max-lines
+    // solhint-disable-next-line function-max-lines, code-complexity
     function burn(uint256 burnAmount_, address receiver_)
         external
         nonReentrant
@@ -165,7 +165,6 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         _burn(msg.sender, burnAmount_);
 
         Withdraw memory total;
-
         for (uint256 i; i < _ranges.length; i++) {
             Range memory range = _ranges[i];
             IUniswapV3Pool pool = IUniswapV3Pool(
@@ -196,6 +195,8 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
             total.burn0 += withdraw.burn0;
             total.burn1 += withdraw.burn1;
         }
+
+        if (burnAmount_ == ts) delete _ranges;
 
         _applyFees(total.fee0, total.fee1);
 

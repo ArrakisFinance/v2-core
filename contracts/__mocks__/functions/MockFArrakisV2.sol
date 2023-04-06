@@ -112,4 +112,12 @@ contract MockFArrakisV2 {
             totalSupply_
         );
     }
+
+    function checkMulDiv(
+        uint256 a,
+        uint256 b,
+        uint256 c
+    ) external pure returns (uint256) {
+        return FullMath.mulDiv(a, b, c);
+    }
 }
