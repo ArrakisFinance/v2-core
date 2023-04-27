@@ -27,6 +27,10 @@ abstract contract ArrakisV2FactoryStorage is
     // #region constructor.
 
     constructor(IArrakisV2Beacon arrakisV2Beacon_) {
+        require(
+            address(arrakisV2Beacon_) != address(0),
+            "beacon is address zero"
+        );
         arrakisV2Beacon = arrakisV2Beacon_;
     }
 

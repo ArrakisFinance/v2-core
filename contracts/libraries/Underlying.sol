@@ -297,8 +297,15 @@ library Underlying {
         fee1 += uint256(tokensOwed1);
     }
 
-    /// @notice Computes the token0 and token1 value for a given amount of liquidity, the current
-    /// pool prices and the prices at the tick boundaries
+    /// @notice Computes the token0 and token1 value for a given amount of liquidity
+    /// @param sqrtRatioX96 current pool price as a sqrtPriceX96
+    /// @param sqrtRatioAX96 price at position tick boundary as a sqrtPriceX96
+    /// @param sqrtRatioBX96 price at position other tick boundary as a sqrtPriceX96
+    /// @param liquidity liquidity value (>0 for mints, <0 for burns)
+    /// @return amount0 and amount1 as the amounts debited/credited on burn/mint of given liquidity
+    /// @dev this function mimics the UniswapV3 core rounding rules, it rounds up when liquidity>0
+    /// but rounds down when liquidity<0.
+    // solhint-disable-next-line function-max-lines
     function getAmountsForDelta(
         uint160 sqrtRatioX96,
         uint160 sqrtRatioAX96,
@@ -309,35 +316,39 @@ library Underlying {
             (sqrtRatioAX96, sqrtRatioBX96) = (sqrtRatioBX96, sqrtRatioAX96);
 
         if (sqrtRatioX96 <= sqrtRatioAX96) {
+            int256 amount0Delta = SqrtPriceMath.getAmount0Delta(
+                sqrtRatioAX96,
+                sqrtRatioBX96,
+                liquidity
+            );
             amount0 = SafeCast.toUint256(
-                SqrtPriceMath.getAmount0Delta(
-                    sqrtRatioAX96,
-                    sqrtRatioBX96,
-                    liquidity
-                )
+                amount0Delta < 0 ? -amount0Delta : amount0Delta
             );
         } else if (sqrtRatioX96 < sqrtRatioBX96) {
+            int256 amount0Delta = SqrtPriceMath.getAmount0Delta(
+                sqrtRatioX96,
+                sqrtRatioBX96,
+                liquidity
+            );
             amount0 = SafeCast.toUint256(
-                SqrtPriceMath.getAmount0Delta(
-                    sqrtRatioX96,
-                    sqrtRatioBX96,
-                    liquidity
-                )
+                amount0Delta < 0 ? -amount0Delta : amount0Delta
+            );
+            int256 amount1Delta = SqrtPriceMath.getAmount1Delta(
+                sqrtRatioAX96,
+                sqrtRatioX96,
+                liquidity
             );
             amount1 = SafeCast.toUint256(
-                SqrtPriceMath.getAmount1Delta(
-                    sqrtRatioAX96,
-                    sqrtRatioX96,
-                    liquidity
-                )
+                amount1Delta < 0 ? -amount1Delta : amount1Delta
             );
         } else {
+            int256 amount1Delta = SqrtPriceMath.getAmount1Delta(
+                sqrtRatioAX96,
+                sqrtRatioBX96,
+                liquidity
+            );
             amount1 = SafeCast.toUint256(
-                SqrtPriceMath.getAmount1Delta(
-                    sqrtRatioAX96,
-                    sqrtRatioBX96,
-                    liquidity
-                )
+                amount1Delta < 0 ? -amount1Delta : amount1Delta
             );
         }
     }
@@ -352,7 +363,7 @@ library Underlying {
     }
 
     // solhint-disable-next-line function-max-lines
-    function computeMintAmounts(
+    function computeMintAmount(
         uint256 current0_,
         uint256 current1_,
         uint256 totalSupply_,

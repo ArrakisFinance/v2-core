@@ -52,7 +52,7 @@ describe("Arrakis V2 smart contract internal functions unit test", function () {
     const amount0Max = ethers.utils.parseUnits("1", 3);
     const amount1Max = ethers.constants.Zero;
 
-    const result = await mockFArrakisV2.computeMintAmounts(
+    const result = await mockFArrakisV2.computeMintAmount(
       current0,
       current1,
       totalSupply,
@@ -76,7 +76,7 @@ describe("Arrakis V2 smart contract internal functions unit test", function () {
     const amount1Max = ethers.utils.parseUnits("1", 3);
     const amount0Max = ethers.constants.Zero;
 
-    const result = await mockFArrakisV2.computeMintAmounts(
+    const result = await mockFArrakisV2.computeMintAmount(
       current0,
       current1,
       totalSupply,
@@ -100,7 +100,7 @@ describe("Arrakis V2 smart contract internal functions unit test", function () {
     const amount1Max = ethers.utils.parseUnits("1", 3);
     const amount0Max = ethers.utils.parseUnits("3", 3);
 
-    const result = await mockFArrakisV2.computeMintAmounts(
+    const result = await mockFArrakisV2.computeMintAmount(
       current0,
       current1,
       totalSupply,

@@ -79,7 +79,7 @@ contract MockFArrakisV2 {
         return PositionHelper.getPositionId(self_, lowerTick_, upperTick_);
     }
 
-    function computeMintAmounts(
+    function computeMintAmount(
         uint256 current0_,
         uint256 current1_,
         uint256 totalSupply_,
@@ -94,7 +94,7 @@ contract MockFArrakisV2 {
             uint256 mintAmount
         )
     {
-        mintAmount = UnderlyingHelper.computeMintAmounts(
+        mintAmount = UnderlyingHelper.computeMintAmount(
             current0_,
             current1_,
             totalSupply_,

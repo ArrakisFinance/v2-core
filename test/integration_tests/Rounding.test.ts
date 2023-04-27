@@ -353,7 +353,7 @@ describe("Rounding integration test", async function () {
 
     const [current0, current1] = await helper.totalUnderlying(vaultV2.address);
 
-    const mintAmount = await underlying.computeMintAmounts(
+    const mintAmount = await underlying.computeMintAmount(
       current0,
       current1,
       totalSupply,

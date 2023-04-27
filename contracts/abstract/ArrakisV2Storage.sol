@@ -21,6 +21,7 @@ import {
     EnumerableSet
 } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {Range, Rebalance, InitializePayload} from "../structs/SArrakisV2.sol";
+import {hundredPercent} from "../constants/CArrakisV2.sol";
 
 /// @title ArrakisV2Storage base contract containing all ArrakisV2 storage variables.
 // solhint-disable-next-line max-states-count
@@ -216,7 +217,7 @@ abstract contract ArrakisV2Storage is
     /// @param managerFeeBPS_ manager fee in basis points.
     /// @dev only callable by manager.
     function setManagerFeeBPS(uint16 managerFeeBPS_) external onlyManager {
-        require(managerFeeBPS_ <= 10000, "MFO");
+        require(managerFeeBPS_ <= hundredPercent, "MFO");
         managerFeeBPS = managerFeeBPS_;
         emit LogSetManagerFeeBPS(managerFeeBPS_);
     }
@@ -312,7 +313,8 @@ abstract contract ArrakisV2Storage is
         for (uint256 i = 0; i < routers_.length; i++) {
             require(
                 routers_[i] != address(token0) &&
-                    routers_[i] != address(token1),
+                    routers_[i] != address(token1) &&
+                    routers_[i] != address(0),
                 "RT"
             );
             require(!_routers.contains(routers_[i]), "CR");

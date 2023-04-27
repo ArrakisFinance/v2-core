@@ -30,6 +30,7 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
     IUniswapV3Factory public immutable factory;
 
     constructor(IUniswapV3Factory factory_) {
+        require(address(factory_) != address(0), "factory is address zero");
         factory = factory_;
     }
 
@@ -171,7 +172,7 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
                     totalSupply
                 );
 
-            mintAmount = UnderlyingHelper.computeMintAmounts(
+            mintAmount = UnderlyingHelper.computeMintAmount(
                 current0,
                 current1,
                 totalSupply,
@@ -184,7 +185,7 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
                 totalSupply
             );
         } else {
-            mintAmount = UnderlyingHelper.computeMintAmounts(
+            mintAmount = UnderlyingHelper.computeMintAmount(
                 vaultV2_.init0(),
                 vaultV2_.init1(),
                 1 ether,
@@ -206,8 +207,13 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
         }
     }
 
-    /// @notice Exposes Uniswap's getAmountsForLiquidity helper function,
-    /// returns amount0 and amount1 for a given amount of liquidity.
+    /// @notice Exposes a modified version of Uniswap's getAmountsForLiquidity helper
+    /// exactly accurate with UniswapV3 core as it debits/credits tokens
+    /// @param sqrtPriceX96_ sqrtPriceX96 for market of interest
+    /// @param lowerTick_ lower tick for position of interest
+    /// @param upperTick_ upper tick for position of interest
+    /// @param liquidity_ liquidity value for position of interest (>0 for mints, <0 for burns)
+    /// @return amount0 and amount1 as the amounts debited/credited on burn/mint of given liquidity
     function getAmountsForLiquidity(
         uint160 sqrtPriceX96_,
         int24 lowerTick_,

@@ -133,11 +133,12 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                     range.lowerTick,
                     range.upperTick
                 );
-                if (liquidity == 0) continue;
 
                 liquidity = SafeCast.toUint128(
                     FullMath.mulDiv(liquidity, mintAmount_, ts)
                 );
+
+                if (liquidity == 0) continue;
 
                 pool.mint(me, range.lowerTick, range.upperTick, liquidity, "");
             }
@@ -363,6 +364,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         uint256 aggregator0;
         uint256 aggregator1;
         for (uint256 i; i < rebalanceParams_.mints.length; i++) {
+            if (rebalanceParams_.mints[i].liquidity == 0) continue;
             (bool exists, ) = Position.rangeExists(
                 _ranges,
                 rebalanceParams_.mints[i].range
