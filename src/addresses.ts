@@ -79,6 +79,19 @@ export const getAddresses = (network: string): Addresses => {
         ArrakisV2Helper: "0x07d2CeB4869DFE17e8D48c92A71eDC3AE564449f",
         ArrakisV2Resolver: "0xb11bb8ad710579Cc5ED16b1C8587808109c1f193",
       };
+    case "binance":
+      return {
+        UniswapV3Factory: "0xdB1d10011AD0Ff90774D0C6Bb92e5C5c8b4461F7",
+        SwapRouter: "",
+        WETH: "0x2170Ed0880ac9A755fd29B2688956BD959F933F8",
+        WMATIC: "0xCC42724C6683B7E57334c4E856f4c9965ED682bD",
+        USDC: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
+        ArrakisV2Implementation: "0xAf0f96e8702cB1b8160e43c8c020C608cD7B134d",
+        ArrakisV2Beacon: "0x1D91F6D917ec51dE53A5789c34fFF777a58759B6",
+        ArrakisV2Factory: "0xECb8Ffcb2369EF188A082a662F496126f66c8288",
+        ArrakisV2Helper: "0x07d2CeB4869DFE17e8D48c92A71eDC3AE564449f",
+        ArrakisV2Resolver: "0xb11bb8ad710579Cc5ED16b1C8587808109c1f193",
+      };
     case "goerli":
       return {
         UniswapV3Factory: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
