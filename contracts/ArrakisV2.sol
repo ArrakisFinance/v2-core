@@ -92,7 +92,14 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                 denominator
             );
 
-            /// @dev check ratio against precision attacks (small values that skew init ratio)
+            /// @dev check ratio against small values that skew init ratio
+            if (FullMath.mulDiv(mintAmount_, init0M, denominator) == 0) {
+                amount0 = 0;
+            }
+            if (FullMath.mulDiv(mintAmount_, init1M, denominator) == 0) {
+                amount1 = 0;
+            }
+
             uint256 amount0Mint = init0M != 0
                 ? FullMath.mulDiv(amount0, denominator, init0M)
                 : type(uint256).max;
