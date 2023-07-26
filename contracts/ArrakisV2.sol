@@ -22,7 +22,6 @@ import {Position} from "./libraries/Position.sol";
 import {Pool} from "./libraries/Pool.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import {hundredPercent} from "./constants/CArrakisV2.sol";
 
 /// @title ArrakisV2 LP vault version 2
 /// @notice Smart contract managing liquidity providing strategy for a given token pair
@@ -140,11 +139,12 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                     range.lowerTick,
                     range.upperTick
                 );
-                if (liquidity == 0) continue;
 
                 liquidity = SafeCast.toUint128(
                     FullMath.mulDiv(liquidity, mintAmount_, ts)
                 );
+
+                if (liquidity == 0) continue;
 
                 pool.mint(me, range.lowerTick, range.upperTick, liquidity, "");
             }
@@ -183,11 +183,12 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                 range.lowerTick,
                 range.upperTick
             );
-            if (liquidity == 0) continue;
 
             liquidity = SafeCast.toUint128(
                 FullMath.mulDiv(liquidity, burnAmount_, ts)
             );
+
+            if (liquidity == 0) continue;
 
             Withdraw memory withdraw = _withdraw(
                 pool,
@@ -414,7 +415,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
 
     /// @notice will send manager fees to manager
     /// @dev anyone can call this function
-    function withdrawManagerBalance() external nonReentrant {
+    function withdrawManagerBalance() external {
         _withdrawManagerBalance();
     }
 
@@ -430,21 +431,13 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
             liquidity_
         );
 
-        (uint256 collect0, uint256 collect1) = pool_.collect(
-            address(this),
+        (uint256 collect0, uint256 collect1) = _collectFees(
+            pool_,
             lowerTick_,
-            upperTick_,
-            type(uint128).max,
-            type(uint128).max
+            upperTick_
         );
 
         withdraw.fee0 = collect0 - withdraw.burn0;
         withdraw.fee1 = collect1 - withdraw.burn1;
-    }
-
-    function _applyFees(uint256 fee0_, uint256 fee1_) internal {
-        uint16 mManagerFeeBPS = managerFeeBPS;
-        managerBalance0 += (fee0_ * mManagerFeeBPS) / hundredPercent;
-        managerBalance1 += (fee1_ * mManagerFeeBPS) / hundredPercent;
     }
 }
