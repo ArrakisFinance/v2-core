@@ -211,7 +211,7 @@ abstract contract ArrakisV2Storage is
     /// @notice set manager
     /// @param manager_ manager address.
     /// @dev only callable by owner.
-    function setManager(address manager_) external onlyOwner {
+    function setManager(address manager_) external onlyOwner nonReentrant {
         _collectFeesOnPools();
         _withdrawManagerBalance();
         manager = manager_;
@@ -221,7 +221,11 @@ abstract contract ArrakisV2Storage is
     /// @notice set manager fee bps
     /// @param managerFeeBPS_ manager fee in basis points.
     /// @dev only callable by manager.
-    function setManagerFeeBPS(uint16 managerFeeBPS_) external onlyManager {
+    function setManagerFeeBPS(uint16 managerFeeBPS_)
+        external
+        onlyManager
+        nonReentrant
+    {
         require(managerFeeBPS_ <= 10000, "MFO");
         _collectFeesOnPools();
         managerFeeBPS = managerFeeBPS_;
@@ -277,14 +281,15 @@ abstract contract ArrakisV2Storage is
         if (amount1_ > 0) token1.safeTransfer(msg.sender, amount1_);
     }
 
-    function _withdrawManagerBalance() internal nonReentrant {
+    function _withdrawManagerBalance() internal {
         uint256 amount0 = managerBalance0;
         uint256 amount1 = managerBalance1;
 
         managerBalance0 = 0;
         managerBalance1 = 0;
 
-        /// @dev token can blacklist manager and make this function fail.
+        /// @dev token can blacklist manager and make this function fail,
+        /// so we use try catch to deal with blacklisting.
 
         if (amount0 > 0) {
             // solhint-disable-next-line no-empty-blocks
@@ -331,6 +336,9 @@ abstract contract ArrakisV2Storage is
             IUniswapV3Pool pool = IUniswapV3Pool(
                 factory.getPool(address(token0), address(token1), range.feeTier)
             );
+
+            /// @dev to update the position and collect fees.
+            pool.burn(range.lowerTick, range.upperTick, 0);
 
             (uint256 collect0, uint256 collect1) = _collectFees(
                 pool,
