@@ -308,7 +308,7 @@ library Underlying {
         if (sqrtRatioAX96 > sqrtRatioBX96)
             (sqrtRatioAX96, sqrtRatioBX96) = (sqrtRatioBX96, sqrtRatioAX96);
 
-        if (sqrtRatioX96 <= sqrtRatioAX96) {
+        if (sqrtRatioX96 < sqrtRatioAX96) {
             amount0 = SafeCast.toUint256(
                 SqrtPriceMath.getAmount0Delta(
                     sqrtRatioAX96,

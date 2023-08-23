@@ -155,6 +155,16 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
             uint256 mintAmount
         )
     {
+        /// @dev to not exceed max amount sent by user.
+        uint256 numberOfRanges = vaultV2_.getRanges().length;
+
+        require(
+            numberOfRanges < amount0Max_ && numberOfRanges < amount1Max_,
+            "max amounts should be higher than the number of ranges"
+        );
+        amount0Max_ = amount0Max_ - numberOfRanges;
+        amount1Max_ = amount1Max_ - numberOfRanges;
+
         uint256 totalSupply = vaultV2_.totalSupply();
         UnderlyingPayload memory underlyingPayload = UnderlyingPayload({
             ranges: vaultV2_.getRanges(),
