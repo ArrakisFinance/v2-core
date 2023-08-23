@@ -5,6 +5,9 @@ import {
     IUniswapV3Factory
 } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {
+    IUniswapV3Pool
+} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {
     IERC20,
     SafeERC20
 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -21,6 +24,7 @@ import {
     EnumerableSet
 } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {Range, Rebalance, InitializePayload} from "../structs/SArrakisV2.sol";
+import {hundredPercent} from "../constants/CArrakisV2.sol";
 
 /// @title ArrakisV2Storage base contract containing all ArrakisV2 storage variables.
 // solhint-disable-next-line max-states-count
@@ -131,10 +135,11 @@ abstract contract ArrakisV2Storage is
         __ReentrancyGuard_init();
 
         _addPools(params_.feeTiers, params_.token0, params_.token1);
-        _whitelistRouters(params_.routers);
 
         token0 = IERC20(params_.token0);
         token1 = IERC20(params_.token1);
+
+        _whitelistRouters(params_.routers);
 
         _transferOwnership(params_.owner);
 
@@ -206,7 +211,9 @@ abstract contract ArrakisV2Storage is
     /// @notice set manager
     /// @param manager_ manager address.
     /// @dev only callable by owner.
-    function setManager(address manager_) external onlyOwner {
+    function setManager(address manager_) external onlyOwner nonReentrant {
+        _collectFeesOnPools();
+        _withdrawManagerBalance();
         manager = manager_;
         emit LogSetManager(manager_);
     }
@@ -214,8 +221,13 @@ abstract contract ArrakisV2Storage is
     /// @notice set manager fee bps
     /// @param managerFeeBPS_ manager fee in basis points.
     /// @dev only callable by manager.
-    function setManagerFeeBPS(uint16 managerFeeBPS_) external onlyManager {
+    function setManagerFeeBPS(uint16 managerFeeBPS_)
+        external
+        onlyManager
+        nonReentrant
+    {
         require(managerFeeBPS_ <= 10000, "MFO");
+        _collectFeesOnPools();
         managerFeeBPS = managerFeeBPS_;
         emit LogSetManagerFeeBPS(managerFeeBPS_);
     }
@@ -269,6 +281,33 @@ abstract contract ArrakisV2Storage is
         if (amount1_ > 0) token1.safeTransfer(msg.sender, amount1_);
     }
 
+    function _withdrawManagerBalance() internal {
+        uint256 amount0 = managerBalance0;
+        uint256 amount1 = managerBalance1;
+
+        managerBalance0 = 0;
+        managerBalance1 = 0;
+
+        /// @dev token can blacklist manager and make this function fail,
+        /// so we use try catch to deal with blacklisting.
+
+        if (amount0 > 0) {
+            // solhint-disable-next-line no-empty-blocks
+            try token0.transfer(manager, amount0) {} catch {
+                amount0 = 0;
+            }
+        }
+
+        if (amount1 > 0) {
+            // solhint-disable-next-line no-empty-blocks
+            try token1.transfer(manager, amount1) {} catch {
+                amount1 = 0;
+            }
+        }
+
+        emit LogWithdrawManagerBalance(amount0, amount1);
+    }
+
     function _addPools(
         uint24[] calldata feeTiers_,
         address token0Addr_,
@@ -289,6 +328,46 @@ abstract contract ArrakisV2Storage is
         }
     }
 
+    function _collectFeesOnPools() internal {
+        uint256 fees0;
+        uint256 fees1;
+        for (uint256 i; i < _ranges.length; i++) {
+            Range memory range = _ranges[i];
+            IUniswapV3Pool pool = IUniswapV3Pool(
+                factory.getPool(address(token0), address(token1), range.feeTier)
+            );
+
+            /// @dev to update the position and collect fees.
+            pool.burn(range.lowerTick, range.upperTick, 0);
+
+            (uint256 collect0, uint256 collect1) = _collectFees(
+                pool,
+                range.lowerTick,
+                range.upperTick
+            );
+
+            fees0 += collect0;
+            fees1 += collect1;
+        }
+
+        _applyFees(fees0, fees1);
+        emit LogCollectedFees(fees0, fees1);
+    }
+
+    function _collectFees(
+        IUniswapV3Pool pool_,
+        int24 lowerTick_,
+        int24 upperTick_
+    ) internal returns (uint256 collect0, uint256 collect1) {
+        (collect0, collect1) = pool_.collect(
+            address(this),
+            lowerTick_,
+            upperTick_,
+            type(uint128).max,
+            type(uint128).max
+        );
+    }
+
     function _whitelistRouters(address[] calldata routers_) internal {
         for (uint256 i = 0; i < routers_.length; i++) {
             require(
@@ -302,6 +381,12 @@ abstract contract ArrakisV2Storage is
         }
 
         emit LogWhitelistRouters(routers_);
+    }
+
+    function _applyFees(uint256 fee0_, uint256 fee1_) internal {
+        uint16 mManagerFeeBPS = managerFeeBPS;
+        managerBalance0 += (fee0_ * mManagerFeeBPS) / hundredPercent;
+        managerBalance1 += (fee1_ * mManagerFeeBPS) / hundredPercent;
     }
 
     // #endregion internal functions

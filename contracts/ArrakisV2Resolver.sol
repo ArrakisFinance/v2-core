@@ -5,7 +5,6 @@ import {IArrakisV2Resolver} from "./interfaces/IArrakisV2Resolver.sol";
 import {
     IUniswapV3Factory
 } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
-import {IArrakisV2Helper} from "./interfaces/IArrakisV2Helper.sol";
 import {IArrakisV2} from "./interfaces/IArrakisV2.sol";
 import {
     IUniswapV3Pool
@@ -21,18 +20,17 @@ import {
     PositionLiquidity,
     Range,
     RangeWeight,
-    Rebalance
+    Rebalance,
+    UnderlyingPayload
 } from "./structs/SArrakisV2.sol";
 import {hundredPercent} from "./constants/CArrakisV2.sol";
 
 /// @title ArrakisV2Resolver helpers that resolve / compute payloads for ArrakisV2 calls
 contract ArrakisV2Resolver is IArrakisV2Resolver {
     IUniswapV3Factory public immutable factory;
-    IArrakisV2Helper public immutable helper;
 
-    constructor(IUniswapV3Factory factory_, IArrakisV2Helper helper_) {
+    constructor(IUniswapV3Factory factory_) {
         factory = factory_;
-        helper = helper_;
     }
 
     /// @notice Standard rebalance (without swapping)
@@ -55,7 +53,15 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
             token0Addr = address(vaultV2_.token0());
             token1Addr = address(vaultV2_.token1());
 
-            (amount0, amount1) = helper.totalUnderlying(vaultV2_);
+            (amount0, amount1, , ) = UnderlyingHelper.totalUnderlyingWithFees(
+                UnderlyingPayload({
+                    ranges: vaultV2_.getRanges(),
+                    factory: factory,
+                    token0: address(vaultV2_.token0()),
+                    token1: address(vaultV2_.token1()),
+                    self: address(vaultV2_)
+                })
+            );
 
             PositionLiquidity[] memory pl = new PositionLiquidity[](
                 ranges.length
@@ -149,40 +155,78 @@ contract ArrakisV2Resolver is IArrakisV2Resolver {
             uint256 mintAmount
         )
     {
-        (uint256 current0, uint256 current1) = helper.totalUnderlying(vaultV2_);
+        /// @dev to not exceed max amount sent by user.
+        uint256 numberOfRanges = vaultV2_.getRanges().length;
+
+        require(
+            numberOfRanges < amount0Max_ && numberOfRanges < amount1Max_,
+            "max amounts should be higher than the number of ranges"
+        );
+        amount0Max_ = amount0Max_ - numberOfRanges;
+        amount1Max_ = amount1Max_ - numberOfRanges;
 
         uint256 totalSupply = vaultV2_.totalSupply();
+        UnderlyingPayload memory underlyingPayload = UnderlyingPayload({
+            ranges: vaultV2_.getRanges(),
+            factory: factory,
+            token0: address(vaultV2_.token0()),
+            token1: address(vaultV2_.token1()),
+            self: address(vaultV2_)
+        });
         if (totalSupply > 0) {
-            (amount0, amount1, mintAmount) = UnderlyingHelper
-                .computeMintAmounts(
-                    current0,
-                    current1,
+            (uint256 current0, uint256 current1) = UnderlyingHelper
+                .totalUnderlyingForMint(
+                    underlyingPayload,
                     totalSupply,
-                    amount0Max_,
-                    amount1Max_
+                    totalSupply
                 );
-        } else
-            (amount0, amount1, mintAmount) = UnderlyingHelper
-                .computeMintAmounts(
-                    vaultV2_.init0(),
-                    vaultV2_.init1(),
-                    1 ether,
-                    amount0Max_,
-                    amount1Max_
-                );
+
+            mintAmount = UnderlyingHelper.computeMintAmounts(
+                current0,
+                current1,
+                totalSupply,
+                amount0Max_,
+                amount1Max_
+            );
+            (amount0, amount1) = UnderlyingHelper.totalUnderlyingForMint(
+                underlyingPayload,
+                mintAmount,
+                totalSupply
+            );
+        } else {
+            mintAmount = UnderlyingHelper.computeMintAmounts(
+                vaultV2_.init0(),
+                vaultV2_.init1(),
+                1 ether,
+                amount0Max_,
+                amount1Max_
+            );
+
+            // compute amounts owed to contract
+            amount0 = FullMath.mulDivRoundingUp(
+                mintAmount,
+                vaultV2_.init0(),
+                1 ether
+            );
+            amount1 = FullMath.mulDivRoundingUp(
+                mintAmount,
+                vaultV2_.init1(),
+                1 ether
+            );
+        }
     }
 
     /// @notice Exposes Uniswap's getAmountsForLiquidity helper function,
     /// returns amount0 and amount1 for a given amount of liquidity.
     function getAmountsForLiquidity(
-        int24 currentTick_,
+        uint160 sqrtPriceX96_,
         int24 lowerTick_,
         int24 upperTick_,
-        uint128 liquidity_
+        int128 liquidity_
     ) external pure returns (uint256 amount0, uint256 amount1) {
         return
-            LiquidityAmounts.getAmountsForLiquidity(
-                TickMath.getSqrtRatioAtTick(currentTick_),
+            UnderlyingHelper.getAmountsForDelta(
+                sqrtPriceX96_,
                 TickMath.getSqrtRatioAtTick(lowerTick_),
                 TickMath.getSqrtRatioAtTick(upperTick_),
                 liquidity_

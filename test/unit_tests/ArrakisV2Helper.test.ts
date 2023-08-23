@@ -102,7 +102,7 @@ describe("ArrakisV2Helper functions unit test", function () {
       upperTick = slot0.tick - (slot0.tick % tickSpacing) + 2 * tickSpacing;
 
       const res = await arrakisV2Resolver.getAmountsForLiquidity(
-        slot0.tick,
+        slot0.sqrtPriceX96,
         lowerTick,
         upperTick,
         ethers.utils.parseUnits("1", 18)

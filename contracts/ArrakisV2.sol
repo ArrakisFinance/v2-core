@@ -22,7 +22,6 @@ import {Position} from "./libraries/Position.sol";
 import {Pool} from "./libraries/Pool.sol";
 import {Underlying as UnderlyingHelper} from "./libraries/Underlying.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import {hundredPercent} from "./constants/CArrakisV2.sol";
 
 /// @title ArrakisV2 LP vault version 2
 /// @notice Smart contract managing liquidity providing strategy for a given token pair
@@ -65,20 +64,17 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         uint256 ts = totalSupply();
         bool isTotalSupplyGtZero = ts > 0;
         if (isTotalSupplyGtZero) {
-            (uint256 current0, uint256 current1, , ) = UnderlyingHelper
-                .totalUnderlyingWithFees(
-                    UnderlyingPayload({
-                        ranges: _ranges,
-                        factory: factory,
-                        token0: address(token0),
-                        token1: address(token1),
-                        self: me
-                    })
-                );
-
-            /// @dev current0 and current1 include fees and leftover (but not manager balances)
-            amount0 = FullMath.mulDivRoundingUp(mintAmount_, current0, ts);
-            amount1 = FullMath.mulDivRoundingUp(mintAmount_, current1, ts);
+            (amount0, amount1) = UnderlyingHelper.totalUnderlyingForMint(
+                UnderlyingPayload({
+                    ranges: _ranges,
+                    factory: factory,
+                    token0: address(token0),
+                    token1: address(token1),
+                    self: me
+                }),
+                mintAmount_,
+                ts
+            );
         } else {
             uint256 denominator = 1 ether;
             uint256 init0M = init0;
@@ -95,7 +91,14 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                 denominator
             );
 
-            /// @dev check ratio against precision attacks (small values that skew init ratio)
+            /// @dev check ratio against small values that skew init ratio
+            if (FullMath.mulDiv(mintAmount_, init0M, denominator) == 0) {
+                amount0 = 0;
+            }
+            if (FullMath.mulDiv(mintAmount_, init1M, denominator) == 0) {
+                amount1 = 0;
+            }
+
             uint256 amount0Mint = init0M != 0
                 ? FullMath.mulDiv(amount0, denominator, init0M)
                 : type(uint256).max;
@@ -136,11 +139,12 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                     range.lowerTick,
                     range.upperTick
                 );
-                if (liquidity == 0) continue;
 
                 liquidity = SafeCast.toUint128(
                     FullMath.mulDiv(liquidity, mintAmount_, ts)
                 );
+
+                if (liquidity == 0) continue;
 
                 pool.mint(me, range.lowerTick, range.upperTick, liquidity, "");
             }
@@ -154,7 +158,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
     /// @param receiver_ address to receive underlying tokens withdrawn.
     /// @return amount0 amount of token0 sent to receiver
     /// @return amount1 amount of token1 sent to receiver
-    // solhint-disable-next-line function-max-lines
+    // solhint-disable-next-line function-max-lines, code-complexity
     function burn(uint256 burnAmount_, address receiver_)
         external
         nonReentrant
@@ -168,7 +172,6 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
         _burn(msg.sender, burnAmount_);
 
         Withdraw memory total;
-
         for (uint256 i; i < _ranges.length; i++) {
             Range memory range = _ranges[i];
             IUniswapV3Pool pool = IUniswapV3Pool(
@@ -180,11 +183,12 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
                 range.lowerTick,
                 range.upperTick
             );
-            if (liquidity == 0) continue;
 
             liquidity = SafeCast.toUint128(
                 FullMath.mulDiv(liquidity, burnAmount_, ts)
             );
+
+            if (liquidity == 0) continue;
 
             Withdraw memory withdraw = _withdraw(
                 pool,
@@ -199,6 +203,8 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
             total.burn0 += withdraw.burn0;
             total.burn1 += withdraw.burn1;
         }
+
+        if (burnAmount_ == ts) delete _ranges;
 
         _applyFees(total.fee0, total.fee1);
 
@@ -410,21 +416,7 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
     /// @notice will send manager fees to manager
     /// @dev anyone can call this function
     function withdrawManagerBalance() external nonReentrant {
-        uint256 amount0 = managerBalance0;
-        uint256 amount1 = managerBalance1;
-
-        managerBalance0 = 0;
-        managerBalance1 = 0;
-
-        if (amount0 > 0) {
-            token0.safeTransfer(manager, amount0);
-        }
-
-        if (amount1 > 0) {
-            token1.safeTransfer(manager, amount1);
-        }
-
-        emit LogWithdrawManagerBalance(amount0, amount1);
+        _withdrawManagerBalance();
     }
 
     function _withdraw(
@@ -439,21 +431,13 @@ contract ArrakisV2 is IUniswapV3MintCallback, ArrakisV2Storage {
             liquidity_
         );
 
-        (uint256 collect0, uint256 collect1) = pool_.collect(
-            address(this),
+        (uint256 collect0, uint256 collect1) = _collectFees(
+            pool_,
             lowerTick_,
-            upperTick_,
-            type(uint128).max,
-            type(uint128).max
+            upperTick_
         );
 
         withdraw.fee0 = collect0 - withdraw.burn0;
         withdraw.fee1 = collect1 - withdraw.burn1;
-    }
-
-    function _applyFees(uint256 fee0_, uint256 fee1_) internal {
-        uint16 mManagerFeeBPS = managerFeeBPS;
-        managerBalance0 += (fee0_ * mManagerFeeBPS) / hundredPercent;
-        managerBalance1 += (fee1_ * mManagerFeeBPS) / hundredPercent;
     }
 }
