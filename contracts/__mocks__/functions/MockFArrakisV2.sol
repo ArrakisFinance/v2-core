@@ -17,6 +17,7 @@ import {
     PositionUnderlying,
     Range
 } from "../../structs/SArrakisV2.sol";
+import {FullMath} from "@arrakisfi/v3-lib-0.8/contracts/LiquidityAmounts.sol";
 
 contract MockFArrakisV2 {
     function getUnderlyingBalances(
@@ -93,13 +94,30 @@ contract MockFArrakisV2 {
             uint256 mintAmount
         )
     {
-        return
-            UnderlyingHelper.computeMintAmounts(
-                current0_,
-                current1_,
-                totalSupply_,
-                amount0Max_,
-                amount1Max_
-            );
+        mintAmount = UnderlyingHelper.computeMintAmounts(
+            current0_,
+            current1_,
+            totalSupply_,
+            amount0Max_,
+            amount1Max_
+        );
+        amount0 = FullMath.mulDivRoundingUp(
+            mintAmount,
+            current0_,
+            totalSupply_
+        );
+        amount1 = FullMath.mulDivRoundingUp(
+            mintAmount,
+            current1_,
+            totalSupply_
+        );
+    }
+
+    function checkMulDiv(
+        uint256 a,
+        uint256 b,
+        uint256 c
+    ) external pure returns (uint256) {
+        return FullMath.mulDiv(a, b, c);
     }
 }

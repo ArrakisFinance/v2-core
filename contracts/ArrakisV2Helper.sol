@@ -112,6 +112,28 @@ contract ArrakisV2Helper is IArrakisV2Helper {
         );
     }
 
+    /// @notice get underlying at specific price.
+    /// @param vault_ Arrakis V2 vault to get underlying info about.
+    /// @param sqrtPriceX96_ specific price.
+    /// @return amount0 amount of underlying of token 0 of LPs.
+    /// @return amount1 amount of underlying of token 1 of LPs.
+    function totalUnderlyingAtPrice(IArrakisV2 vault_, uint160 sqrtPriceX96_)
+        external
+        view
+        returns (uint256 amount0, uint256 amount1)
+    {
+        UnderlyingPayload memory underlyingPayload = UnderlyingPayload({
+            ranges: vault_.getRanges(),
+            factory: factory,
+            token0: address(vault_.token0()),
+            token1: address(vault_.token1()),
+            self: address(vault_)
+        });
+
+        (amount0, amount1, , ) = UnderlyingHelper
+            .totalUnderlyingAtPriceWithFees(underlyingPayload, sqrtPriceX96_);
+    }
+
     /// @notice get liquidity in all uniswap v3 ranges
     /// @param vault_ Arrakis V2 vault to get liquidity in ranges for
     /// @return liquidities list of ranges and amount of liquidity in each
@@ -257,7 +279,8 @@ contract ArrakisV2Helper is IArrakisV2Helper {
         );
 
         (amount0, amount1, fee0, fee1) = UnderlyingHelper.underlying(
-            RangeData({self: vaultV2_, range: range_, pool: pool})
+            RangeData({self: vaultV2_, range: range_, pool: pool}),
+            0
         );
 
         amount0 += fee0;

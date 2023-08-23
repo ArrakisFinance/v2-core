@@ -1,7 +1,7 @@
 ## Addresses
 
-| Contract Name     | Address                                    | Networks                                                                  |
-| ----------------- | ------------------------------------------ | ------------------------------------------------------------------------- |
+| Contract Name     | Address                                    | Networks                                                                             |
+| ----------------- | ------------------------------------------ | ------------------------------------------------------------------------------------ |
 | ArrakisV2         | 0xAf0f96e8702cB1b8160e43c8c020C608cD7B134d | [Ethereum][ae], [Matic][ap], [Optimism][ao], [Arbitrum][aa], [Goerli][ag], [BSC][ab] |
 | ArrakisV2Beacon   | 0x1D91F6D917ec51dE53A5789c34fFF777a58759B6 | [Ethereum][be], [Matic][bp], [Optimism][bo], [Arbitrum][ba], [Goerli][bg], [BSC][bb] |
 | ArrakisV2Factory  | 0xECb8Ffcb2369EF188A082a662F496126f66c8288 | [Ethereum][fe], [Matic][fp], [Optimism][fo], [Arbitrum][fa], [Goerli][fg], [BSC][fb] |
