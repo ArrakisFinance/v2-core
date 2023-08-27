@@ -11,7 +11,10 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     hre.network.name === "goerli" ||
     hre.network.name === "optimism" ||
     hre.network.name === "arbitrum" ||
-    hre.network.name === "binance"
+    hre.network.name === "binance" ||
+    hre.network.name === "base" ||
+    hre.network.name === "base_goerli" ||
+    hre.network.name === "sepolia"
   ) {
     console.log(
       `Deploying ArrakisV2Resolver to ${hre.network.name}. Hit ctrl + c to abort`
@@ -42,7 +45,10 @@ func.skip = async (hre: HardhatRuntimeEnvironment) => {
     hre.network.name === "goerli" ||
     hre.network.name === "optimism" ||
     hre.network.name === "arbitrum" ||
-    hre.network.name === "binance";
+    hre.network.name === "binance" ||
+    hre.network.name === "base" ||
+    hre.network.name === "base_goerli" ||
+    hre.network.name === "sepolia";
   return shouldSkip ? true : false;
 };
 func.tags = ["ArrakisV2Resolver"];

@@ -105,6 +105,32 @@ export const getAddresses = (network: string): Addresses => {
         ArrakisV2Helper: "0x07d2CeB4869DFE17e8D48c92A71eDC3AE564449f",
         ArrakisV2Resolver: "0xb11bb8ad710579Cc5ED16b1C8587808109c1f193",
       };
+    case "base":
+      return {
+        UniswapV3Factory: "0x33128a8fC17869897dcE68Ed026d694621f6FDfD",
+        SwapRouter: "0x2626664c2603336E57B271c5C0b26F421741e481",
+        WETH: "",
+        WMATIC: "",
+        USDC: "",
+        ArrakisV2Implementation: "0xAf0f96e8702cB1b8160e43c8c020C608cD7B134d",
+        ArrakisV2Beacon: "0x1D91F6D917ec51dE53A5789c34fFF777a58759B6",
+        ArrakisV2Factory: "0xECb8Ffcb2369EF188A082a662F496126f66c8288",
+        ArrakisV2Helper: "0x07d2CeB4869DFE17e8D48c92A71eDC3AE564449f",
+        ArrakisV2Resolver: "0xb11bb8ad710579Cc5ED16b1C8587808109c1f193",
+      };
+    case "sepolia":
+      return {
+        UniswapV3Factory: "0x0227628f3F023bb0B980b67D528571c95c6DaC1c",
+        SwapRouter: "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD",
+        WETH: "",
+        WMATIC: "",
+        USDC: "",
+        ArrakisV2Implementation: "0xAf0f96e8702cB1b8160e43c8c020C608cD7B134d",
+        ArrakisV2Beacon: "0x1D91F6D917ec51dE53A5789c34fFF777a58759B6",
+        ArrakisV2Factory: "0xECb8Ffcb2369EF188A082a662F496126f66c8288",
+        ArrakisV2Helper: "0x07d2CeB4869DFE17e8D48c92A71eDC3AE564449f",
+        ArrakisV2Resolver: "0xb11bb8ad710579Cc5ED16b1C8587808109c1f193",
+      };
     default:
       throw new Error(`No addresses for Network: ${network}`);
   }
