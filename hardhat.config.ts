@@ -45,7 +45,7 @@ const config: HardhatUserConfig = {
       optimism: "0x8636600A864797Aa7ac8807A065C5d8BD9bA3Ccb",
       arbitrum: "0x77BADa8FC2A478f1bc1E1E4980916666187D0dF7",
       goerli: "0xDb651b0C70C67181B1807B29d9097DD556b2eC4b",
-      sepolia: "0x81a1e7F34b9bABf172087cF5df8A4DF6500e9d4d",
+      sepolia: "0x09E60942D910D3399961b845d4479627F0FE2C43",
       base: "0x25CF23B54e25daaE3fe9989a74050b953A343823",
       base_goerli: "0x4788290e1fb26c537cBfBb5a8b4E1432795BeEbD", // eslint-disable-line @typescript-eslint/naming-convention
       binance: "0x7ddBE55B78FbDe1B0A0b57cc05EE469ccF700585",
