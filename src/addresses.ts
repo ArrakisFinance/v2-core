@@ -21,11 +21,11 @@ export const getAddresses = (network: string): Addresses => {
         WETH: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
         WMATIC: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
         USDC: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
-        ArrakisV2Implementation: "0xAf0f96e8702cB1b8160e43c8c020C608cD7B134d",
+        ArrakisV2Implementation: "0x7F346F1eB7a65fF83f51B3FD76dCc70979e6DF38",
         ArrakisV2Beacon: "0x1D91F6D917ec51dE53A5789c34fFF777a58759B6",
         ArrakisV2Factory: "0xECb8Ffcb2369EF188A082a662F496126f66c8288",
-        ArrakisV2Helper: "0x07d2CeB4869DFE17e8D48c92A71eDC3AE564449f",
-        ArrakisV2Resolver: "0xb11bb8ad710579Cc5ED16b1C8587808109c1f193",
+        ArrakisV2Helper: "0x89E4bE1F999E3a58D16096FBe405Fc2a1d7F07D6",
+        ArrakisV2Resolver: "0x535C5fDf31477f799366DF6E4899a12A801cC7b8",
       };
     case "mainnet":
       return {
@@ -34,11 +34,11 @@ export const getAddresses = (network: string): Addresses => {
         WETH: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
         WMATIC: "",
         USDC: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-        ArrakisV2Implementation: "0xAf0f96e8702cB1b8160e43c8c020C608cD7B134d",
+        ArrakisV2Implementation: "0x7F346F1eB7a65fF83f51B3FD76dCc70979e6DF38",
         ArrakisV2Beacon: "0x1D91F6D917ec51dE53A5789c34fFF777a58759B6",
         ArrakisV2Factory: "0xECb8Ffcb2369EF188A082a662F496126f66c8288",
-        ArrakisV2Helper: "0x07d2CeB4869DFE17e8D48c92A71eDC3AE564449f",
-        ArrakisV2Resolver: "0xb11bb8ad710579Cc5ED16b1C8587808109c1f193",
+        ArrakisV2Helper: "0x89E4bE1F999E3a58D16096FBe405Fc2a1d7F07D6",
+        ArrakisV2Resolver: "0x535C5fDf31477f799366DF6E4899a12A801cC7b8",
       };
     case "polygon":
       return {
@@ -47,11 +47,11 @@ export const getAddresses = (network: string): Addresses => {
         WETH: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
         WMATIC: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
         USDC: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
-        ArrakisV2Implementation: "0xAf0f96e8702cB1b8160e43c8c020C608cD7B134d",
+        ArrakisV2Implementation: "0x7F346F1eB7a65fF83f51B3FD76dCc70979e6DF38",
         ArrakisV2Beacon: "0x1D91F6D917ec51dE53A5789c34fFF777a58759B6",
         ArrakisV2Factory: "0xECb8Ffcb2369EF188A082a662F496126f66c8288",
-        ArrakisV2Helper: "0x07d2CeB4869DFE17e8D48c92A71eDC3AE564449f",
-        ArrakisV2Resolver: "0xb11bb8ad710579Cc5ED16b1C8587808109c1f193",
+        ArrakisV2Helper: "0x89E4bE1F999E3a58D16096FBe405Fc2a1d7F07D6",
+        ArrakisV2Resolver: "0x535C5fDf31477f799366DF6E4899a12A801cC7b8",
       };
     case "optimism":
       return {
@@ -60,11 +60,11 @@ export const getAddresses = (network: string): Addresses => {
         WETH: "0x4200000000000000000000000000000000000006",
         WMATIC: "",
         USDC: "0x7F5c764cBc14f9669B88837ca1490cCa17c31607",
-        ArrakisV2Implementation: "0xAf0f96e8702cB1b8160e43c8c020C608cD7B134d",
+        ArrakisV2Implementation: "0x7F346F1eB7a65fF83f51B3FD76dCc70979e6DF38",
         ArrakisV2Beacon: "0x1D91F6D917ec51dE53A5789c34fFF777a58759B6",
         ArrakisV2Factory: "0xECb8Ffcb2369EF188A082a662F496126f66c8288",
-        ArrakisV2Helper: "0x07d2CeB4869DFE17e8D48c92A71eDC3AE564449f",
-        ArrakisV2Resolver: "0xb11bb8ad710579Cc5ED16b1C8587808109c1f193",
+        ArrakisV2Helper: "0x89E4bE1F999E3a58D16096FBe405Fc2a1d7F07D6",
+        ArrakisV2Resolver: "0x535C5fDf31477f799366DF6E4899a12A801cC7b8",
       };
     case "arbitrum":
       return {
@@ -73,11 +73,11 @@ export const getAddresses = (network: string): Addresses => {
         WETH: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
         WMATIC: "",
         USDC: "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
-        ArrakisV2Implementation: "0xAf0f96e8702cB1b8160e43c8c020C608cD7B134d",
+        ArrakisV2Implementation: "0x7F346F1eB7a65fF83f51B3FD76dCc70979e6DF38",
         ArrakisV2Beacon: "0x1D91F6D917ec51dE53A5789c34fFF777a58759B6",
         ArrakisV2Factory: "0xECb8Ffcb2369EF188A082a662F496126f66c8288",
-        ArrakisV2Helper: "0x07d2CeB4869DFE17e8D48c92A71eDC3AE564449f",
-        ArrakisV2Resolver: "0xb11bb8ad710579Cc5ED16b1C8587808109c1f193",
+        ArrakisV2Helper: "0x89E4bE1F999E3a58D16096FBe405Fc2a1d7F07D6",
+        ArrakisV2Resolver: "0x535C5fDf31477f799366DF6E4899a12A801cC7b8",
       };
     case "binance":
       return {
@@ -86,11 +86,11 @@ export const getAddresses = (network: string): Addresses => {
         WETH: "0x2170Ed0880ac9A755fd29B2688956BD959F933F8",
         WMATIC: "0xCC42724C6683B7E57334c4E856f4c9965ED682bD",
         USDC: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
-        ArrakisV2Implementation: "0xAf0f96e8702cB1b8160e43c8c020C608cD7B134d",
+        ArrakisV2Implementation: "0x7F346F1eB7a65fF83f51B3FD76dCc70979e6DF38",
         ArrakisV2Beacon: "0x1D91F6D917ec51dE53A5789c34fFF777a58759B6",
         ArrakisV2Factory: "0xECb8Ffcb2369EF188A082a662F496126f66c8288",
-        ArrakisV2Helper: "0x07d2CeB4869DFE17e8D48c92A71eDC3AE564449f",
-        ArrakisV2Resolver: "0xb11bb8ad710579Cc5ED16b1C8587808109c1f193",
+        ArrakisV2Helper: "0x89E4bE1F999E3a58D16096FBe405Fc2a1d7F07D6",
+        ArrakisV2Resolver: "0x535C5fDf31477f799366DF6E4899a12A801cC7b8",
       };
     case "goerli":
       return {
@@ -99,11 +99,11 @@ export const getAddresses = (network: string): Addresses => {
         WETH: "",
         WMATIC: "",
         USDC: "",
-        ArrakisV2Implementation: "0xAf0f96e8702cB1b8160e43c8c020C608cD7B134d",
+        ArrakisV2Implementation: "0x7F346F1eB7a65fF83f51B3FD76dCc70979e6DF38",
         ArrakisV2Beacon: "0x1D91F6D917ec51dE53A5789c34fFF777a58759B6",
         ArrakisV2Factory: "0xECb8Ffcb2369EF188A082a662F496126f66c8288",
-        ArrakisV2Helper: "0x07d2CeB4869DFE17e8D48c92A71eDC3AE564449f",
-        ArrakisV2Resolver: "0xb11bb8ad710579Cc5ED16b1C8587808109c1f193",
+        ArrakisV2Helper: "0x89E4bE1F999E3a58D16096FBe405Fc2a1d7F07D6",
+        ArrakisV2Resolver: "0x535C5fDf31477f799366DF6E4899a12A801cC7b8",
       };
     case "base":
       return {
@@ -112,11 +112,11 @@ export const getAddresses = (network: string): Addresses => {
         WETH: "",
         WMATIC: "",
         USDC: "",
-        ArrakisV2Implementation: "0xAf0f96e8702cB1b8160e43c8c020C608cD7B134d",
+        ArrakisV2Implementation: "0x7F346F1eB7a65fF83f51B3FD76dCc70979e6DF38",
         ArrakisV2Beacon: "0x1D91F6D917ec51dE53A5789c34fFF777a58759B6",
         ArrakisV2Factory: "0xECb8Ffcb2369EF188A082a662F496126f66c8288",
-        ArrakisV2Helper: "0x07d2CeB4869DFE17e8D48c92A71eDC3AE564449f",
-        ArrakisV2Resolver: "0xb11bb8ad710579Cc5ED16b1C8587808109c1f193",
+        ArrakisV2Helper: "0x89E4bE1F999E3a58D16096FBe405Fc2a1d7F07D6",
+        ArrakisV2Resolver: "0x535C5fDf31477f799366DF6E4899a12A801cC7b8",
       };
     case "sepolia":
       return {
@@ -125,11 +125,11 @@ export const getAddresses = (network: string): Addresses => {
         WETH: "",
         WMATIC: "",
         USDC: "",
-        ArrakisV2Implementation: "0xAf0f96e8702cB1b8160e43c8c020C608cD7B134d",
+        ArrakisV2Implementation: "0x7F346F1eB7a65fF83f51B3FD76dCc70979e6DF38",
         ArrakisV2Beacon: "0x1D91F6D917ec51dE53A5789c34fFF777a58759B6",
         ArrakisV2Factory: "0xECb8Ffcb2369EF188A082a662F496126f66c8288",
-        ArrakisV2Helper: "0x07d2CeB4869DFE17e8D48c92A71eDC3AE564449f",
-        ArrakisV2Resolver: "0xb11bb8ad710579Cc5ED16b1C8587808109c1f193",
+        ArrakisV2Helper: "0x89E4bE1F999E3a58D16096FBe405Fc2a1d7F07D6",
+        ArrakisV2Resolver: "0x535C5fDf31477f799366DF6E4899a12A801cC7b8",
       };
     default:
       throw new Error(`No addresses for Network: ${network}`);
