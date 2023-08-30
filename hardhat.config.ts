@@ -33,6 +33,9 @@ const config: HardhatUserConfig = {
       optimism: "0x283824e5A6378EaB2695Be7d3cb0919186e37D7C",
       arbitrum: "0x64520Dc190b5015E7d48E87273f6EE69197Cd798",
       goerli: "0xB4fa2C382dAf08531F8BA4515F409A129beCFd02",
+      sepolia: "0x81a1e7F34b9bABf172087cF5df8A4DF6500e9d4d",
+      base: "0x463a4a038038DE81525f55c456f071241e0a3E66",
+      base_goerli: "0x0F83FFe2d0779550E74D96B3871216132D527eF5", // eslint-disable-line @typescript-eslint/naming-convention
       binance: "0x2CcDA3A99A41342Eb5Ff3c8173828Ac0C5311fba",
     },
     owner: {
@@ -42,6 +45,9 @@ const config: HardhatUserConfig = {
       optimism: "0x8636600A864797Aa7ac8807A065C5d8BD9bA3Ccb",
       arbitrum: "0x77BADa8FC2A478f1bc1E1E4980916666187D0dF7",
       goerli: "0xDb651b0C70C67181B1807B29d9097DD556b2eC4b",
+      sepolia: "0x09E60942D910D3399961b845d4479627F0FE2C43",
+      base: "0x25CF23B54e25daaE3fe9989a74050b953A343823",
+      base_goerli: "0x4788290e1fb26c537cBfBb5a8b4E1432795BeEbD", // eslint-disable-line @typescript-eslint/naming-convention
       binance: "0x7ddBE55B78FbDe1B0A0b57cc05EE469ccF700585",
     },
   },
@@ -84,6 +90,16 @@ const config: HardhatUserConfig = {
       accounts: PK ? [PK] : [],
       chainId: 56,
       url: "https://bsc-dataseed.binance.org/",
+    },
+    base: {
+      accounts: PK ? [PK] : [],
+      chainId: 8453,
+      url: "https://mainnet.base.org",
+    },
+    sepolia: {
+      accounts: PK ? [PK] : [],
+      chainId: 11155111,
+      url: `https://eth-sepolia.g.alchemy.com/v2/${ALCHEMY_ID}`,
     },
     goerli: {
       accounts: TEST_PK ? [TEST_PK] : [],
