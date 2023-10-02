@@ -1,15 +1,14 @@
-import { HardhatUserConfig } from "hardhat/config";
+import { HardhatUserConfig, task } from "hardhat/config";
+import deployPool from "./tasks/deployPool";
 
 // PLUGINS
 import "@nomiclabs/hardhat-ethers";
-import "@nomiclabs/hardhat-etherscan";
-import "@nomiclabs/hardhat-waffle";
-import "@typechain/hardhat";
-import "hardhat-deploy";
+import "@nomicfoundation/hardhat-verify";
 import "solidity-coverage";
 import "hardhat-gas-reporter";
-
-import { ethers } from "ethers";
+import "@openzeppelin/hardhat-upgrades";
+import "hardhat-contract-sizer";
+// import "@typechain/hardhat";
 
 // Process Env Variables
 import * as dotenv from "dotenv";
@@ -18,46 +17,23 @@ const ALCHEMY_ID = process.env.ALCHEMY_ID;
 const PK = process.env.PK;
 const TEST_PK = process.env.TEST_PK;
 
+deployPool();
+
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
-
-  // hardhat-deploy
-  namedAccounts: {
-    deployer: {
-      default: 0,
-    },
-    arrakisMultiSig: {
-      default: 1,
-      polygon: "0xd06a7cc1a162fDfB515595A2eC1c47B75743C381",
-      mainnet: "0xb9229ea965FC84f21b63791efC643b2c7ffB77Be",
-      optimism: "0x283824e5A6378EaB2695Be7d3cb0919186e37D7C",
-      arbitrum: "0x64520Dc190b5015E7d48E87273f6EE69197Cd798",
-      goerli: "0xB4fa2C382dAf08531F8BA4515F409A129beCFd02",
-      binance: "0x2CcDA3A99A41342Eb5Ff3c8173828Ac0C5311fba",
-    },
-    owner: {
-      default: 2,
-      polygon: "0xDEb4C33D5C3E7e32F55a9D6336FE06010E40E3AB",
-      mainnet: "0x5108EF86cF493905BcD35A3736e4B46DeCD7de58",
-      optimism: "0x8636600A864797Aa7ac8807A065C5d8BD9bA3Ccb",
-      arbitrum: "0x77BADa8FC2A478f1bc1E1E4980916666187D0dF7",
-      goerli: "0xDb651b0C70C67181B1807B29d9097DD556b2eC4b",
-      binance: "0x7ddBE55B78FbDe1B0A0b57cc05EE469ccF700585",
-    },
-  },
-
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY,
+    apiKey: {
+      avalanche: `${process.env.SNOWTRACE_API_KEY}`,
+      bsc: `${process.env.BSC_SCAN_API_KEY}`,
+      arbitrumOne: `${process.env.ARBI_SCAN_API_KEY}`,
+    },
   },
 
   networks: {
     hardhat: {
+      allowUnlimitedContractSize: false,
       forking: {
-        url: `https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_ID}`,
-        blockNumber: 25594591, // ether price $4,168.96
-      },
-      accounts: {
-        accountsBalance: ethers.utils.parseEther("10000").toString(),
+        url: `${process.env["ARBITRUM_ARCHIVE_NODE_URL"]}`,
       },
     },
     mainnet: {
@@ -76,9 +52,9 @@ const config: HardhatUserConfig = {
       url: `https://opt-mainnet.g.alchemy.com/v2/${ALCHEMY_ID}`,
     },
     arbitrum: {
-      accounts: PK ? [PK] : [],
+      accounts: [`0x${process.env.MAINNET_PRIVATE_KEY}`],
       chainId: 42161,
-      url: `https://arb-mainnet.g.alchemy.com/v2/${ALCHEMY_ID}`,
+      url: `${process.env["ARBITRUM_ARCHIVE_NODE_URL"]}`,
     },
     binance: {
       accounts: PK ? [PK] : [],
@@ -102,11 +78,16 @@ const config: HardhatUserConfig = {
       },
     ],
   },
-
-  typechain: {
-    outDir: "typechain",
-    target: "ethers-v5",
-  },
+  //   typechain: {
+  //     outDir: "typechain",
+  //     target: "ethers-v5",
+  //     externalArtifacts: ["**/openzeppelin/!(*.dbg).ts"],
+  //   },
+  // contractSizer: {
+  // alphaSort: true,
+  // runOnCompile: true,
+  // strict: true,
+  // },
 };
 
 export default config;

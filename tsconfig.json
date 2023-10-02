@@ -12,6 +12,6 @@
     "declaration": true
   },
   "files": ["hardhat.config.ts"],
-  "include": ["src", "deploy", "scripts", "test", "typechain"],
+  "include": ["src", "deploy", "scripts", "test", "typechain", "tasks"],
   "exclude": ["node_modules"]
 }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.13;
+pragma solidity ^0.8.0;
 
 import {IArrakisV2Factory} from "../interfaces/IArrakisV2Factory.sol";
 import {IArrakisV2Beacon} from "../interfaces/IArrakisV2Beacon.sol";

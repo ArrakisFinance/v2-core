@@ -32,3 +32,5 @@ dist
 # VS Code
 .vscode
 
+# Others
+yarn-error.log

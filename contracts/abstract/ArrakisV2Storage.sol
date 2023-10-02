@@ -1,5 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.13;
+pragma solidity ^0.8.0;
+
+import {
+    ArrakisStorage,
+    ArrakisStorageLib
+} from "../libraries/ArrakisStorageLib.sol";
+import {Invest} from "../libraries/Invest.sol";
+import {Range, Rebalance, InitializePayload} from "../structs/SArrakisV2.sol";
+import {hundredPercent} from "../constants/CArrakisV2.sol";
 
 import {
     IUniswapV3Factory
@@ -23,69 +31,22 @@ import {
 import {
     EnumerableSet
 } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {Range, Rebalance, InitializePayload} from "../structs/SArrakisV2.sol";
-import {hundredPercent} from "../constants/CArrakisV2.sol";
+import {
+    UUPSUpgradeable
+} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /// @title ArrakisV2Storage base contract containing all ArrakisV2 storage variables.
 // solhint-disable-next-line max-states-count
 abstract contract ArrakisV2Storage is
     OwnableUpgradeable,
     ERC20Upgradeable,
-    ReentrancyGuardUpgradeable
+    ReentrancyGuardUpgradeable,
+    UUPSUpgradeable
 {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    IUniswapV3Factory public immutable factory;
-
-    IERC20 public token0;
-    IERC20 public token1;
-
-    uint256 public init0;
-    uint256 public init1;
-
-    // #region manager data
-
-    uint16 public managerFeeBPS;
-    uint256 public managerBalance0;
-    uint256 public managerBalance1;
-    address public manager;
-    address public restrictedMint;
-
-    // #endregion manager data
-
-    Range[] internal _ranges;
-
-    EnumerableSet.AddressSet internal _pools;
-    EnumerableSet.AddressSet internal _routers;
-
     // #region events
-
-    event LogMint(
-        address indexed receiver,
-        uint256 mintAmount,
-        uint256 amount0In,
-        uint256 amount1In
-    );
-
-    event LogBurn(
-        address indexed receiver,
-        uint256 burnAmount,
-        uint256 amount0Out,
-        uint256 amount1Out
-    );
-
-    event LPBurned(
-        address indexed user,
-        uint256 burnAmount0,
-        uint256 burnAmount1
-    );
-
-    event LogRebalance(
-        Rebalance rebalanceParams,
-        uint256 swapDelta0,
-        uint256 swapDelta1
-    );
 
     event LogCollectedFees(uint256 fee0, uint256 fee1);
 
@@ -97,7 +58,6 @@ abstract contract ArrakisV2Storage is
     event LogRemovePools(address[] pools);
     event LogSetManager(address newManager);
     event LogSetManagerFeeBPS(uint16 managerFeeBPS);
-    event LogRestrictedMint(address minter);
     event LogWhitelistRouters(address[] routers);
     event LogBlacklistRouters(address[] routers);
     // #endregion Setting events
@@ -107,16 +67,14 @@ abstract contract ArrakisV2Storage is
     // #region modifiers
 
     modifier onlyManager() {
-        require(manager == msg.sender, "NM");
+        ArrakisStorage storage arrakisStorage = ArrakisStorageLib.getStorage();
+        require(arrakisStorage.manager == msg.sender, "NM");
         _;
     }
 
     // #endregion modifiers
 
-    constructor(IUniswapV3Factory factory_) {
-        require(address(factory_) != address(0), "ZF");
-        factory = factory_;
-    }
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 
     // solhint-disable-next-line function-max-lines
     function initialize(
@@ -130,23 +88,23 @@ abstract contract ArrakisV2Storage is
         require(params_.owner != address(0), "OAZ");
         require(params_.manager != address(0), "MAZ");
         require(params_.init0 > 0 || params_.init1 > 0, "I");
+        require(address(params_.factory) != address(0), "ZF");
+
+        ArrakisStorage storage arrakisStorage = ArrakisStorageLib.getStorage();
 
         __ERC20_init(name_, symbol_);
         __ReentrancyGuard_init();
+        __UUPSUpgradeable_init();
 
+        arrakisStorage.factory = IUniswapV3Factory(params_.factory);
         _addPools(params_.feeTiers, params_.token0, params_.token1);
-
-        token0 = IERC20(params_.token0);
-        token1 = IERC20(params_.token1);
-
+        arrakisStorage.token0 = IERC20(params_.token0);
+        arrakisStorage.token1 = IERC20(params_.token1);
         _whitelistRouters(params_.routers);
-
         _transferOwnership(params_.owner);
-
-        manager = params_.manager;
-
-        init0 = params_.init0;
-        init1 = params_.init1;
+        arrakisStorage.manager = params_.manager;
+        arrakisStorage.init0 = params_.init0;
+        arrakisStorage.init1 = params_.init1;
 
         emit LogAddPools(params_.feeTiers);
         emit LogSetInits(params_.init0, params_.init1);
@@ -158,22 +116,27 @@ abstract contract ArrakisV2Storage is
     /// @notice set initial virtual allocation of token0 and token1
     /// @param init0_ initial virtual allocation of token 0.
     /// @param init1_ initial virtual allocation of token 1.
-    /// @dev only callable by restrictedMint or by owner if restrictedMint is unset.
-    function setInits(uint256 init0_, uint256 init1_) external {
+    function setInits(uint256 init0_, uint256 init1_) external onlyOwner {
         require(init0_ > 0 || init1_ > 0, "I");
         require(totalSupply() == 0, "TS");
-        address requiredCaller = restrictedMint == address(0)
-            ? owner()
-            : restrictedMint;
-        require(msg.sender == requiredCaller, "R");
-        emit LogSetInits(init0 = init0_, init1 = init1_);
+
+        ArrakisStorage storage arrakisStorage = ArrakisStorageLib.getStorage();
+        arrakisStorage.init0 = init0_;
+        arrakisStorage.init1 = init1_;
+
+        emit LogSetInits(init0_, init1_);
     }
 
     /// @notice whitelist pools
     /// @param feeTiers_ list of fee tiers associated to pools to whitelist.
     /// @dev only callable by owner.
     function addPools(uint24[] calldata feeTiers_) external onlyOwner {
-        _addPools(feeTiers_, address(token0), address(token1));
+        ArrakisStorage storage arrakisStorage = ArrakisStorageLib.getStorage();
+        _addPools(
+            feeTiers_,
+            address(arrakisStorage.token0),
+            address(arrakisStorage.token1)
+        );
         emit LogAddPools(feeTiers_);
     }
 
@@ -181,10 +144,12 @@ abstract contract ArrakisV2Storage is
     /// @param pools_ list of pools to remove from whitelist.
     /// @dev only callable by owner.
     function removePools(address[] calldata pools_) external onlyOwner {
-        for (uint256 i = 0; i < pools_.length; i++) {
-            require(_pools.contains(pools_[i]), "NP");
+        ArrakisStorage storage arrakisStorage = ArrakisStorageLib.getStorage();
 
-            _pools.remove(pools_[i]);
+        for (uint256 i = 0; i < pools_.length; i++) {
+            require(arrakisStorage.pools.contains(pools_[i]), "NP");
+
+            arrakisStorage.pools.remove(pools_[i]);
         }
         emit LogRemovePools(pools_);
     }
@@ -200,10 +165,12 @@ abstract contract ArrakisV2Storage is
     /// @param routers_ list of routers addresses to blacklist.
     /// @dev only callable by owner.
     function blacklistRouters(address[] calldata routers_) external onlyOwner {
-        for (uint256 i = 0; i < routers_.length; i++) {
-            require(_routers.contains(routers_[i]), "RW");
+        ArrakisStorage storage arrakisStorage = ArrakisStorageLib.getStorage();
 
-            _routers.remove(routers_[i]);
+        for (uint256 i = 0; i < routers_.length; i++) {
+            require(arrakisStorage.routers.contains(routers_[i]), "RW");
+
+            arrakisStorage.routers.remove(routers_[i]);
         }
         emit LogBlacklistRouters(routers_);
     }
@@ -212,9 +179,11 @@ abstract contract ArrakisV2Storage is
     /// @param manager_ manager address.
     /// @dev only callable by owner.
     function setManager(address manager_) external onlyOwner nonReentrant {
-        _collectFeesOnPools();
+        ArrakisStorage storage arrakisStorage = ArrakisStorageLib.getStorage();
+
+        Invest.collectFeesOnPools();
         _withdrawManagerBalance();
-        manager = manager_;
+        arrakisStorage.manager = manager_;
         emit LogSetManager(manager_);
     }
 
@@ -227,17 +196,11 @@ abstract contract ArrakisV2Storage is
         nonReentrant
     {
         require(managerFeeBPS_ <= 10000, "MFO");
-        _collectFeesOnPools();
-        managerFeeBPS = managerFeeBPS_;
-        emit LogSetManagerFeeBPS(managerFeeBPS_);
-    }
 
-    /// @notice set restricted minter
-    /// @param minter_ address of restricted minter.
-    /// @dev only callable by owner.
-    function setRestrictedMint(address minter_) external onlyOwner {
-        restrictedMint = minter_;
-        emit LogRestrictedMint(minter_);
+        ArrakisStorage storage arrakisStorage = ArrakisStorageLib.getStorage();
+        Invest.collectFeesOnPools();
+        arrakisStorage.managerFeeBPS = managerFeeBPS_;
+        emit LogSetManagerFeeBPS(managerFeeBPS_);
     }
 
     // #endregion setter functions
@@ -247,24 +210,30 @@ abstract contract ArrakisV2Storage is
     /// @notice get full list of ranges, guaranteed to contain all active vault LP Positions.
     /// @return ranges list of ranges
     function getRanges() external view returns (Range[] memory) {
-        return _ranges;
+        ArrakisStorage storage arrakisStorage = ArrakisStorageLib.getStorage();
+
+        return arrakisStorage.ranges;
     }
 
     function getPools() external view returns (address[] memory) {
-        uint256 len = _pools.length();
+        ArrakisStorage storage arrakisStorage = ArrakisStorageLib.getStorage();
+
+        uint256 len = arrakisStorage.pools.length();
         address[] memory output = new address[](len);
         for (uint256 i; i < len; i++) {
-            output[i] = _pools.at(i);
+            output[i] = arrakisStorage.pools.at(i);
         }
 
         return output;
     }
 
     function getRouters() external view returns (address[] memory) {
-        uint256 len = _routers.length();
+        ArrakisStorage storage arrakisStorage = ArrakisStorageLib.getStorage();
+
+        uint256 len = arrakisStorage.routers.length();
         address[] memory output = new address[](len);
         for (uint256 i; i < len; i++) {
-            output[i] = _routers.at(i);
+            output[i] = arrakisStorage.routers.at(i);
         }
 
         return output;
@@ -275,32 +244,42 @@ abstract contract ArrakisV2Storage is
     // #region internal functions
 
     function _uniswapV3CallBack(uint256 amount0_, uint256 amount1_) internal {
-        require(_pools.contains(msg.sender), "CC");
+        ArrakisStorage storage arrakisStorage = ArrakisStorageLib.getStorage();
 
-        if (amount0_ > 0) token0.safeTransfer(msg.sender, amount0_);
-        if (amount1_ > 0) token1.safeTransfer(msg.sender, amount1_);
+        require(arrakisStorage.pools.contains(msg.sender), "CC");
+
+        if (amount0_ > 0)
+            arrakisStorage.token0.safeTransfer(msg.sender, amount0_);
+        if (amount1_ > 0)
+            arrakisStorage.token1.safeTransfer(msg.sender, amount1_);
     }
 
     function _withdrawManagerBalance() internal {
-        uint256 amount0 = managerBalance0;
-        uint256 amount1 = managerBalance1;
+        ArrakisStorage storage arrakisStorage = ArrakisStorageLib.getStorage();
 
-        managerBalance0 = 0;
-        managerBalance1 = 0;
+        uint256 amount0 = arrakisStorage.managerBalance0;
+        uint256 amount1 = arrakisStorage.managerBalance1;
+
+        arrakisStorage.managerBalance0 = 0;
+        arrakisStorage.managerBalance1 = 0;
 
         /// @dev token can blacklist manager and make this function fail,
         /// so we use try catch to deal with blacklisting.
 
         if (amount0 > 0) {
             // solhint-disable-next-line no-empty-blocks
-            try token0.transfer(manager, amount0) {} catch {
+            try
+                arrakisStorage.token0.transfer(arrakisStorage.manager, amount0)
+            {} catch {
                 amount0 = 0;
             }
         }
 
         if (amount1 > 0) {
             // solhint-disable-next-line no-empty-blocks
-            try token1.transfer(manager, amount1) {} catch {
+            try
+                arrakisStorage.token1.transfer(arrakisStorage.manager, amount1)
+            {} catch {
                 amount1 = 0;
             }
         }
@@ -313,80 +292,39 @@ abstract contract ArrakisV2Storage is
         address token0Addr_,
         address token1Addr_
     ) internal {
+        ArrakisStorage storage arrakisStorage = ArrakisStorageLib.getStorage();
+
         for (uint256 i = 0; i < feeTiers_.length; i++) {
-            address pool = factory.getPool(
+            address pool = arrakisStorage.factory.getPool(
                 token0Addr_,
                 token1Addr_,
                 feeTiers_[i]
             );
 
             require(pool != address(0), "ZA");
-            require(!_pools.contains(pool), "P");
+
+            require(!arrakisStorage.pools.contains(pool), "P");
 
             // explicit.
-            _pools.add(pool);
+            arrakisStorage.pools.add(pool);
         }
-    }
-
-    function _collectFeesOnPools() internal {
-        uint256 fees0;
-        uint256 fees1;
-        for (uint256 i; i < _ranges.length; i++) {
-            Range memory range = _ranges[i];
-            IUniswapV3Pool pool = IUniswapV3Pool(
-                factory.getPool(address(token0), address(token1), range.feeTier)
-            );
-
-            /// @dev to update the position and collect fees.
-            pool.burn(range.lowerTick, range.upperTick, 0);
-
-            (uint256 collect0, uint256 collect1) = _collectFees(
-                pool,
-                range.lowerTick,
-                range.upperTick
-            );
-
-            fees0 += collect0;
-            fees1 += collect1;
-        }
-
-        _applyFees(fees0, fees1);
-        emit LogCollectedFees(fees0, fees1);
-    }
-
-    function _collectFees(
-        IUniswapV3Pool pool_,
-        int24 lowerTick_,
-        int24 upperTick_
-    ) internal returns (uint256 collect0, uint256 collect1) {
-        (collect0, collect1) = pool_.collect(
-            address(this),
-            lowerTick_,
-            upperTick_,
-            type(uint128).max,
-            type(uint128).max
-        );
     }
 
     function _whitelistRouters(address[] calldata routers_) internal {
+        ArrakisStorage storage arrakisStorage = ArrakisStorageLib.getStorage();
+
         for (uint256 i = 0; i < routers_.length; i++) {
             require(
-                routers_[i] != address(token0) &&
-                    routers_[i] != address(token1),
+                routers_[i] != address(arrakisStorage.token0) &&
+                    routers_[i] != address(arrakisStorage.token1),
                 "RT"
             );
-            require(!_routers.contains(routers_[i]), "CR");
+            require(!arrakisStorage.routers.contains(routers_[i]), "CR");
             // explicit.
-            _routers.add(routers_[i]);
+            arrakisStorage.routers.add(routers_[i]);
         }
 
         emit LogWhitelistRouters(routers_);
-    }
-
-    function _applyFees(uint256 fee0_, uint256 fee1_) internal {
-        uint16 mManagerFeeBPS = managerFeeBPS;
-        managerBalance0 += (fee0_ * mManagerFeeBPS) / hundredPercent;
-        managerBalance1 += (fee1_ * mManagerFeeBPS) / hundredPercent;
     }
 
     // #endregion internal functions

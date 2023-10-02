@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.13;
+pragma solidity ^0.8.0;
 
 import {IArrakisV2} from "./../interfaces/IArrakisV2.sol";
 import {Rebalance} from "./../structs/SArrakisV2.sol";

@@ -10,44 +10,15 @@ import {Range, Rebalance} from "../structs/SArrakisV2.sol";
 
 interface IArrakisV2 is IERC20 {
     // #region events
-
-    event LogMint(
-        address indexed receiver,
-        uint256 mintAmount,
-        uint256 amount0In,
-        uint256 amount1In
-    );
-
-    event LogBurn(
-        address indexed receiver,
-        uint256 burnAmount,
-        uint256 amount0Out,
-        uint256 amount1Out
-    );
-
-    event LPBurned(
-        address indexed user,
-        uint256 burnAmount0,
-        uint256 burnAmount1
-    );
-
-    event LogRebalance(
-        Rebalance rebalanceParams,
-        uint256 swapDelta0,
-        uint256 swapDelta1
-    );
-
     event LogCollectedFees(uint256 fee0, uint256 fee1);
-
     event LogWithdrawManagerBalance(uint256 amount0, uint256 amount1);
-    // #region Setting events
 
+    // #region Setting events
     event LogSetInits(uint256 init0, uint256 init1);
     event LogAddPools(uint24[] feeTiers);
     event LogRemovePools(address[] pools);
     event LogSetManager(address newManager);
     event LogSetManagerFeeBPS(uint16 managerFeeBPS);
-    event LogRestrictedMint(address minter);
     event LogWhitelistRouters(address[] routers);
     event LogBlacklistRouters(address[] routers);
 
@@ -87,8 +58,6 @@ interface IArrakisV2 is IERC20 {
 
     function setManager(address manager_) external;
 
-    function setRestrictedMint(address minter_) external;
-
     function setManagerFeeBPS(uint16 managerFeeBPS_) external;
 
     function transferOwnership(address newOwner) external;
@@ -110,8 +79,6 @@ interface IArrakisV2 is IERC20 {
     function manager() external view returns (address);
 
     function managerFeeBPS() external view returns (uint16);
-
-    function restrictedMint() external view returns (address);
 
     function managerBalance0() external view returns (uint256);
 

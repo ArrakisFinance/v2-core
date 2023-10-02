@@ -10,22 +10,26 @@ export interface Addresses {
   ArrakisV2Factory: string;
   ArrakisV2Helper: string;
   ArrakisV2Resolver: string;
+  OwnerAddr: string;
+  ManagerAddr: string;
 }
 
-export const getAddresses = (network: string): Addresses => {
+export const getAddresses = (network: string): Addresses | any => {
   switch (network) {
     case "hardhat":
       return {
         UniswapV3Factory: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
         SwapRouter: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
-        WETH: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
-        WMATIC: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
-        USDC: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+        WETH: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+        WMATIC: "",
+        USDC: "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
         ArrakisV2Implementation: "0xAf0f96e8702cB1b8160e43c8c020C608cD7B134d",
         ArrakisV2Beacon: "0x1D91F6D917ec51dE53A5789c34fFF777a58759B6",
         ArrakisV2Factory: "0xECb8Ffcb2369EF188A082a662F496126f66c8288",
         ArrakisV2Helper: "0x07d2CeB4869DFE17e8D48c92A71eDC3AE564449f",
         ArrakisV2Resolver: "0xb11bb8ad710579Cc5ED16b1C8587808109c1f193",
+        OwnerAddr: "0x4821fCb59f13376eDd7bC82f6eE37785F3A7AB66",
+        ManagerAddr: "0x4821fCb59f13376eDd7bC82f6eE37785F3A7AB66",
       };
     case "mainnet":
       return {
@@ -39,6 +43,8 @@ export const getAddresses = (network: string): Addresses => {
         ArrakisV2Factory: "0xECb8Ffcb2369EF188A082a662F496126f66c8288",
         ArrakisV2Helper: "0x07d2CeB4869DFE17e8D48c92A71eDC3AE564449f",
         ArrakisV2Resolver: "0xb11bb8ad710579Cc5ED16b1C8587808109c1f193",
+        OwnerAddr: "0x4821fCb59f13376eDd7bC82f6eE37785F3A7AB66",
+        ManagerAddr: "0x4821fCb59f13376eDd7bC82f6eE37785F3A7AB66",
       };
     case "polygon":
       return {
@@ -52,6 +58,8 @@ export const getAddresses = (network: string): Addresses => {
         ArrakisV2Factory: "0xECb8Ffcb2369EF188A082a662F496126f66c8288",
         ArrakisV2Helper: "0x07d2CeB4869DFE17e8D48c92A71eDC3AE564449f",
         ArrakisV2Resolver: "0xb11bb8ad710579Cc5ED16b1C8587808109c1f193",
+        OwnerAddr: "0x4821fCb59f13376eDd7bC82f6eE37785F3A7AB66",
+        ManagerAddr: "0x4821fCb59f13376eDd7bC82f6eE37785F3A7AB66",
       };
     case "optimism":
       return {
@@ -65,6 +73,8 @@ export const getAddresses = (network: string): Addresses => {
         ArrakisV2Factory: "0xECb8Ffcb2369EF188A082a662F496126f66c8288",
         ArrakisV2Helper: "0x07d2CeB4869DFE17e8D48c92A71eDC3AE564449f",
         ArrakisV2Resolver: "0xb11bb8ad710579Cc5ED16b1C8587808109c1f193",
+        OwnerAddr: "0x4821fCb59f13376eDd7bC82f6eE37785F3A7AB66",
+        ManagerAddr: "0x4821fCb59f13376eDd7bC82f6eE37785F3A7AB66",
       };
     case "arbitrum":
       return {
@@ -78,6 +88,8 @@ export const getAddresses = (network: string): Addresses => {
         ArrakisV2Factory: "0xECb8Ffcb2369EF188A082a662F496126f66c8288",
         ArrakisV2Helper: "0x07d2CeB4869DFE17e8D48c92A71eDC3AE564449f",
         ArrakisV2Resolver: "0xb11bb8ad710579Cc5ED16b1C8587808109c1f193",
+        OwnerAddr: "0x4821fCb59f13376eDd7bC82f6eE37785F3A7AB66",
+        ManagerAddr: "0x4821fCb59f13376eDd7bC82f6eE37785F3A7AB66",
       };
     case "binance":
       return {
@@ -91,6 +103,8 @@ export const getAddresses = (network: string): Addresses => {
         ArrakisV2Factory: "0xECb8Ffcb2369EF188A082a662F496126f66c8288",
         ArrakisV2Helper: "0x07d2CeB4869DFE17e8D48c92A71eDC3AE564449f",
         ArrakisV2Resolver: "0xb11bb8ad710579Cc5ED16b1C8587808109c1f193",
+        OwnerAddr: "0x4821fCb59f13376eDd7bC82f6eE37785F3A7AB66",
+        ManagerAddr: "0x4821fCb59f13376eDd7bC82f6eE37785F3A7AB66",
       };
     case "goerli":
       return {
@@ -104,6 +118,8 @@ export const getAddresses = (network: string): Addresses => {
         ArrakisV2Factory: "0xECb8Ffcb2369EF188A082a662F496126f66c8288",
         ArrakisV2Helper: "0x07d2CeB4869DFE17e8D48c92A71eDC3AE564449f",
         ArrakisV2Resolver: "0xb11bb8ad710579Cc5ED16b1C8587808109c1f193",
+        OwnerAddr: "0x4821fCb59f13376eDd7bC82f6eE37785F3A7AB66",
+        ManagerAddr: "0x4821fCb59f13376eDd7bC82f6eE37785F3A7AB66",
       };
     default:
       throw new Error(`No addresses for Network: ${network}`);

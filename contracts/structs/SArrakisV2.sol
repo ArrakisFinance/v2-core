@@ -51,6 +51,7 @@ struct InitializePayload {
     uint256 init1;
     address manager;
     address[] routers;
+    address factory;
 }
 
 // #region internal Structs
