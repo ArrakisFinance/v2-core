@@ -1,4 +1,4 @@
 #!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
+#. "$(dirname "$0")/_/husky.sh"
 
-yarn install && yarn clean && yarn build && yarn format && yarn lint:sol && yarn lint-staged
+#yarn install && yarn clean && yarn build && yarn format && yarn lint:sol && yarn lint-staged

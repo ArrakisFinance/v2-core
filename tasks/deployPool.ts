@@ -22,6 +22,7 @@ async function deployArtifact(
   );
   const aftifact = await Artifact.deploy();
   const artifactAddress: string = aftifact.address;
+  console.log(contractName, " deployed at: ", artifactAddress);
 
   // verify aftifact
 
@@ -29,8 +30,7 @@ async function deployArtifact(
     console.log("Verifying: ", contractName);
     await hardhat.run("verify", { address: artifactAddress });
   }
-  console.log(contractName, " deployed at: ", artifactAddress);
-  console.log("");
+  console.log("-----");
 
   return artifactAddress;
 }
@@ -57,6 +57,9 @@ async function approveToken(
 export default function () {
   task("deployPool", "Deploy ArrakisV2 pool").setAction(
     async (taskArgs: any, hre: HardhatRuntimeEnvironment) => {
+      await hre.run("clean");
+      await hre.run("compile");
+
       const addresses = getAddresses(hre.network.name);
 
       const [signer] = await hre.ethers.getSigners();
@@ -71,7 +74,7 @@ export default function () {
       const managerAddr = addresses.ManagerAddr;
       const routers = [addresses.SwapRouter];
       const factoryAddr = addresses.UniswapV3Factory;
-      const shouldVerify: boolean = false;
+      const shouldVerify: boolean = hre.network.name != "hardhat";
 
       // deploying libraries
       const poolAddress = await deployArtifact("Pool", {}, hre, shouldVerify);
@@ -137,8 +140,10 @@ export default function () {
 
       await approveToken(token0, arrakisV2Address, hre);
       await approveToken(token1, arrakisV2Address, hre);
-      arrakisV2.mint(hre.ethers.utils.parseEther("1"), signer.address);
-      console.log("\nminted 1 token");
+      console.log("\nminting 1 token");
+      await arrakisV2.mint(hre.ethers.utils.parseEther("1"), signer.address);
+      console.log("\nminting again 1 token");
+      await arrakisV2.mint(hre.ethers.utils.parseEther("1"), signer.address);
     }
   );
 }

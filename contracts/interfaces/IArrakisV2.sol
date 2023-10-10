@@ -1,14 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import {
-    IUniswapV3Factory
-} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {InitializePayload} from "../structs/SArrakisV2.sol";
 import {Range, Rebalance} from "../structs/SArrakisV2.sol";
 
-interface IArrakisV2 is IERC20 {
+import {
+    IUniswapV3Factory
+} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
+import {
+    IERC20Upgradeable
+} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+interface IArrakisV2 is IERC20Upgradeable {
     // #region events
     event LogCollectedFees(uint256 fee0, uint256 fee1);
     event LogWithdrawManagerBalance(uint256 amount0, uint256 amount1);
@@ -60,13 +64,7 @@ interface IArrakisV2 is IERC20 {
 
     function setManagerFeeBPS(uint16 managerFeeBPS_) external;
 
-    function transferOwnership(address newOwner) external;
-
-    function renounceOwnership() external;
-
     // #endregion state modifiying functions.
-
-    function factory() external view returns (IUniswapV3Factory);
 
     function token0() external view returns (IERC20);
 
@@ -89,12 +87,4 @@ interface IArrakisV2 is IERC20 {
     function getPools() external view returns (address[] memory);
 
     function getRouters() external view returns (address[] memory);
-
-    function owner() external view returns (address);
-
-    function name() external view returns (string memory);
-
-    function symbol() external view returns (string memory);
-
-    function decimals() external view returns (uint8);
 }

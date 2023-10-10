@@ -32,6 +32,13 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       allowUnlimitedContractSize: false,
+      accounts: [
+        {
+          privateKey: `0x${process.env.MAINNET_PRIVATE_KEY}`,
+          balance: "2000000000000000000000000",
+        },
+      ],
+
       forking: {
         url: `${process.env["ARBITRUM_ARCHIVE_NODE_URL"]}`,
       },
