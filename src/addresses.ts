@@ -40,6 +40,19 @@ export const getAddresses = (network: string): Addresses => {
         ArrakisV2Helper: "0x89E4bE1F999E3a58D16096FBe405Fc2a1d7F07D6",
         ArrakisV2Resolver: "0x535C5fDf31477f799366DF6E4899a12A801cC7b8",
       };
+    case "gnosis":
+      return {
+        UniswapV3Factory: "0xe32F7dD7e3f098D518ff19A22d5f028e076489B1",
+        SwapRouter: "0xc6D25285D5C5b62b7ca26D6092751A145D50e9Be",
+        WETH: "0x6A023CCd1ff6F2045C3309768eAd9E68F978f6e1",
+        WMATIC: "",
+        USDC: "0xDDAfbb505ad214D7b80b1f830fcCc89B60fb7A83",
+        ArrakisV2Implementation: "0x7F346F1eB7a65fF83f51B3FD76dCc70979e6DF38",
+        ArrakisV2Beacon: "0x1D91F6D917ec51dE53A5789c34fFF777a58759B6",
+        ArrakisV2Factory: "0xECb8Ffcb2369EF188A082a662F496126f66c8288",
+        ArrakisV2Helper: "0x89E4bE1F999E3a58D16096FBe405Fc2a1d7F07D6",
+        ArrakisV2Resolver: "0x535C5fDf31477f799366DF6E4899a12A801cC7b8",
+      };
     case "polygon":
       return {
         UniswapV3Factory: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
