@@ -1,3 +1,11 @@
+# ⚠️ DEPRECATED
+
+**This repository is no longer maintained.** The Arrakis V2 vault contracts
+remain deployed and immutable on-chain, but this codebase is frozen and will
+receive no further updates, fixes, or security patches.
+
+---
+
 # V2 Core
 
 Arrakis Vaults Version 2, Core Smart Contracts.
